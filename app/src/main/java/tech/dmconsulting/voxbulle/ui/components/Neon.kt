@@ -36,6 +36,9 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -88,9 +91,8 @@ fun NeonCard(
     glow: Pair<Color, GlowLayer>? = if (important) Neon.Orange to GlowLayer(22.dp, 0.18f) else null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val glowModifier = glow?.let { (color, layer) -> Modifier.neonGlow(color, CardShape, layer) } ?: Modifier
     Surface(
-        modifier = modifier.then(glowModifier),
+        modifier = modifier.cardGlow(glow),
         shape = CardShape,
         color = Neon.Surface,
         contentColor = Neon.Text,
@@ -99,6 +101,35 @@ fun NeonCard(
         Column(Modifier.padding(16.dp), content = content)
     }
 }
+
+/**
+ * The whole card is a switch: one accessibility node, a large target. The
+ * press ripple is clipped to the 16 dp corners, like the glow.
+ */
+@Composable
+fun NeonToggleCard(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier.semantics { role = Role.Switch }.cardGlow(Neon.Orange to GlowLayer(22.dp, 0.18f)),
+        enabled = enabled,
+        shape = CardShape,
+        color = Neon.Surface,
+        contentColor = Neon.Text,
+        border = BorderStroke(1.dp, Neon.Orange.copy(alpha = 0.55f)),
+    ) {
+        Column(Modifier.padding(16.dp), content = content)
+    }
+}
+
+private fun Modifier.cardGlow(glow: Pair<Color, GlowLayer>?): Modifier =
+    glow?.let { (color, layer) -> neonGlow(color, CardShape, layer) } ?: this
 
 /** Filled orange pill, 56 dp: the main action. */
 @Composable

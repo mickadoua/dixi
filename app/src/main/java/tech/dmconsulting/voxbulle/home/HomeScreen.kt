@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -30,7 +29,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,6 +48,7 @@ import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
 import tech.dmconsulting.voxbulle.ui.components.NeonCard
 import tech.dmconsulting.voxbulle.ui.components.NeonChip
 import tech.dmconsulting.voxbulle.ui.components.NeonSwitch
+import tech.dmconsulting.voxbulle.ui.components.NeonToggleCard
 import tech.dmconsulting.voxbulle.ui.components.SectionLabel
 import tech.dmconsulting.voxbulle.ui.components.neonGlow
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
@@ -114,12 +113,11 @@ fun HomeScreen(bubble: BubbleToggle, history: DictationHistory, onOpenOffer: () 
 @Composable
 private fun BubbleCard(bubble: BubbleToggle) {
     val shown = bubble.shown ?: false
-    // The whole card is the switch: one accessibility node, a large target.
-    NeonCard(
-        important = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = shown, enabled = bubble.shown != null, role = Role.Switch, onValueChange = bubble.set),
+    NeonToggleCard(
+        checked = shown,
+        onCheckedChange = bubble.set,
+        enabled = bubble.shown != null,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(Modifier.weight(1f)) {
