@@ -3,6 +3,7 @@ package tech.dmconsulting.voxbulle.ui.navigation
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import tech.dmconsulting.voxbulle.onboarding.WelcomeScreen
 import tech.dmconsulting.voxbulle.onboarding.onboardingStep
 import tech.dmconsulting.voxbulle.onboarding.previous
 import tech.dmconsulting.voxbulle.onboarding.screen
+import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.settings.OnboardingStep
 import tech.dmconsulting.voxbulle.settings.SettingsScreen
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
@@ -72,6 +74,7 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     val finishOnboarding: () -> Unit = {
         scope.launch {
             container.settings.update { it.copy(onboardingDone = true) }
+            Log.i(MicrophoneRecorder.TAG, "onboarding done")
             go(Screen.home)
         }
     }
@@ -81,7 +84,10 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                 composable(screen.route) {
                     val step = screen.onboardingStep
                     if (step != null) {
-                        LaunchedEffect(step) { container.settings.update { it.copy(onboardingStep = step) } }
+                        LaunchedEffect(step) {
+                            Log.i(MicrophoneRecorder.TAG, "onboarding step $step")
+                            container.settings.update { it.copy(onboardingStep = step) }
+                        }
                         val previous = step.previous
                         val toPrevious = { previous?.let { go(it.screen) } ?: Unit }
                         if (previous != null) BackHandler(onBack = toPrevious)

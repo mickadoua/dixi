@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -73,6 +74,7 @@ import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.VoxbulleApp
 import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
 import tech.dmconsulting.voxbulle.history.copyToClipboard
+import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.recording.RecordingLimits
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
@@ -202,10 +204,14 @@ fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -
     val context = LocalContext.current
     var refused by rememberSaveable { mutableStateOf(false) }
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        Log.i(MicrophoneRecorder.TAG, "microphone permission granted=$granted")
         if (granted) onGranted() else refused = true
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (refused && hasMicrophone(context)) onGranted()
+        if (refused && hasMicrophone(context)) {
+            Log.i(MicrophoneRecorder.TAG, "microphone allowed in the app info page")
+            onGranted()
+        }
     }
 
     OnboardingFrame(
@@ -264,6 +270,7 @@ fun TrialScreen(onContinue: () -> Unit, onBack: () -> Unit) {
     val app = context.applicationContext as VoxbulleApp
     val model = viewModel { TrialViewModel(app) }.model
     val state by model.state.collectAsState()
+    LaunchedEffect(state) { Log.i(MicrophoneRecorder.TAG, "trial state ${state::class.simpleName}") }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val copiedMessage = stringResource(R.string.text_copied)
@@ -425,13 +432,19 @@ fun BubbleIntroScreen(onEnabled: () -> Unit, onNotNow: () -> Unit, onBack: () ->
     var refused by rememberSaveable { mutableStateOf(false) }
 
     fun enable() {
+        Log.i(MicrophoneRecorder.TAG, "overlay permission allowed")
         asked = false
         refused = false
         onEnabled()
     }
 
     val overlayPage = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (BubbleSwitch.canShow(context)) enable() else refused = true
+        if (BubbleSwitch.canShow(context)) {
+            enable()
+        } else {
+            Log.i(MicrophoneRecorder.TAG, "overlay permission refused")
+            refused = true
+        }
     }
     // Android 8 can answer canDrawOverlays late, after the result: check again on resume.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {

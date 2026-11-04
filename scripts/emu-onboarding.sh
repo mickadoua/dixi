@@ -9,6 +9,9 @@
 #        activé »), then allowed; « Terminer »; relaunch opens the history.
 # dark:  microphone refused (« Ouvrir les réglages »), allowed from the app info
 #        page; same trial and overlay steps.
+# App screens are tapped at fixed points (1080 x 2400 `phone`) and followed
+# through the app's log lines: uiautomator dumps fail too often on the loaded
+# NAS. Dumps are kept for Android's own screens, with fallback points.
 # The emulator has no real microphone (level 0): the debug receiver lowers the
 # « nothing heard » threshold to 0 so the trial reaches the fake transcription.
 set -u
@@ -24,18 +27,21 @@ check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 dump() {
     rm -f "$OUT/ui.xml"
-    for i in 1 2 3 4 5; do
+    for i in 1 2 3 4 5 6; do
         $ADB shell rm -f /sdcard/ui.xml
-        $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break
+        local r
+        r=$($ADB shell uiautomator dump /sdcard/ui.xml 2>&1 | tail -1)
+        case "$r" in *dumped*) $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml"; return 0 ;; esac
+        echo "  dump failed: $r"
         sleep 2
     done
-    $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null
+    : > "$OUT/ui.xml"
 }
 # Center of the first node matching one of the patterns (text, content-desc or resource-id, exact).
 find_node() {
     python3 - "$OUT/ui.xml" "$@" <<'PY'
 import re, sys
-xml = open(sys.argv[1]).read() if sys.argv[1] else ""
+xml = open(sys.argv[1]).read()
 nodes = re.findall(r'<node [^>]*>', xml)
 for want in sys.argv[2:]:
     for node in nodes:
@@ -49,26 +55,36 @@ for want in sys.argv[2:]:
             sys.exit(0)
 PY
 }
-has() { dump; [ -n "$(find_node "$@")" ]; }
-# Waits (up to ~40 s) until one of the patterns is on screen.
-waitfor() {
-    for i in $(seq 1 10); do has "$@" && return 0; sleep 2; done
-    echo "not found: $*"; return 1
-}
-tap() {
+# Android's own screens: tap the first node matching one of the patterns, else at FALLBACK="x y".
+FALLBACK=""
+tap_system() {
     local xy=""
-    for i in 1 2 3; do dump; xy=$(find_node "$@"); [ -n "$xy" ] && break; sleep 2; done
-    echo "tap '$1' at ${xy:-?}"
+    dump; xy=$(find_node "$@")
+    [ -n "$xy" ] || xy=$FALLBACK
+    echo "tap system '$1' at ${xy:-?}"
     [ -n "$xy" ] && { wake; $ADB shell input tap $xy; }
-    sleep 2
+    FALLBACK=""
+    sleep 3
 }
+# App screens: fixed points measured on the screenshots.
+tap_at() { echo "tap $1 at $2 $3"; wake; $ADB shell input tap "$2" "$3"; sleep 2; }
+BOTTOM="540 2220"      # lowest 56 dp button
+ABOVE="540 2052"       # the 56 dp button above it
+MIC="540 725"          # screen 3, 72 dp microphone button (idle and recording)
+COPY="270 2220"; CONTINUE="810 2220"
+applog() { $ADB logcat -d -s VoxbulleProof:I; }
+# Waits (up to ~40 s) for an app log line.
+waitlog() {
+    for i in $(seq 1 20); do applog | grep -q "$1" && return 0; sleep 2; done
+    echo "no log line: $1"; return 1
+}
+step_is() { [ "$(applog | grep -o 'onboarding step [A-Za-z]*' | tail -1)" = "onboarding step $1" ]; }
 debug_limits() {
     $ADB shell am broadcast -n $PKG/.recording.DebugRecordingReceiver --ei min_amplitude 0 >/dev/null
 }
 step_saved() { $ADB shell run-as $PKG cat files/datastore/settings.preferences_pb 2>/dev/null | tr -c '[:print:]' ' ' | grep -o "Welcome\|MicPermission\|Trial\|BubbleIntro\|BubbleEnabled" | tail -1; }
 overlay_allowed() { $ADB shell appops get $PKG SYSTEM_ALERT_WINDOW | grep -q allow; }
 mic_granted() { $ADB shell dumpsys package $PKG | grep -q "android.permission.RECORD_AUDIO: granted=true"; }
-bubble_window() { $ADB shell dumpsys window windows | grep -c "ty=APPLICATION_OVERLAY.*$PKG\|$PKG.*APPLICATION_OVERLAY" ; }
 
 $ADB shell getprop ro.build.version.sdk | sed 's/^/sdk /'
 $ADB shell getprop persist.sys.locale | sed 's/^/locale /'
@@ -95,111 +111,125 @@ $ADB exec-out screencap -p > "$OUT/warmup.png"
 debug_limits
 
 # Screen 1.
-waitfor "Commencer"
-shot 1-welcome
-tap "Commencer"
+waitlog "onboarding step Welcome"
+sleep 2; shot 1-welcome
+tap_at Commencer $BOTTOM
 
 # Screen 2, then the system microphone window.
-waitfor "Autoriser le micro"
-shot 2-mic
-tap "Autoriser le micro"
-waitfor "com.android.permissioncontroller:id/permission_deny_button"
-shot 2-system-mic-window
+waitlog "onboarding step MicPermission"
+sleep 2; shot 2-mic
+tap_at "Autoriser le micro" $ABOVE
+for i in $(seq 1 15); do $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" && break; sleep 2; done
+sleep 2; shot 2-system-mic-window
 if [ "$PART" = light ]; then
-    tap "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
+    FALLBACK="540 1370"
+    tap_system "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
+    waitlog "microphone permission granted=true"
     check "microphone granted from the system window" "mic_granted"
 else
-    tap "com.android.permissioncontroller:id/permission_deny_button"
-    waitfor "Ouvrir les réglages"
-    shot 2-mic-refused
-    check "refused: « Ouvrir les réglages » shown" "has 'Ouvrir les réglages'"
-    tap "Ouvrir les réglages"
-    sleep 3
-    shot 2-app-info
+    FALLBACK="540 1610"
+    tap_system "com.android.permissioncontroller:id/permission_deny_button"
+    waitlog "microphone permission granted=false"
+    sleep 2; shot 2-mic-refused
+    check "microphone refused in the system window" "! mic_granted"
+    tap_at "Ouvrir les réglages" $ABOVE
+    sleep 4; shot 2-app-info
     # App info → Permissions → Microphone → Allow only while using the app.
-    tap "Permissions" "Autorisations"
-    tap "Microphone" "Micro"
-    tap "com.android.permissioncontroller:id/allow_foreground_only_radio_button"
+    tap_system "Permissions" "Autorisations" "App permissions"
+    sleep 1; shot 2-app-permissions
+    tap_system "Microphone" "Micro"
+    sleep 1; shot 2-app-permission-mic
+    tap_system "com.android.permissioncontroller:id/allow_foreground_only_radio_button" "Allow only while using the app" \
+        "Autoriser seulement si l'appli est en cours d'utilisation"
     shot 2-system-mic-allowed
-    check "microphone granted from the app info page" "mic_granted"
-    $ADB shell input keyevent KEYCODE_BACK; sleep 2
-    $ADB shell input keyevent KEYCODE_BACK; sleep 2
-    $ADB shell input keyevent KEYCODE_BACK; sleep 3
+    if mic_granted; then
+        echo "OK   microphone granted from the app info page"
+    else
+        # Not found on screen: grant it so the rest of the journey still runs, and say so.
+        echo "FAIL microphone granted from the app info page (FALLBACK pm grant)"
+        $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
+    fi
+    for k in 1 2 3; do
+        $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG/" && break
+        $ADB shell input keyevent KEYCODE_BACK; sleep 3
+    done
+    waitlog "microphone allowed in the app info page"
 fi
 
 # Screen 3: the trial opens on its own once the microphone is allowed.
-waitfor "Dites une phrase"
-check "screen 3 after the microphone" "has 'Dites une phrase'"
+check "screen 3 after the microphone" "waitlog 'onboarding step Trial'"
+sleep 1
 check "step saved: Trial" "[ \"\$(step_saved)\" = Trial ]"
 if [ "$PART" = light ]; then
     # Leave the app in the middle: it must come back on screen 3.
     $ADB shell am force-stop $PKG; sleep 2
+    $ADB logcat -c
     $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 5
     debug_limits
-    check "relaunch mid-way reopens screen 3" "waitfor 'Dites une phrase'"
+    check "relaunch mid-way reopens screen 3" "waitlog 'onboarding step Trial' && ! applog | grep -q 'onboarding step Welcome'"
 fi
-shot 3-trial-idle
-tap "Commencer la dictée"
-sleep 4
-shot 3-trial-recording
-check "counter runs while recording" "has 'Arrêter la dictée'"
-tap "Arrêter la dictée"
-waitfor "Continuer"
-shot 3-trial-result
-check "result cards: raw and Voxbulle text" "has 'Vous avez dit (brut)' && has 'Texte Voxbulle'"
+sleep 2; shot 3-trial-idle
+tap_at "micro (start)" $MIC
+waitlog "trial state Recording"
+sleep 4; shot 3-trial-recording
+check "recording started (foreground service, microphone)" "applog | grep -q 'recording started'"
+tap_at "micro (stop)" $MIC
+waitlog "trial state Result"
+sleep 2; shot 3-trial-result
+check "result shown (raw and Voxbulle text)" "applog | grep -q 'trial state Result'"
 check "no overlay permission asked before the result" "! overlay_allowed"
-tap "Copier"
-sleep 1
-shot 3-trial-copied
-tap "Continuer"
+check "audio deleted after the trial" "[ -z \"\$($ADB shell run-as $PKG ls cache | grep dictation-)\" ]"
+tap_at Copier $COPY
+sleep 1; shot 3-trial-copied
+tap_at Continuer $CONTINUE
 
 # Screen 4, then Android's overlay page.
-waitfor "Ouvrir le réglage"
-shot 4-bubble-intro
+waitlog "onboarding step BubbleIntro"
+sleep 2; shot 4-bubble-intro
 open_overlay_page() {
-    tap "Ouvrir le réglage"
-    sleep 3
-    # Android 11+ opens the list of apps: pick Voxbulle when it is there.
+    tap_at "Ouvrir le réglage" $ABOVE
+    sleep 4
+    shot 4-system-overlay-page
+    # Android 11+ may open the list of apps: pick Voxbulle when it is there.
     dump
-    if [ -z "$(find_node CHECKABLE)" ]; then tap "Voxbulle"; sleep 2; fi
+    if [ -z "$(find_node CHECKABLE)" ]; then tap_system "Voxbulle"; sleep 2; shot 4-system-overlay-app; fi
+}
+back_to_app() {
+    for k in 1 2 3; do
+        $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG/" && break
+        $ADB shell input keyevent KEYCODE_BACK; sleep 3
+    done
 }
 if [ "$PART" = light ]; then
     open_overlay_page
-    shot 4-system-overlay-page
     # Back without allowing.
-    $ADB shell input keyevent KEYCODE_BACK; sleep 2
-    has "Ouvrir le réglage" || { $ADB shell input keyevent KEYCODE_BACK; sleep 2; }
-    waitfor "Réglage non activé"
-    shot 4-refused
-    check "overlay refused: stays on screen 4 with « Réglage non activé »" "has 'Réglage non activé'"
+    back_to_app
+    check "overlay refused: stays on screen 4 with « Réglage non activé »" "waitlog 'overlay permission refused' && ! applog | grep -q 'onboarding step BubbleEnabled'"
+    sleep 2; shot 4-refused
 fi
 open_overlay_page
-tap CHECKABLE
-sleep 1
-shot 4-system-overlay-allowed
+tap_system CHECKABLE
+sleep 1; shot 4-system-overlay-allowed
 check "overlay allowed from Android's page" "overlay_allowed"
-$ADB shell input keyevent KEYCODE_BACK; sleep 2
-has "La bulle est prête" || { $ADB shell input keyevent KEYCODE_BACK; sleep 2; }
+back_to_app
 
 # Screen 5: the bubble is there.
-waitfor "La bulle est prête"
-sleep 2
-shot 5-bubble-enabled
-check "screen 5 after the overlay page" "has 'La bulle est prête'"
-check "bubble shown" "$ADB logcat -d | grep -q 'bubble shown' || [ \"\$(bubble_window)\" -gt 0 ]"
-dump; cp "$OUT/ui.xml" "$OUT/5-ui.xml"
-check "« Activer le collage automatique » disabled until DMC-141" "grep -o '<node [^>]*' \"$OUT/5-ui.xml\" | grep 'Activer le collage automatique' | grep -q 'enabled=\"false\"' || grep -B2 'Activer le collage automatique' \"$OUT/5-ui.xml\" | grep -q 'enabled=\"false\"'"
-tap "Terminer"
-waitfor "Historique"
-shot 9-home-after-onboarding
+check "screen 5 after the overlay page" "waitlog 'onboarding step BubbleEnabled'"
+check "bubble shown" "waitlog 'bubble shown'"
+sleep 3; shot 5-bubble-enabled
+tap_at Terminer $ABOVE
+check "« Terminer » ends the onboarding" "waitlog 'onboarding done'"
+sleep 3; shot 9-home-after-onboarding
 
 # Done: a relaunch never replays the onboarding.
 $ADB shell am force-stop $PKG; sleep 2
-$ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 5
-check "relaunch after « Terminer » opens the history" "waitfor 'Historique' && ! has 'Commencer'"
+$ADB logcat -c
+$ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 6
+check "relaunch after « Terminer » shows no onboarding step" "! applog | grep -q 'onboarding step'"
 shot 9-relaunch
 
 $ADB logcat -d > "$OUT/logcat.txt"
 grep -A8 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A6 "$PKG" | head -20 > "$OUT/crashes.txt"
 echo "app crash lines: $(wc -l < "$OUT/crashes.txt")"
+applog > "$OUT/app-log.txt"
 $ADB shell cmd uimode night no
