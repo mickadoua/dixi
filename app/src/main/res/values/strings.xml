@@ -28,5 +28,4 @@
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
     <string name="notif_copied_body">Appui long dans le champ pour coller.</string>
-    <string name="fixed_text">Bonjour, ceci est un texte de test Voxbulle.</string>
 </resources>

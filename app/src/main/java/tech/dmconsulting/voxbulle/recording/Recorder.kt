@@ -109,7 +109,8 @@ class Recorder(private val context: Context) {
             finish(RecordingOutcome.Failure(error))
             return
         }
-        val newSession = RecordingSession(MicrophoneRecorder(context), { SystemClock.elapsedRealtime() }, RecordingLimits.current())
+        val capture = MicrophoneRecorder(context)
+        val newSession = RecordingSession(capture, { SystemClock.elapsedRealtime() }, RecordingLimits.current())
         val file = File(context.cacheDir, "$AUDIO_PREFIX${System.currentTimeMillis()}$AUDIO_SUFFIX")
         newSession.start(file)?.let {
             Log.e(TAG, "recording FAILED: $it")
@@ -120,6 +121,7 @@ class Recorder(private val context: Context) {
         _state.value = RecorderState.Recording
         Log.i(TAG, "recording started, limits=${RecordingLimits.current()}")
         handler.postDelayed(tick, TICK_MS)
+        handler.postDelayed({ if (session === newSession) capture.logRecordingState() }, 1_500)
     }
 
     /** The service is going away without a stop (system kill): drop the audio. */
