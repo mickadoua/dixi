@@ -93,6 +93,7 @@ class BubbleService : Service() {
         } else {
             try {
                 overlay.show()
+                if (intent?.action == ACTION_DICTATE) onBubbleTap()
             } catch (e: RuntimeException) {
                 Log.e(TAG, "bubble show FAILED", e)
                 stopSelf()
@@ -261,6 +262,16 @@ class BubbleService : Service() {
 
         fun show(context: Context) {
             context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_SHOW))
+        }
+
+        /**
+         * The main screen's « Touchez, parlez » button: same as a tap on the bubble
+         * (start or stop). Needs the overlay permission, like the bubble itself.
+         */
+        const val ACTION_DICTATE = "tech.dmconsulting.voxbulle.action.DICTATE"
+
+        fun dictate(context: Context) {
+            context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_DICTATE))
         }
 
         private const val ACTION_DEBUG_STATE = "tech.dmconsulting.voxbulle.debug.SET_BUBBLE_STATE"
