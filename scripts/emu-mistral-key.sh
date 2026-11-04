@@ -46,14 +46,14 @@ PY
     done
 }
 has() { dump; grep -q "$1" "$OUT/ui.xml"; }
-# Taps the first node whose text or content-desc starts with $1.
+# Taps the first node whose text or content-desc starts with $1 (is exactly $1 with $2 = exact).
 tap() {
     wake
     dump
     local xy
-    xy=$(python3 - "$OUT/ui.xml" "$1" <<'PY'
+    xy=$(python3 - "$OUT/ui.xml" "$1" "${2:-}" <<'PY'
 import re, sys
-want = sys.argv[2]
+want = sys.argv[2] + ('"' if sys.argv[3] == 'exact' else '')
 for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
     if f'text="{want}' in node or f'content-desc="{want}' in node:
         a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups())
@@ -68,11 +68,36 @@ hide_keyboard() {
     $ADB shell dumpsys input_method | grep -q "mInputShown=true" && $ADB shell input keyevent KEYCODE_BACK
     sleep 2
 }
+# Length of the text in the (password) field, read from the UI tree.
+typed_length() {
+    dump
+    python3 - "$OUT/ui.xml" <<'PY'
+import re, sys
+for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
+    if 'EditText' in node:
+        print(len(re.search(r' text="([^"]*)"', node).group(1))); break
+else:
+    print(0)
+PY
+}
+# A loaded emulator drops characters of a long `input text`: type small chunks, check, retry.
 save_fake_key() {
     tap "Coller la clé"
-    $ADB shell input text "$FAKE_KEY"
-    sleep 1
-    dump
+    for attempt in 1 2 3; do
+        for i in $(seq 0 4 $((${#FAKE_KEY} - 1))); do
+            $ADB shell input text "${FAKE_KEY:$i:4}"
+            sleep 0.5
+        done
+        sleep 1
+        local n
+        n=$(typed_length)
+        echo "typed $n of ${#FAKE_KEY} characters (attempt $attempt)"
+        # 0: the tree hides the password text, nothing to check against.
+        [ "$n" = "${#FAKE_KEY}" ] || [ "$n" = 0 ] && break
+        $ADB shell input keyevent KEYCODE_MOVE_END
+        $ADB shell input keyevent $(for k in $(seq 1 40); do printf 'KEYCODE_DEL '; done)
+        sleep 1
+    done
     echo "fake key readable in the UI tree while typed: $(grep -c "$FAKE_KEY" "$OUT/ui.xml")"
     hide_keyboard
     tap "Enregistrer"
@@ -82,9 +107,9 @@ test_key() {
     tap "Tester la clé"
     for i in 1 2 3 4 5 6; do
         sleep 3
-        has "Clé refusée par Mistral. Vérifiez-la ou créez" && break
+        has 'text="\(Clé valide\|Test : Mistral refuse\|Pas de réseau\|Service Mistral\)' && break
     done
-    grep -o 'text="\(Clé valide[^"]*\|Clé refusée par Mistral[^"]*\|Pas de réseau[^"]*\|Service Mistral[^"]*\)"' "$OUT/ui.xml" | sort -u | sed 's/^/test result: /'
+    grep -o 'text="\(Clé valide[^"]*\|Test : Mistral refuse[^"]*\|Pas de réseau[^"]*\|Service Mistral[^"]*\)"' "$OUT/ui.xml" | sort -u | sed 's/^/test result: /'
 }
 status() { dump; grep -o 'text="\(Aucune clé[^"]*\|Clé enregistrée\|Clé refusée par Mistral. Vérifiez-la ou collez[^"]*\)"' "$OUT/ui.xml" | head -1 | sed "s/^/status $1: /"; }
 
@@ -123,7 +148,7 @@ done
 
 # Delete through the dialog: back to « Aucune clé ».
 tap "Supprimer la clé"
-tap "Supprimer"
+tap "Supprimer" exact
 sleep 2
 status "after delete"; shot dark-4-supprimee
 echo "key files after delete: $($ADB shell run-as $PKG ls no_backup 2>&1 | tr '\n' ' ')"

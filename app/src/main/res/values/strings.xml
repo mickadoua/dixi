@@ -92,7 +92,7 @@
     <string name="key_deleted">Clé supprimée. Les dictées passent en mode démo.</string>
     <string name="key_check_running">Test en cours…</string>
     <string name="key_check_valid">Clé valide : Mistral l\'accepte.</string>
-    <string name="key_check_rejected">Clé refusée par Mistral. Vérifiez-la ou créez-en une autre.</string>
+    <string name="key_check_rejected">Test : Mistral refuse cette clé (erreur 401 ou 403).</string>
     <string name="key_check_no_connection">Pas de réseau. Réessayez une fois connecté.</string>
     <string name="key_check_unavailable">Service Mistral indisponible. Réessayez dans quelques minutes.</string>
     <string name="key_delete_title">Supprimer la clé ?</string>
