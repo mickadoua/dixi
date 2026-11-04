@@ -83,28 +83,35 @@ if [ "$PART" = a ]; then
   # Single dictation: a tap while the text is processed does nothing.
   wake; $ADB shell input tap $XY
   shot 3-processing
-  check "text ready" "wait_log 'text ready' 15"
-  shot 4-after-text-ready
-  log | grep -E "bubble state|tapped|text ready|recorded|clipboard|copied" | tee "$OUT/chain.txt"
-  check "tap during processing ignored" "grep -q 'tapped in state Processing' '$OUT/chain.txt'"
-  check "one text only" "[ \$(grep -c 'text ready' '$OUT/chain.txt') -eq 1 ]"
-  check "text ready <= 3000 ms after stop" "[ \$(sed -n 's/.*text ready \([0-9]*\) ms.*/\1/p' '$OUT/chain.txt') -le 3000 ]"
-  check "states Listening > Processing > Ready > Idle" "grep 'bubble state' '$OUT/chain.txt' | sed 's/.*state //' | tr '\n' ' ' | grep -q 'Listening Processing Ready Idle'"
-  check "audio deleted" "[ \$(audio_files) -eq 0 ]"
+  check "text copied" "wait_log 'clipboard set' 20"
+  shot 4-after-copy
+  # Android 13+ shows its own clipboard preview: kept in 4-after-copy to judge the double.
+  wait_log "copied notification posted" 15; POSTED=$SECONDS
   notif | tee "$OUT/notification.txt"
-  check "notification posted on channel copied" "grep -q 'channel=copied' '$OUT/notification.txt'"
-  check "notification has 2 actions" "grep -q 'Voir le texte' '$OUT/notification.txt' && grep -q 'Masquer la bulle' '$OUT/notification.txt'"
   $ADB shell cmd statusbar expand-notifications; sleep 2
   shot 5-notification
-  $ADB shell cmd statusbar collapse; sleep 6
+  $ADB shell cmd statusbar collapse
+  wait_log "bubble state Idle" 10
+  log | grep -E "bubble state|tapped|recording finished|clipboard|copied" | tee "$OUT/chain.txt"
+  check "tap during processing ignored" "grep -q 'tapped in state Processing' '$OUT/chain.txt'"
+  check "one text only" "[ \$(grep -c 'clipboard set' '$OUT/chain.txt') -eq 1 ]"
+  check "text copied <= 3000 ms after stop" "[ \$(sed -n 's/.*clipboard set \([0-9]*\) ms.*/\1/p' '$OUT/chain.txt') -le 3000 ]"
+  check "states Listening > Processing > Ready > Idle" "grep 'bubble state' '$OUT/chain.txt' | sed 's/.*state //' | tr '\n' ' ' | grep -q 'Listening Processing Ready Idle'"
+  check "audio deleted" "[ \$(audio_files) -eq 0 ]"
+  check "notification posted on channel copied" "grep -q 'channel=copied' '$OUT/notification.txt'"
+  check "notification has 2 actions" "grep -q 'Voir le texte' '$OUT/notification.txt' && grep -q 'Masquer la bulle' '$OUT/notification.txt'"
+  while [ $((SECONDS - POSTED)) -lt 8 ]; do sleep 1; done
   notif > "$OUT/notification-after-6s.txt"
   check "notification gone after 6 s" "! grep -q 'id=2 ' '$OUT/notification-after-6s.txt'"
   echo "--- a2. Paste into Contacts"
   F=$(node_center ui-contacts.xml "First name"); [ -n "$F" ] || F="540 1026"
-  wake; $ADB shell input tap $F; sleep 2
-  $ADB shell input keyevent KEYCODE_PASTE; sleep 2
+  for _ in 1 2 3; do
+    wake; $ADB shell input tap $F; sleep 3
+    $ADB shell input keyevent KEYCODE_PASTE; sleep 3
+    node_center ui-pasted.xml "x" >/dev/null
+    grep -q 'texte de test voxbulle' "$OUT/ui-pasted.xml" && break
+  done
   shot 6-pasted
-  node_center ui-pasted.xml "x" >/dev/null
   check "cleaned text pasted" "grep -q 'Bonjour ceci est un texte de test voxbulle.' '$OUT/ui-pasted.xml'"
 fi
 
@@ -145,7 +152,7 @@ if [ "$PART" = b ]; then
   echo "--- b4. « Masquer la bulle » hides the bubble"
   contacts; close_dialogs
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
-  sleep 1; wait_log "text ready" 15
+  sleep 1; wait_log "copied notification posted" 20
   for _ in 1 2 3; do
     $ADB shell cmd statusbar expand-notifications; sleep 2
     H=$(node_center ui-shade2.xml "Masquer la bulle"); echo "Masquer la bulle at: $H"

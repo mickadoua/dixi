@@ -162,11 +162,9 @@ class BubbleService : Service(), DictationOutput {
         }
     }
 
-    override fun textReady(text: String, recordingMs: Long, afterStopMs: Long) {
-        Log.i(TAG, "text ready ${afterStopMs} ms after stop, recording ${formatDuration(recordingMs)} ($recordingMs ms)")
+    override fun copy(text: String, stoppedAtMs: Long) {
         copyToClipboard(this, text)
-        Log.i(TAG, "clipboard set")
-        notifyCopied(recordingMs)
+        Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop")
     }
 
     override fun showError(message: Int) {
@@ -175,7 +173,7 @@ class BubbleService : Service(), DictationOutput {
     }
 
     /** « Texte copié », gone after 6 s. A tap or « Voir le texte » opens the history (screen 7). */
-    private fun notifyCopied(durationMs: Long) {
+    override fun notifyCopied(recordingMs: Long) {
         val history = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java)
@@ -191,7 +189,7 @@ class BubbleService : Service(), DictationOutput {
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
             .setContentText(getString(R.string.notif_copied_body))
-            .setSubText(formatDuration(durationMs))
+            .setSubText(formatDuration(recordingMs))
             .setContentIntent(history)
             .addAction(0, getString(R.string.notif_copied_show_text), history)
             .addAction(0, getString(R.string.bubble_action_hide), hide)

@@ -46,14 +46,21 @@ class DictationControllerTest {
         }
     }
 
-    private class FakeOutput : DictationOutput {
+    private inner class FakeOutput : DictationOutput {
         val texts = mutableListOf<String>()
-        val afterStop = mutableListOf<Long>()
+        val stoppedAt = mutableListOf<Long>()
+        val copiedAt = mutableListOf<Long>()
+        val notified = mutableListOf<Long>()
         val errors = mutableListOf<Int>()
 
-        override fun textReady(text: String, recordingMs: Long, afterStopMs: Long) {
+        override fun copy(text: String, stoppedAtMs: Long) {
             texts += text
-            afterStop += afterStopMs
+            stoppedAt += stoppedAtMs
+            copiedAt += scope.testScheduler.currentTime
+        }
+
+        override fun notifyCopied(recordingMs: Long) {
+            notified += recordingMs
         }
 
         override fun showError(message: Int) {
@@ -103,6 +110,7 @@ class DictationControllerTest {
             states,
         )
         assertEquals(listOf(text), output.texts)
+        assertEquals(listOf(4_000L), output.notified)
         assertEquals(listOf(Dictation(text, at)), history.entries.value)
         assertFalse(outcome.result.file.exists())
         assertTrue(output.errors.isEmpty())
@@ -115,7 +123,7 @@ class DictationControllerTest {
         controller.onTap()
         scope.advanceUntilIdle()
 
-        val afterStop = output.afterStop.single()
+        val afterStop = output.copiedAt.single() - output.stoppedAt.single()
         assertEquals(FakeTranscriber.DEFAULT_DELAY_MS, afterStop)
         assertTrue(afterStop <= 3_000)
     }

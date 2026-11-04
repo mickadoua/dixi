@@ -26,8 +26,11 @@ interface DictationRecorder {
 
 /** What the user sees and gets at the end of a dictation. */
 interface DictationOutput {
-    /** Copies [text] and posts « Texte copié ». [afterStopMs]: from the stop to the text. */
-    fun textReady(text: String, recordingMs: Long, afterStopMs: Long)
+    /** Puts [text] in the clipboard. [stoppedAtMs]: end of the recording, on the elapsedMs clock. */
+    fun copy(text: String, stoppedAtMs: Long)
+
+    /** « Texte copié », with the length of the recording. */
+    fun notifyCopied(recordingMs: Long)
 
     fun showError(@StringRes message: Int)
 }
@@ -94,8 +97,9 @@ class DictationController(
                 is VoxtralResult.Failure -> fail(result.error.message)
                 is VoxtralResult.Success -> {
                     val text = result.value.text
-                    output.textReady(text, recording.durationMs, elapsedMs() - stoppedAt)
+                    output.copy(text, stoppedAt)
                     bubble.setState(BubbleState.Ready)
+                    output.notifyCopied(recording.durationMs)
                     history.add(Dictation(text, now()))
                 }
             }
