@@ -30,3 +30,17 @@ class TapDragTracker(private val touchSlop: Float) {
     /** Returns true when the gesture was a tap. */
     fun up(): Boolean = !isDragging
 }
+
+/** What the bubble does when the finger lifts, or when the system cancels the gesture. */
+enum class Release { Click, Hide, Snap, None }
+
+/**
+ * A cancelled gesture (for example a system navigation gesture) never clicks
+ * and never hides the bubble: a cancelled drag snaps to the side.
+ */
+fun releaseAction(wasTap: Boolean, cancelled: Boolean, overHideZone: Boolean): Release = when {
+    wasTap -> if (cancelled) Release.None else Release.Click
+    cancelled -> Release.Snap
+    overHideZone -> Release.Hide
+    else -> Release.Snap
+}

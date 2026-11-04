@@ -111,6 +111,21 @@ class BubbleControllerTest {
     }
 
     @Test
+    fun hideIsRefusedWhileADictationRuns() {
+        var hides = 0
+        controller.setState(BubbleState.Listening)
+        assertFalse(controller.hideIfAllowed { hides++ })
+        controller.setState(BubbleState.Processing)
+        assertFalse(controller.hideIfAllowed { hides++ })
+        assertEquals(0, hides)
+        controller.setState(BubbleState.Idle)
+        assertTrue(controller.hideIfAllowed { hides++ })
+        controller.setState(BubbleState.Ready)
+        assertTrue(controller.hideIfAllowed { hides++ })
+        assertEquals(2, hides)
+    }
+
+    @Test
     fun voiceLevelIsKeptBetweenZeroAndOne() {
         val levels = mutableListOf<Float>()
         controller.onVoiceLevel = { levels += it }
