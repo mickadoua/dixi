@@ -51,6 +51,28 @@ PY
     sleep 2
 }
 
+# Prints the bounds of the « Mode démo » label and of the node $1 (content-desc),
+# and how many pixels they share (QA DMC-167: the label hid the settings icon).
+overlap() {
+    dump
+    python3 - "$OUT/ui.xml" "$1" <<'PY2'
+import re, sys
+xml, want = open(sys.argv[1]).read(), sys.argv[2]
+def box(pred):
+    for node in re.findall(r'<node [^>]*>', xml):
+        if pred(node):
+            return tuple(map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups()))
+label = box(lambda n: 'content-desc="Mode démo :' in n)
+other = box(lambda n: f'content-desc="{want}"' in n)
+print(f"demo label bounds: {label}")
+print(f"'{want}' bounds: {other}")
+if label and other:
+    w = max(0, min(label[2], other[2]) - max(label[0], other[0]))
+    h = max(0, min(label[3], other[3]) - max(label[1], other[1]))
+    print(f"overlap label/'{want}': {w * h} px")
+PY2
+}
+
 $ADB shell getprop ro.build.version.sdk
 $ADB install -r -g "$APK" || exit 1
 $ADB shell pm clear $PKG >/dev/null
@@ -82,6 +104,13 @@ open --es screen History
 waitfor
 shot 9-full-light
 echo "entries after 21 adds: $(entries)"
+overlap "Réglages"
+overlap "Retour"
+# The settings icon must still open screen 10.
+tap "Réglages" "1020 170"
+waitfor
+dump; grep -q 'text="Langue"' "$OUT/ui.xml" && echo "settings icon opens screen 10: yes" || echo "settings icon opens screen 10: NO"
+shot 10-from-icon-light
 $ADB shell run-as $PKG cat $HISTORY_FILE > "$OUT/dictation_history.json"
 
 # Persistence: kill the app, reopen without seeding.
@@ -114,6 +143,7 @@ night no
 open --es screen Settings
 waitfor
 shot 10-light
+overlap "Retour"
 tap "Langue"
 waitfor
 shot 10-language-dialog-light

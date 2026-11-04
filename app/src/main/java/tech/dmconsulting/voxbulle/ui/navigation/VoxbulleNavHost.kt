@@ -13,11 +13,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,17 +26,20 @@ import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.history.HistoryScreen
 import tech.dmconsulting.voxbulle.onboarding.TrialPreview
 import tech.dmconsulting.voxbulle.settings.SettingsScreen
+import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
+import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 
 /**
  * Screens without their ticket yet are empty placeholders.
- * [demoMode]: debug build on the fake Voxtral, shown by a « Mode démo » label.
+ * [demoMode]: debug build on the fake Voxtral, shown by a « Mode démo » label
+ * that each screen places ([LocalDemoMode]).
  */
 @Composable
 fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Screen.start) {
     val navController = rememberNavController()
     val back: () -> Unit = { navController.popBackStack() }
-    Box(Modifier.fillMaxSize()) {
+    CompositionLocalProvider(LocalDemoMode provides demoMode) {
         NavHost(navController = navController, startDestination = start.route) {
             Screen.entries.forEach { screen ->
                 composable(screen.route) {
@@ -56,28 +58,6 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                 }
             }
         }
-        if (demoMode) DemoModeLabel(Modifier.align(Alignment.TopEnd))
-    }
-}
-
-/** Small, out of the way, but on every screen: testers know nothing is sent. */
-@Composable
-private fun DemoModeLabel(modifier: Modifier) {
-    val description = stringResource(R.string.demo_mode_description)
-    Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-        shape = MaterialTheme.shapes.small,
-        modifier = modifier
-            .safeDrawingPadding()
-            .padding(8.dp)
-            .clearAndSetSemantics { contentDescription = description },
-    ) {
-        Text(
-            stringResource(R.string.demo_mode),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-        )
     }
 }
 
@@ -101,6 +81,12 @@ private fun PlaceholderScreen(screen: Screen, onOpen: (Screen) -> Unit, extra: @
                 }
             }
             extra()
+        }
+        // No top bar here: the label sits in the corner, clear of the heading's start.
+        if (LocalDemoMode.current) {
+            Box(Modifier.safeDrawingPadding().padding(8.dp), contentAlignment = Alignment.TopEnd) {
+                DemoModeLabel()
+            }
         }
     }
 }
