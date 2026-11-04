@@ -211,6 +211,9 @@ class BubbleOverlay(
     private fun showHideZone() {
         if (hideZoneShown || !shown) return
         placeHideZone()
+        // Android 12+ caps the opacity of a non-touchable overlay at 80 %: the
+        // zone takes touches only while shown, so it draws fully opaque.
+        hideZoneParams.flags = hideZoneParams.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
         windowManager.updateViewLayout(hideZone, hideZoneParams)
         hideZone.active = false
         hideZone.alpha = 0f
@@ -236,6 +239,8 @@ class BubbleOverlay(
         if (!hideZoneShown) return
         hideZone.animate().cancel()
         hideZone.visibility = View.INVISIBLE
+        hideZoneParams.flags = hideZoneParams.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        windowManager.updateViewLayout(hideZone, hideZoneParams)
         hideZoneShown = false
     }
 
