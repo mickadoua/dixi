@@ -27,5 +27,10 @@
             android:name=".bubble.BubbleService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <service
+            android:name=".recording.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
 </manifest>

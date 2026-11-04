@@ -3,6 +3,7 @@ package tech.dmconsulting.voxbulle
 import android.app.Application
 import androidx.datastore.dataStoreFile
 import tech.dmconsulting.voxbulle.history.DataStoreDictationHistory
+import tech.dmconsulting.voxbulle.recording.Recorder
 import tech.dmconsulting.voxbulle.settings.DataStoreSettingsStore
 
 class VoxbulleApp : Application() {
@@ -14,4 +15,6 @@ class VoxbulleApp : Application() {
             settings = DataStoreSettingsStore.create(dataStoreFile("settings.preferences_pb")),
         )
     }
+
+    val recorder: Recorder by lazy { Recorder(this) }
 }

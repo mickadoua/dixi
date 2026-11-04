@@ -63,7 +63,7 @@ $ADB shell input keyevent KEYCODE_PASTE; sleep 2
 shot 4-pasted
 for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui2.xml && break; sleep 3; done
 $ADB shell cat /sdcard/ui2.xml > "$OUT/ui-pasted.xml"
-grep -o 'texte de test Voxbulle' "$OUT/ui-pasted.xml" | head -1 | sed 's/^/PASTED: /'
+grep -io 'texte de test Voxbulle' "$OUT/ui-pasted.xml" | head -1 | sed 's/^/PASTED: /'
 $ADB shell dumpsys appops --package $PKG > "$OUT/appops.txt"
 $ADB logcat -d -s VoxbulleProof:V ActivityManager:W AppOps:W > "$OUT/logcat.txt"
 $ADB logcat -d | grep -iE 'voxbulle|ForegroundService|while-in-use|silenc' > "$OUT/logcat-grep.txt"
