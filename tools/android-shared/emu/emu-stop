@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# emu-stop [--id <id>] [--force] : demande l'arrêt de l'émulateur partagé et
+# attend le compte rendu du superviseur (arrêté, aucun qemu restant, données
+# jetables supprimées). Sans effet si rien ne tourne.
+#
+# Refuse d'arrêter l'émulateur d'un autre agent, sauf --force. --id : n'arrête
+# que cette session (emu-run s'en sert pour ne jamais toucher à celle d'un autre).
+# Codes : 0 arrêté (ou rien à arrêter) ; 2 usage ; 3 un qemu reste ou pas de
+#         réponse ; 69 conteneur android-emu absent ; 75 session d'un autre agent.
+EMU_CMD=emu-stop
+# shellcheck source=emu-lib.sh
+. "$(dirname "$(readlink -f "$0")")/emu-lib.sh"
+
+force=0 want=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --force) force=1; shift ;;
+    --id)
+      if [ $# -lt 2 ] || ! emu_valid_id "$2"; then emu_die 2 "usage : emu-stop [--id <id>] [--force]"; fi
+      want=$2
+      shift 2
+      ;;
+    *) emu_die 2 "usage : emu-stop [--id <id>] [--force]" ;;
+  esac
+done
+# Un second signal ne doit pas interrompre l'arrêt.
+trap '' INT TERM HUP
+
+if ! emu_session_ok; then
+  if [ -n "$want" ] && [ -f "$EMU_RESULTS/$want" ]; then
+    emu_report "$want" >/dev/null 2>&1 || true
+    emu_log "session $want déjà terminée ($(emu_kv "$EMU_RESULTS/$want" result))."
+  else
+    emu_log "aucun émulateur en cours."
+  fi
+  exit 0
+fi
+
+id=$(emu_kv "$EMU_SESSION/request" id)
+if [ -z "$id" ]; then
+  [ -z "$want" ] || { emu_log "session $want déjà terminée."; exit 0; }
+  emu_die 75 "un autre client est en train de démarrer l'émulateur : rien arrêté."
+fi
+if [ -n "$want" ] && [ "$id" != "$want" ]; then
+  emu_log "session $want déjà terminée ; celle en cours ($(emu_owner)) n'est pas touchée."
+  exit 0
+fi
+owner=$(emu_kv "$EMU_SESSION/request" agent)
+if [ "$force" = 0 ] && [ -z "$want" ] && [ -n "$owner" ] && [ "$owner" != "?" ] &&
+  [ "$owner" != "${PAPERCLIP_AGENT_ID:-?}" ]; then
+  emu_die 75 "l'émulateur en cours appartient à un autre agent ($(emu_owner)) : emu-stop --force pour l'arrêter quand même."
+fi
+
+rc=0
+emu_stop_session "$id" $((EMU_BOOT_TIMEOUT + 60)) || rc=$?
+# Un démarrage interrompu par l'arrêt n'est pas une erreur d'emu-stop.
+[ "$rc" != 1 ] || [ "$(emu_kv "$EMU_RESULTS/$id" result)" != stopped ] || rc=0
+exit "$rc"

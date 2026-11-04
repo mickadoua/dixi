@@ -1,0 +1,29 @@
+# Versions figées de l'outillage Android partagé du NAS (DMC-114).
+# C'est le seul fichier à modifier pour changer de version. Ensuite, Sacha
+# lance sdk-sync.sh : il installe ce qui manque et retire ce qui n'est plus listé.
+
+# JDK Temurin (Gradle et sdkmanager en ont besoin).
+JDK_VERSION="21.0.13+9"
+
+# Paquets sdkmanager figés par leur identifiant.
+BUILD_TOOLS="36.0.0"
+PLATFORMS="android-37.0"
+
+# sdkmanager n'installe que la dernière version de ces deux paquets :
+# le script vérifie que la révision installée est bien celle-ci.
+PLATFORM_TOOLS_REVISION="37.0.1"
+CMDLINE_TOOLS_REVISION="19.0"
+EMULATOR_REVISION="37.2.13"
+
+# Émulateur (emu-start / emu-run) : images système, et profils
+# <nom>:<image système>:<appareil avdmanager>. Une image non listée est retirée.
+SYSTEM_IMAGES="system-images;android-36;google_apis;x86_64 system-images;android-36;google-tv;x86_64"
+EMU_PROFILES="phone:system-images;android-36;google_apis;x86_64:pixel_7 tv:system-images;android-36;google-tv;x86_64:tv_1080p"
+
+# Bibliothèques que l'image des conteneurs d'agents n'a pas et dont le qemu
+# headless a besoin (paquets Debian trixie, extraits sans root dans
+# <racine>/emulator-libs).
+EMULATOR_LIBS_DEBS="libx11-6 libx11-xcb1 libxcb1 libxau6 libxdmcp6 libbsd0 libmd0"
+# Chargées à l'exécution (dlopen) par le rendu de l'émulateur : ldd ne les
+# voit pas, sdk-sync.sh vérifie leur présence dans <racine>/emulator-libs.
+EMULATOR_DLOPEN_LIBS="libX11-xcb.so.1"

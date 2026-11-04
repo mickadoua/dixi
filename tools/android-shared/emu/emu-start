@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# emu-start <profil> [--wait-lock <s>] [--lease <s>] [--boot snapshot|cold] : demande l'émulateur
+# partagé au conteneur android-emu et rend la main quand Android a démarré.
+#
+# Affiche l'identifiant de la session sur la sortie standard. Toujours suivi
+# de emu-stop, dans la même commande, y compris en cas d'échec :
+#   id=$(emu-start phone) && trap "emu-stop --id $id" EXIT
+# Plus simple : emu-run <profil> -- <commande de test>.
+#
+# --lease : sans emu-stop, le superviseur arrête l'émulateur au bout de ce
+#   délai (600 s par défaut : une commande d'agent dure moins de 10 minutes).
+# --wait-lock : attente en file, par ordre d'arrivée (DMC-168). Un client qui
+#   n'attend pas (sans --wait-lock) est refusé tant que quelqu'un attend.
+# --boot (DMC-174) : snapshot = charger le snapshot propre si le profil le
+#   permet (sinon à froid) ; cold = toujours à froid. Sans l'option : réglage
+#   du profil (/opt/android/emu-snapshot.conf).
+# Codes : 0 prêt ; 2 usage ; 4 KVM absent ; 69 conteneur android-emu absent ;
+#         75 un autre émulateur tourne (ou maintenance du SDK) ;
+#         1 démarrage en échec (tout est déjà arrêté et nettoyé).
+EMU_CMD=emu-start
+# shellcheck source=emu-lib.sh
+. "$(dirname "$(readlink -f "$0")")/emu-lib.sh"
+
+usage() { emu_die 2 "usage : emu-start <$(emu_profiles | paste -sd'|')> [--wait-lock <secondes>] [--lease <secondes>] [--boot snapshot|cold]"; }
+
+profile="" wait_lock=0 lease=600 boot=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --boot)
+      [ $# -ge 2 ] && [[ "$2" =~ ^(snapshot|cold)$ ]] || usage
+      boot=$2
+      shift 2
+      ;;
+    --wait-lock | --lease)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] || usage
+      if [ "$1" = --lease ]; then lease=$2; else wait_lock=$2; fi
+      shift 2
+      ;;
+    -*) usage ;;
+    *)
+      [ -z "$profile" ] || usage
+      profile=$1
+      shift
+      ;;
+  esac
+done
+[ -n "$profile" ] || usage
+emu_valid_profile "$profile" ||
+  emu_die 2 "profil inconnu : $profile (profils : $(emu_profiles | paste -sd' '))"
+[ "$lease" -ge 10 ] && [ "$lease" -le "$EMU_MAX_SECONDS" ] || emu_die 2 "--lease entre 10 et $EMU_MAX_SECONDS s."
+[ -d "$EMU_CTL" ] && [ -w "$EMU_CTL" ] || emu_die 69 "$EMU_CTL absent ou en lecture seule (montage manquant)."
+emu_supervisor_alive || emu_die 69 "le conteneur android-emu ne répond pas (superviseur arrêté) : signaler à Sacha."
+
+# File d'attente (DMC-168) : chaque client qui attend dépose un ticket
+# queue/<arrivée en µs>-<id>, réécrit à chaque tour. Seul le plus ancien ticket
+# vivant tente de prendre l'émulateur : ordre d'arrivée, et celui qui vient de
+# rendre l'émulateur repasse derrière ceux qui attendaient. Un ticket muet
+# depuis EMU_QUEUE_STALE s (client tué) est ignoré puis retiré.
+# Délai d'attente écoulé : le ticket est mis de côté (parked-<run>) ; le même
+# run Paperclip qui revient dans les EMU_QUEUE_PARK s garde son rang.
+: "${EMU_QUEUE_STALE:=15}"
+: "${EMU_QUEUE_PARK:=300}"
+: "${EMU_QUEUE_POLL:=1}"
+EMU_QUEUE=$EMU_CTL/queue
+id=$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')
+run=${PAPERCLIP_RUN_ID:-}
+[[ "$run" =~ ^[A-Za-z0-9-]{1,64}$ ]] || run=""
+arrival=${EPOCHREALTIME/./}
+
+# Âge en secondes d'un fichier ordinaire (pas un lien) ; rien sinon.
+file_age() {
+  local t
+  [ -f "$1" ] && [ ! -L "$1" ] || return 1
+  t=$(stat -c %Y -- "$1" 2>/dev/null) || return 1
+  echo $((EPOCHSECONDS - t))
+}
+# Tickets vivants, du plus ancien au plus récent ; retire ceux des clients
+# disparus et les rangs mis de côté trop vieux.
+queue_live() {
+  local f n a
+  [ -d "$EMU_QUEUE" ] && [ ! -L "$EMU_QUEUE" ] || return 0
+  for f in "$EMU_QUEUE"/*; do
+    n=${f##*/}
+    if [[ "$n" =~ ^parked- ]]; then
+      a=$(file_age "$f") && [ "$a" -gt "$EMU_QUEUE_PARK" ] && rm -f -- "$f"
+      continue
+    fi
+    [[ "$n" =~ ^[0-9]{16}-[0-9a-f]{16}$ ]] || continue
+    a=$(file_age "$f") || continue
+    if [ "$a" -le "$EMU_QUEUE_STALE" ]; then printf '%s\n' "$n"; else rm -f -- "$f"; fi
+  done | LC_ALL=C sort
+}
+# Rang gardé d'un délai d'attente précédent du même run.
+if [ -n "$run" ] && [ "$wait_lock" -gt 0 ]; then
+  parked=$EMU_QUEUE/parked-$run
+  if a=$(file_age "$parked") && [ "$a" -le "$EMU_QUEUE_PARK" ]; then
+    p=$(emu_kv "$parked" arrival)
+    [[ "$p" =~ ^[0-9]{16}$ ]] && arrival=$p
+  fi
+  rm -f -- "$parked"
+fi
+ticket_name=$arrival-$id
+ticket=$EMU_QUEUE/$ticket_name
+queued=0
+# Écrit (ou réécrit) le ticket : date de modification = signe de vie.
+refresh_ticket() {
+  if [ -L "$EMU_QUEUE" ] || { [ -e "$EMU_QUEUE" ] && [ ! -d "$EMU_QUEUE" ]; }; then rm -f -- "$EMU_QUEUE"; fi
+  mkdir -p "$EMU_QUEUE" 2>/dev/null || return 0
+  printf 'agent=%s\ntask=%s\n' "${PAPERCLIP_AGENT_ID:-?}" "${PAPERCLIP_TASK_ID:-?}" | emu_write "$ticket" || true
+}
+leave_queue() {
+  [ "$queued" = 1 ] || return 0
+  queued=0
+  rm -f -- "$ticket"
+  if [ "${1:-}" = park ] && [ -n "$run" ]; then
+    echo "arrival=$arrival" | emu_write "$EMU_QUEUE/parked-$run" || true
+  fi
+}
+trap leave_queue EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Un seul émulateur à la fois : la session est un dossier, créé par mkdir.
+deadline=$((EPOCHSECONDS + wait_lock))
+while :; do
+  [ "$queued" = 0 ] || refresh_ticket
+  live=$(queue_live)
+  head=${live%%$'\n'*}
+  if { [ -z "$head" ] || [ "$head" = "$ticket_name" ]; } && mkdir "$EMU_SESSION" 2>/dev/null; then
+    break
+  fi
+  # Tickets arrivés avant le nôtre.
+  # shellcheck disable=SC2086 # noms sans espace : un mot par ticket
+  ahead=$(printf '%s\n' $live "$ticket_name" | LC_ALL=C sort -u | grep -n -x -F -- "$ticket_name" | cut -d: -f1)
+  ahead=$((ahead - 1))
+  if emu_maintenance_on; then
+    msg="mise à jour du SDK en cours"
+  elif emu_session_ok; then
+    msg="un émulateur tourne déjà ($(emu_owner))"
+  else
+    msg="émulateur réservé au premier de la file"
+  fi
+  [ "$ahead" = 0 ] || msg="$msg ; $ahead avant vous dans la file"
+  if [ "$EPOCHSECONDS" -ge "$deadline" ]; then
+    leave_queue park
+    emu_die 75 "$msg. Réessayer plus tard ou --wait-lock <s>."
+  fi
+  if [ "$queued" = 0 ]; then
+    queued=1
+    refresh_ticket
+    emu_log "en file d'attente : $msg."
+  fi
+  sleep "$EMU_QUEUE_POLL"
+done
+leave_queue
+# Inode de notre dossier : en cas d'abandon, on ne retire que lui.
+sess_ino=$(stat -c %i "$EMU_SESSION" 2>/dev/null || true)
+
+ready=0
+cleanup() {
+  local rc=$?
+  trap '' INT TERM HUP
+  trap - EXIT
+  if [ "$ready" = 0 ]; then
+    if [ -f "$EMU_RESULTS/$id" ]; then
+      emu_report "$id" && rc=1 || rc=$?
+    else
+      # Interrompu ou délai dépassé : on rend l'émulateur et on attend qu'il
+      # soit arrêté, si notre demande a bien été déposée.
+      if emu_session_ok && [ "$(emu_kv "$EMU_SESSION/request" id)" = "$id" ]; then
+        emu_stop_session "$id" 60 >/dev/null 2>&1 || true
+      fi
+      if emu_session_ok && [ -z "$(emu_kv "$EMU_SESSION/request" id)" ] &&
+        [ "$(stat -c %i "$EMU_SESSION" 2>/dev/null)" = "$sess_ino" ]; then
+        # Le superviseur n'a jamais vu la demande : on retire notre dossier.
+        rm -rf -- "$EMU_SESSION"
+      fi
+    fi
+    [ "$rc" != 0 ] || rc=1
+  fi
+  exit "$rc"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+renew() { printf 'id=%s\nuntil=%s\n' "$id" $((EPOCHSECONDS + lease)) | emu_write "$EMU_SESSION/lease"; }
+renew
+printf 'id=%s\nprofile=%s\nagent=%s\nrun=%s\ntask=%s\nrequested=%s\nboot=%s\n' \
+  "$id" "$profile" "${PAPERCLIP_AGENT_ID:-?}" "${PAPERCLIP_RUN_ID:-?}" "${PAPERCLIP_TASK_ID:-?}" "$EPOCHSECONDS" "$boot" |
+  emu_write "$EMU_SESSION/request"
+
+# Pire cas : chargement du snapshot en échec, puis démarrage à froid complet.
+boot_wait=$((EMU_BOOT_TIMEOUT + EMU_SNAP_BOOT_TIMEOUT + 30))
+limit=$((EPOCHSECONDS + boot_wait))
+while :; do
+  [ -f "$EMU_RESULTS/$id" ] && exit 1
+  if [ "$(emu_kv "$EMU_SESSION/status" id)" = "$id" ] &&
+    [ "$(emu_kv "$EMU_SESSION/status" state)" = ready ]; then
+    break
+  fi
+  emu_supervisor_alive || { emu_log "le conteneur android-emu ne répond plus."; exit 69; }
+  [ "$EPOCHSECONDS" -lt "$limit" ] || { emu_log "pas de démarrage en $boot_wait s."; exit 1; }
+  # Le bail court pendant le démarrage, qui peut être long : on le prolonge.
+  [ "$(emu_kv "$EMU_SESSION/request" id)" != "$id" ] || renew || true
+  sleep 1
+done
+
+# Le superviseur voit Android démarré par son adb local ; on attend que
+# l'appareil réponde aussi par le réseau, comme pour la commande de l'agent
+# (vu le 03/11 : « device not found » juste après le démarrage du profil tv).
+limit=$((EPOCHSECONDS + EMU_CLIENT_WAIT))
+until [ "$(ADB_SERVER_SOCKET="tcp:$EMU_ADB_HOST:$EMU_ADB_PORT" timeout 10 \
+  "$ANDROID_HOME/platform-tools/adb" -s "$EMU_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+  [ -f "$EMU_RESULTS/$id" ] && exit 1
+  emu_supervisor_alive || { emu_log "le conteneur android-emu ne répond plus."; exit 69; }
+  [ "$EPOCHSECONDS" -lt "$limit" ] ||
+    { emu_log "démarré, mais $EMU_SERIAL ne répond pas par tcp:$EMU_ADB_HOST:$EMU_ADB_PORT en $EMU_CLIENT_WAIT s."; exit 1; }
+  [ "$(emu_kv "$EMU_SESSION/request" id)" != "$id" ] || renew || true
+  sleep 1
+done
+
+ready=1
+st=$EMU_SESSION/status
+emu_log "$profile prêt en $(emu_kv "$st" boot_s) s, $(emu_kv "$st" boot) ($EMU_SERIAL, qemu $(emu_kv "$st" rss_mb) Mo de RAM), arrêt automatique dans $lease s sans emu-stop."
+emu_log "pour adb : export ADB_SERVER_SOCKET=tcp:$EMU_ADB_HOST:$EMU_ADB_PORT ANDROID_SERIAL=$EMU_SERIAL"
+echo "$id"

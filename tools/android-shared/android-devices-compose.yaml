@@ -1,0 +1,69 @@
+# Appareils Android partagés du NAS (DMC-114). Application « Custom App »
+# TrueNAS (Install via YAML), nom conseillé : android-devices.
+#
+# Deux conteneurs, aucun port publié sur le LAN : seuls les conteneurs du
+# réseau Docker dédié android-devices (Paperclip compris) les joignent. Ce
+# réseau est créé une fois à la main (docker network create android-devices) :
+# aucune des deux applications ne le possède.
+# - adb : serveur adb unique du Google TV Streamer, qui sort vers lui en Wi-Fi
+#   par le NAT Docker. Jamais le téléphone OnePlus (guarded-phone-mcp).
+# - android-emu : superviseur de l'émulateur. Au repos, un script bash qui
+#   surveille un dossier (quelques Mo de RAM) ; l'émulateur ne tourne que
+#   pendant un test, un seul à la fois. Seul conteneur à voir /dev/kvm,
+#   sans privilège (pas de privileged, pas de cap_add).
+#
+# Les deux attendent que le SDK soit copié dans /mnt/fastPool/android
+# (vérification toutes les 30 s), puis démarrent seuls.
+services:
+  adb:
+    image: debian:trixie-slim
+    restart: unless-stopped
+    init: true
+    user: "1000:1000"
+    environment:
+      HOME: /adb-home
+      ANDROID_USER_HOME: /adb-home/.android
+    command:
+      - bash
+      - -c
+      - until [ -x /opt/android/sdk/platform-tools/adb ]; do sleep 30; done; exec /opt/android/sdk/platform-tools/adb -a -P 5037 nodaemon server
+    volumes:
+      - /mnt/fastPool/android:/opt/android:ro
+      - /mnt/fastPool/adb-home:/adb-home
+    networks: [android-devices]
+    mem_limit: 256m
+
+  android-emu:
+    image: debian:trixie-slim
+    restart: unless-stopped
+    init: true
+    user: "1000:1000"
+    group_add:
+      - "GID_KVM"            # à remplacer : getent group kvm | cut -d: -f3
+    devices:
+      - /dev/kvm:/dev/kvm
+    environment:
+      ANDROID_HOME: /opt/android/sdk
+      EMU_CTL: /opt/android-emu
+      EMU_DATA: /emu-data
+    command:
+      - bash
+      - -c
+      - until [ -x /opt/android/admin/emu/emu-supervisor ]; do sleep 30; done; exec /opt/android/admin/emu/emu-supervisor
+    volumes:
+      - /mnt/fastPool/android:/opt/android:ro
+      - /mnt/fastPool/android-emu/ctl:/opt/android-emu
+      - /mnt/fastPool/android-emu/data:/emu-data
+    networks: [android-devices]
+    # Plafonds : au-delà, seul ce conteneur est tué, jamais le reste du NAS.
+    # Mesuré le 03/11 : qemu 2,7 Go pour tv, 4,4 Go pour phone (4 Go de RAM
+    # invitée imposés par l'émulateur pour l'image API 36) : 6 Go demandés.
+    mem_limit: 6g
+    cpus: 3
+    shm_size: 512m
+    # Le superviseur arrête proprement l'émulateur en cours (jusqu'à 40 s).
+    stop_grace_period: 45s
+
+networks:
+  android-devices:
+    external: true
