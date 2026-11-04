@@ -1,6 +1,7 @@
 package tech.dmconsulting.voxbulle.transcription
 
 import java.io.File
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -22,6 +23,7 @@ class FakesTest {
         assertEquals(VoxtralResult.Success(FakeTranscriber.SAMPLE_RAW_TEXT), result)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class) // currentTime: virtual clock of runTest
     @Test
     fun fakeTranscriberWaitsLikeTheRealService() = runTest {
         FakeTranscriber().transcribe(File("a.m4a"), DictationLanguage.Auto)
