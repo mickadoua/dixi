@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.BlendMode
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
@@ -22,6 +23,9 @@ private fun View.dp(value: Float) = value * resources.displayMetrics.density
 private val LOW_WAVE = floatArrayOf(6f, 12f, 18f, 12f, 6f)
 private val HIGH_WAVE = floatArrayOf(10f, 20f, 26f, 16f, 22f)
 private const val CHECK_PATH = "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
+
+/** Material « priority_high »: an exclamation mark. */
+private const val ERROR_PATH = "M10 3h4v12h-4zM12 17a2 2 0 1 1 0 4a2 2 0 1 1 0-4z"
 
 /** The 56 dp disc and its content for each state (charter § 6). Takes the touches. */
 class BubbleView(context: Context) : View(context) {
@@ -43,6 +47,7 @@ class BubbleView(context: Context) : View(context) {
     private val bar = RectF()
     private val arc = RectF()
     private val check = PathParser.createPathFromPathData(CHECK_PATH)
+    private val exclamation = PathParser.createPathFromPathData(ERROR_PATH)
 
     init {
         isClickable = true
@@ -62,7 +67,8 @@ class BubbleView(context: Context) : View(context) {
             BubbleState.Idle -> drawWave(canvas, LOW_WAVE, content)
             BubbleState.Listening -> drawWave(canvas, HIGH_WAVE, content)
             BubbleState.Processing -> drawSpinner(canvas, content)
-            BubbleState.Ready -> drawCheck(canvas, content)
+            BubbleState.Ready -> drawIcon(canvas, check, content)
+            BubbleState.Error -> drawIcon(canvas, exclamation, content)
         }
     }
 
@@ -95,14 +101,14 @@ class BubbleView(context: Context) : View(context) {
         postInvalidateOnAnimation()
     }
 
-    /** 28 dp white check (24-unit Material path). */
-    private fun drawCheck(canvas: Canvas, color: Int) {
+    /** 28 dp icon from a 24-unit Material path: the check, or the error mark. */
+    private fun drawIcon(canvas: Canvas, icon: Path, color: Int) {
         val size = dp(28f)
         val scale = size / 24f
         ink.color = color
         canvas.withTranslation((width - size) / 2f, (height - size) / 2f) {
             scale(scale, scale)
-            drawPath(check, ink)
+            drawPath(icon, ink)
         }
     }
 

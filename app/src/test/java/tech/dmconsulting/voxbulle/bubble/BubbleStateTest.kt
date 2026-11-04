@@ -11,12 +11,16 @@ class BubbleStateTest {
         assertEquals(R.color.bubble_tertiary, BubbleState.Listening.background)
         assertEquals(R.color.bubble_primary, BubbleState.Processing.background)
         assertEquals(R.color.bubble_secondary, BubbleState.Ready.background)
+        assertEquals(R.color.bubble_error, BubbleState.Error.background)
     }
 
     @Test
     fun eachStateHasItsOwnDescription() {
         assertEquals(
-            listOf(R.string.bubble_idle, R.string.bubble_listening, R.string.bubble_processing, R.string.bubble_ready),
+            listOf(
+                R.string.bubble_idle, R.string.bubble_listening, R.string.bubble_processing, R.string.bubble_ready,
+                R.string.bubble_error,
+            ),
             BubbleState.entries.map { it.description },
         )
     }
