@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Emulator proof for screens 9 (history) and 10 (settings), light and dark.
 # Uses the debug-only extras of MainActivity (--es screen, --ei seedHistory).
-# Two parts, one emulator session each (boot alone can take 4 min on the NAS):
-#   emu-run phone --wait-lock 60 -- bash scripts/emu-history-settings.sh history <out-dir>
-#   emu-run phone --wait-lock 60 -- bash scripts/emu-history-settings.sh settings <out-dir>
+# Three parts, one emulator session each (boot alone can take 4 min on the NAS):
+#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh history <out-dir>
+#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh settings <out-dir>
+#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh dark <out-dir>
 set -u
 PART=${1:-history}; shift
 ADB=$ANDROID_HOME/platform-tools/adb
@@ -21,16 +22,17 @@ dump() {
     for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break; sleep 3; done
     $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml"
 }
-# Waits (up to ~60 s on a loaded NAS) until text or content-desc "$1" is on screen.
+# Waits until our activity has focus, then lets Compose draw. uiautomator dumps
+# take several seconds each on a loaded NAS: they are kept for taps only.
 waitfor() {
-    for i in $(seq 1 12); do
-        dump
-        grep -q -e "text=\"$1\"" -e "content-desc=\"$1\"" "$OUT/ui.xml" && { sleep 1; return 0; }
-        sleep 2
+    for i in $(seq 1 20); do
+        $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG" && break
+        sleep 1
     done
-    echo "NOT SHOWN: $1"; return 1
+    sleep 4
 }
-# Taps the first node whose text or content-desc is exactly $1.
+# Taps the first node whose text or content-desc is exactly $1, else at $2
+# (coordinates measured on the 1080 x 2400 `phone` screenshots).
 tap() {
     dump
     local xy
@@ -43,6 +45,7 @@ for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
         print((a + c) // 2, (b + d) // 2); break
 PY
 )
+    [ -n "$xy" ] || xy=${2:-}
     echo "tap '$1' at ${xy:-?}"
     [ -n "$xy" ] && $ADB shell input tap $xy
     sleep 2
@@ -56,7 +59,7 @@ $ADB shell settings put system screen_off_timeout 600000
 $ADB shell settings put global hide_error_dialogs 1
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
 # A cold boot on a loaded NAS can show "System UI isn't responding": let it settle.
-sleep 25
+sleep 15
 $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
 
@@ -69,14 +72,14 @@ seed() {
 if [ "$PART" = history ]; then
 night no
 open --es screen History
-waitfor "Aucune dictée pour l’instant."
+waitfor
 shot 9-empty-light
 echo "entries at start: $(entries)"
 
 # 21 dictations in: the oldest must go.
 seed
 open --es screen History
-waitfor "Tout effacer"
+waitfor
 shot 9-full-light
 echo "entries after 21 adds: $(entries)"
 $ADB shell run-as $PKG cat $HISTORY_FILE > "$OUT/dictation_history.json"
@@ -84,9 +87,8 @@ $ADB shell run-as $PKG cat $HISTORY_FILE > "$OUT/dictation_history.json"
 # Persistence: kill the app, reopen without seeding.
 $ADB shell am force-stop $PKG
 open --es screen History
-waitfor "Tout effacer"
+waitfor
 echo "entries after restart: $(entries)"
- grep -o 'Copier le texte' "$OUT/ui.xml" | wc -l | sed 's/^/copy icons on screen: /'
 
 # Copy by tapping the first line, then paste into Contacts.
 tap "Bonjour Claire, je voulais confirmer le rendez-vous de jeudi à 14 h."
@@ -110,44 +112,55 @@ if [ "$PART" = settings ]; then
 # Settings, light.
 night no
 open --es screen Settings
-waitfor "Bulle flottante"
+waitfor
 shot 10-light
 tap "Langue"
-waitfor "Français"
+waitfor
 shot 10-language-dialog-light
-tap "English"
+tap "English" "346 1351"
 dump; grep -o 'text="English"' "$OUT/ui.xml" | head -1 | sed 's/^/language row: /'
-tap "Bulle flottante"
+tap "Bulle flottante" "360 420"
 sleep 2
 $ADB shell dumpsys activity services $PKG | grep -c 'BubbleService' | sed 's/^/bubble service records: /'
 shot 10-bubble-on-light
-tap "Bulle flottante"
+tap "Bulle flottante" "360 420"
 sleep 2
 $ADB shell dumpsys activity services $PKG | grep -c 'BubbleService' | sed 's/^/bubble service records after off: /'
 $ADB shell am force-stop $PKG
 open --es screen Settings
-waitfor "English"; grep -o 'text="English"' "$OUT/ui.xml" | head -1 | sed 's/^/language after restart: /'
+waitfor; shot 10-after-restart-light; dump; grep -o 'text="English"' "$OUT/ui.xml" | head -1 | sed 's/^/language after restart: /'
 
+fi
+
+if [ "$PART" = dark ]; then
 # Dark: full history, settings, then "Tout effacer" with its confirmation.
 night yes
 seed
 open --es screen History
-waitfor "Tout effacer"
+waitfor
 shot 9-full-dark
 open --es screen Settings
-waitfor "Bulle flottante"
+waitfor
 shot 10-dark
+# Language without uiautomator (its dumps are slow): tap, then look.
+$ADB shell input tap 132 773; sleep 3
+shot 10-language-dialog-dark
+$ADB shell input tap 346 1351; sleep 1
+shot 10-language-tapped-dark
+sleep 4
+shot 10-language-english-dark
+$ADB shell run-as $PKG ls -la files/datastore/
 open --es screen History
-waitfor "Tout effacer"
-tap "Tout effacer"
-waitfor "Effacer l’historique ?"
+waitfor
+tap "Tout effacer" "540 2242"
+waitfor
 shot 9-confirm-dark
 tap "Effacer"
-waitfor "Aucune dictée pour l’instant."
+waitfor
 shot 9-cleared-dark
 echo "entries after clear: $(entries)"
 open --es screen History
-waitfor "Aucune dictée pour l’instant."
+waitfor
 shot 9-empty-dark
 night no
 fi
