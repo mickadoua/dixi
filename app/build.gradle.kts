@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // Mistral key for debug builds only: environment first, then local.properties
@@ -29,10 +30,15 @@ android {
     }
 
     buildTypes {
-        // Shrunk so the debug APK fits the 10 MB task attachment limit.
+        // Shrunk so the debug APK fits the 10 MB task attachment limit. The real Mistral
+        // path under R8 is checked on a device with the debug probe (scripts/mistral-probe.sh).
         debug {
             isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "MISTRAL_API_KEY", buildConfigString(mistralApiKey))
+        }
+        release {
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -42,11 +48,29 @@ android {
     }
 }
 
+// Release builds get no Mistral key yet (how it ships is decided before any release), and
+// AppContainer refuses the fake Voxtral outside debug: stop here rather than build an APK
+// that would not start.
+val checkReleaseMistralKey by tasks.registering {
+    doLast {
+        throw GradleException("Release build without MISTRAL_API_KEY: the fake Voxtral is for debug builds only.")
+    }
+}
+tasks.configureEach {
+    if (name == "preReleaseBuild") dependsOn(checkReleaseMistralKey)
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

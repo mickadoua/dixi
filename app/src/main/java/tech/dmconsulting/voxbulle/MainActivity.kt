@@ -5,7 +5,15 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import java.time.Duration
+import java.time.Instant
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.bubble.BubbleService
+import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
+import tech.dmconsulting.voxbulle.history.Dictation
+import tech.dmconsulting.voxbulle.ui.navigation.Screen
 import tech.dmconsulting.voxbulle.ui.navigation.VoxbulleNavHost
 import tech.dmconsulting.voxbulle.ui.theme.VoxbulleTheme
 
@@ -14,15 +22,53 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        val container = (application as VoxbulleApp).container
         // Test hook kept from the PoC (scripts/emu-proof.sh): start the bubble
         // from the foreground activity. Onboarding (DMC-140) brings the real path.
         if (intent.getBooleanExtra("showBubble", false) && Settings.canDrawOverlays(this)) {
             BubbleService.show(this)
         }
-        setContent {
-            VoxbulleTheme {
-                VoxbulleNavHost()
+        // Bubble switched on in the settings (screen 10): bring it back after a restart.
+        lifecycleScope.launch {
+            if (container.settings.settings.first().bubbleEnabled && BubbleSwitch.canShow(this@MainActivity)) {
+                BubbleSwitch.show(this@MainActivity)
             }
         }
+        val demoMode = BuildConfig.DEBUG && container.usesFakeVoxtral
+        val start = debugStartScreen(container, firstCreate = savedInstanceState == null) ?: Screen.start
+        setContent {
+            VoxbulleTheme {
+                VoxbulleNavHost(container, demoMode, start)
+            }
+        }
+    }
+
+    /**
+     * Debug builds only, for emulator proofs: `--es screen History` opens a screen
+     * directly, `--ei seedHistory N` adds N sample dictations (fictitious texts).
+     */
+    private fun debugStartScreen(container: AppContainer, firstCreate: Boolean): Screen? {
+        if (!BuildConfig.DEBUG) return null
+        val seed = intent.getIntExtra("seedHistory", 0)
+        // Seed once per launch: a rotation recreates the activity with the same intent.
+        if (seed > 0 && firstCreate) {
+            lifecycleScope.launch {
+                val now = Instant.now()
+                (seed downTo 1).forEach { i ->
+                    val text = SAMPLE_TEXTS[(i - 1) % SAMPLE_TEXTS.size]
+                    container.history.add(Dictation(text, now.minus(Duration.ofHours(7L * (i - 1)))))
+                }
+            }
+        }
+        return Screen.entries.firstOrNull { it.name == intent.getStringExtra("screen") }
+    }
+
+    private companion object {
+        val SAMPLE_TEXTS = listOf(
+            "Bonjour Claire, je voulais confirmer le rendez-vous de jeudi à 14 h.",
+            "Compte-rendu : le client valide le devis. Prochaine étape, l’envoi du contrat signé " +
+                "et la planification de la réunion de lancement avec toute l’équipe la semaine prochaine.",
+            "Pense à relancer le fournisseur pour la livraison de lundi.",
+        )
     }
 }
