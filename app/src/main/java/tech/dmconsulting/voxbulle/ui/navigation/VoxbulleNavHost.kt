@@ -22,25 +22,36 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import tech.dmconsulting.voxbulle.AppContainer
 import tech.dmconsulting.voxbulle.R
+import tech.dmconsulting.voxbulle.history.HistoryScreen
 import tech.dmconsulting.voxbulle.onboarding.TrialPreview
-import tech.dmconsulting.voxbulle.transcription.TranscriptionPipeline
+import tech.dmconsulting.voxbulle.settings.SettingsScreen
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 
 /**
- * Every screen is an empty placeholder until its ticket replaces it here.
+ * Screens without their ticket yet are empty placeholders.
  * [demoMode]: debug build on the fake Voxtral, shown by a « Mode démo » label.
  */
 @Composable
-fun VoxbulleNavHost(pipeline: TranscriptionPipeline, demoMode: Boolean) {
+fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Screen.start) {
     val navController = rememberNavController()
+    val back: () -> Unit = { navController.popBackStack() }
     Box(Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = Screen.start.route) {
+        NavHost(navController = navController, startDestination = start.route) {
             Screen.entries.forEach { screen ->
                 composable(screen.route) {
-                    PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
-                        // Real calls need a recording: only the fakes run from this preview.
-                        if (screen == Screen.Trial && demoMode) TrialPreview(pipeline)
+                    when (screen) {
+                        Screen.History -> HistoryScreen(
+                            history = container.history,
+                            onBack = back,
+                            onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                        )
+                        Screen.Settings -> SettingsScreen(container.settings, container.history, onBack = back)
+                        else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
+                            // Real calls need a recording: only the fakes run from this preview.
+                            if (screen == Screen.Trial && demoMode) TrialPreview(container.transcription)
+                        }
                     }
                 }
             }
