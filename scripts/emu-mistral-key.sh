@@ -4,6 +4,7 @@
 # Also checks: key kept encrypted across a restart, never in logcat nor the UI tree,
 # key file excluded from backups.
 #   emu-run phone --wait-lock 120 -- bash scripts/emu-mistral-key.sh <out-dir> [apk]
+# MODES="dark" runs one theme only (shorter session when the shared emulator is busy).
 # Never use a real key here: FAKE_KEY below is not one.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
@@ -130,7 +131,7 @@ night no
 open --es screen Settings
 shot warmup
 
-for mode in light dark; do
+for mode in ${MODES:-light dark}; do
     [ $mode = dark ] && night yes || night no
     $ADB shell run-as $PKG rm -rf no_backup
     open --es screen Settings
