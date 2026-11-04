@@ -1,13 +1,19 @@
-# Voxbulle — technical proof (bubble + microphone)
+# Voxbulle
 
-Throwaway proof for Voxbulle risk #2: a floating bubble (`SYSTEM_ALERT_WINDOW`)
-that starts microphone recording from on top of another app, in a
-`microphone` foreground service. No network call: records 5 s, logs the file
-duration, copies a fixed text and posts a "Texte copié" notification.
+Android dictation app with a floating bubble. Package `tech.dmconsulting.voxbulle`,
+one Gradle module, one package per area: `bubble`, `recording`, `transcription`,
+`dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`.
+Dependencies are wired by hand in `AppContainer`.
 
 ## Build
 
-    ./gradlew --no-daemon testDebugUnitTest assembleDebug
+    ./gradlew --no-daemon clean testDebugUnitTest assembleDebug
+
+## Mistral key (debug builds only)
+
+Read at build time from the `MISTRAL_API_KEY` environment variable, else from
+`local.properties` (ignored by git). Without a key, the app uses the fake
+Voxtral services and nothing leaves the phone. Never commit a key.
 
 ## Emulator check (NAS)
 

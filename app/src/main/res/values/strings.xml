@@ -1,5 +1,18 @@
 <resources>
-    <string name="app_name">Voxbulle PoC</string>
+    <string name="app_name">Voxbulle</string>
+
+    <!-- Screens, named like the mockups (DMC-121). -->
+    <string name="screen_heading">%1$d. %2$s</string>
+    <string name="screen_welcome">Accueil</string>
+    <string name="screen_mic_permission">Permission micro</string>
+    <string name="screen_trial">Essai</string>
+    <string name="screen_bubble_intro">Explication de la bulle</string>
+    <string name="screen_bubble_enabled">Bulle activée</string>
+    <string name="screen_auto_paste_disclosure">Collage automatique</string>
+    <string name="screen_history">Historique</string>
+    <string name="screen_settings">Réglages</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
     <string name="bubble_idle">Voxbulle, prêt à dicter</string>
     <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
     <string name="bubble_processing">Voxbulle, transcription en cours</string>
