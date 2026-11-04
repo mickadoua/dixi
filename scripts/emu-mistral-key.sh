@@ -12,7 +12,7 @@ OUT=${1:-proof-mistral-key}
 APK=${2:-app/build/outputs/apk/debug/app-debug.apk}
 FAKE_KEY=fausse-cle-de-preuve-0000000000
 mkdir -p "$OUT"
-shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(stat -c %s "$OUT/$1.png") bytes)"; }
+shot() { dump; $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(stat -c %s "$OUT/$1.png") bytes)"; }
 open() { $ADB shell am start -S -W -n $PKG/.MainActivity "$@" >/dev/null; waitfor; }
 night() { $ADB shell cmd uimode night "$1" >/dev/null; sleep 3; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
@@ -24,10 +24,26 @@ waitfor() {
     sleep 4
 }
 # Fresh dump each time: a failed dump leaves the previous file on the device (stale).
+# A loaded NAS often shows « System UI isn't responding » over the app: answer « Wait ».
 dump() {
-    $ADB shell rm -f /sdcard/ui.xml
-    for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break; sleep 3; done
-    $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null
+    for attempt in 1 2 3; do
+        $ADB shell rm -f /sdcard/ui.xml
+        for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break; sleep 3; done
+        $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null
+        grep -q "isn't responding" "$OUT/ui.xml" || return 0
+        local wait_xy
+        wait_xy=$(python3 - "$OUT/ui.xml" <<'PY'
+import re, sys
+for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
+    if 'text="Wait"' in node:
+        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups())
+        print((a + c) // 2, (b + d) // 2); break
+PY
+)
+        echo "ANR dialog: tap Wait at ${wait_xy:-?}"
+        $ADB shell input tap ${wait_xy:-324 1368}
+        sleep 3
+    done
 }
 has() { dump; grep -q "$1" "$OUT/ui.xml"; }
 # Taps the first node whose text or content-desc starts with $1.
