@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import tech.dmconsulting.voxbulle.MainActivity
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.VoxbulleApp
 import tech.dmconsulting.voxbulle.dictation.transcribeThenDelete
@@ -36,6 +37,7 @@ import tech.dmconsulting.voxbulle.recording.RecordingOutcome
 import tech.dmconsulting.voxbulle.recording.RecordingResult
 import tech.dmconsulting.voxbulle.recording.formatDuration
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 
 /**
@@ -162,17 +164,21 @@ class BubbleService : Service() {
         Log.i(TAG, "recorded file duration=${formatDuration(result.durationMs)} (${result.durationMs} ms) maxAmplitude=${result.maxAmplitude}")
         scope.launch {
             val container = (application as VoxbulleApp).container
+            // Read before the call: the keyed transcriber picks the fake without a key.
+            val demo = container.usesFakeVoxtral
             val text = container.transcriber.transcribeThenDelete(result.file, DictationLanguage.Auto)
             Log.i(TAG, "audio deleted=${!result.file.exists()}")
             if (text !is VoxtralResult.Success) {
+                // A Failure prints only its VoxtralError: never the key.
                 Log.w(TAG, "transcription FAILED: $text")
+                if (text == VoxtralResult.Failure(VoxtralError.InvalidKey)) notifyKeyRefused()
                 controller.setState(BubbleState.Idle)
                 return@launch
             }
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", text.value))
-            Log.i(TAG, "clipboard set")
-            notifyCopied(result.durationMs)
+            Log.i(TAG, "clipboard set demo=$demo")
+            notifyCopied(result.durationMs, demo)
             controller.setState(BubbleState.Ready)
         }
     }
@@ -187,14 +193,25 @@ class BubbleService : Service() {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
-    private fun notifyCopied(durationMs: Long) {
+    /** [demo]: the fake Voxtral wrote the text; tapping opens screen 10 to add a key (DMC-227). */
+    private fun notifyCopied(durationMs: Long, demo: Boolean) {
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
-            .setContentText(getString(R.string.notif_copied_body))
             .setSubText(formatDuration(durationMs))
-            .setTimeoutAfter(6_000)
             .setAutoCancel(true)
+            .apply {
+                if (demo) {
+                    val body = getString(R.string.notif_demo_body)
+                    setContentText(body)
+                    setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                    setContentIntent(openSettingsIntent())
+                    setTimeoutAfter(15_000)
+                } else {
+                    setContentText(getString(R.string.notif_copied_body))
+                    setTimeoutAfter(6_000)
+                }
+            }
             .build()
         try {
             NotificationManagerCompat.from(this).notify(NOTIF_COPIED, notification)
@@ -203,6 +220,32 @@ class BubbleService : Service() {
             Log.e(TAG, "copied notification FAILED", e)
         }
     }
+
+    /** Mistral refused the saved key: say so, tapping opens screen 10. */
+    private fun notifyKeyRefused() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(getString(R.string.notif_key_refused_title))
+            .setContentText(getString(R.string.notif_key_refused_body))
+            .setContentIntent(openSettingsIntent())
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(this).notify(NOTIF_COPIED, notification)
+            Log.i(TAG, "key refused notification posted")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "key refused notification FAILED", e)
+        }
+    }
+
+    private fun openSettingsIntent(): PendingIntent = PendingIntent.getActivity(
+        this,
+        REQUEST_OPEN_SETTINGS,
+        Intent(this, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_OPEN_SETTINGS, true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     // The visible result of the tap is the bubble itself, over the current app:
     // opening an activity here would hide that app.
@@ -270,5 +313,6 @@ class BubbleService : Service() {
         private const val LEVEL_MS = 100L
         private const val CHANNEL_COPIED = "copied"
         private const val NOTIF_COPIED = 2
+        private const val REQUEST_OPEN_SETTINGS = 1
     }
 }

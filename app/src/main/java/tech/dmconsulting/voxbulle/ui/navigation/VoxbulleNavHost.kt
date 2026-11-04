@@ -14,6 +14,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,13 +37,22 @@ import tech.dmconsulting.voxbulle.ui.theme.Dimens
 
 /**
  * Screens without their ticket yet are empty placeholders.
- * [demoMode]: debug build on the fake Voxtral, shown by a « Mode démo » label
+ * [demoMode]: no Mistral key, Voxtral is faked, shown by a « Mode démo » label
  * that each screen places ([LocalDemoMode]).
+ * [openOnTop]: a screen opened once over [start], so « Retour » leads back to it
+ * (a dictation notification opens screen 10 this way).
  */
 @Composable
-fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Screen.start) {
+fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Screen.start, openOnTop: Screen? = null) {
     val navController = rememberNavController()
     val back: () -> Unit = { navController.popBackStack() }
+    var openedOnTop by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(openOnTop) {
+        if (openOnTop != null && !openedOnTop) {
+            openedOnTop = true
+            navController.navigate(openOnTop.route)
+        }
+    }
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         NavHost(navController = navController, startDestination = start.route) {
             Screen.entries.forEach { screen ->
@@ -49,7 +63,13 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                             onBack = back,
                             onOpenSettings = { navController.navigate(Screen.Settings.route) },
                         )
-                        Screen.Settings -> SettingsScreen(container.settings, container.history, onBack = back)
+                        Screen.Settings -> SettingsScreen(
+                            container.settings,
+                            container.history,
+                            container.mistralKey,
+                            container.keyCheck,
+                            onBack = back,
+                        )
                         else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
                             // Real calls need a recording: only the fakes run from this preview.
                             if (screen == Screen.Trial && demoMode) TrialPreview(container.transcription)

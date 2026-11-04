@@ -27,7 +27,7 @@ enum class VoxtralError(@StringRes val message: Int) {
     /** Audio over the size limit, checked before sending, or HTTP 413. */
     AudioTooLong(R.string.error_audio_too_long),
 
-    /** Key rejected by Mistral (HTTP 401 or 403). A build problem, not the user's. */
+    /** The user's key, refused by Mistral (HTTP 401 or 403): to check in screen 10. */
     InvalidKey(R.string.error_invalid_key),
 
     /** Too many requests (HTTP 429): rate limit or spending cap reached. */

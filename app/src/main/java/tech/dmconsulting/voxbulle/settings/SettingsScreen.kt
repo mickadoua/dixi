@@ -43,6 +43,7 @@ import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
 import tech.dmconsulting.voxbulle.history.ClearHistoryDialog
 import tech.dmconsulting.voxbulle.history.DictationHistory
+import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
 import tech.dmconsulting.voxbulle.ui.components.VoxbulleTopBar
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 
@@ -54,9 +55,15 @@ val DictationLanguage.label: Int
         DictationLanguage.English -> R.string.settings_language_english
     }
 
-/** Screen 10: bubble, auto-paste (wired by DMC-141), language, history, privacy, about. */
+/** Screen 10: bubble, auto-paste (wired by DMC-141), language, Mistral key, history, privacy, about. */
 @Composable
-fun SettingsScreen(settingsStore: SettingsStore, history: DictationHistory, onBack: () -> Unit) {
+fun SettingsScreen(
+    settingsStore: SettingsStore,
+    history: DictationHistory,
+    mistralKey: MistralKeyStore,
+    keyCheck: MistralKeyCheck,
+    onBack: () -> Unit,
+) {
     val settings by settingsStore.settings.collectAsState(initial = null)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -109,6 +116,7 @@ fun SettingsScreen(settingsStore: SettingsStore, history: DictationHistory, onBa
                 summary = stringResource(current.language.label),
                 onClick = { chooseLanguage = true },
             )
+            MistralKeySection(mistralKey, keyCheck)
             SettingRow(
                 title = R.string.settings_clear_history,
                 summary = stringResource(R.string.settings_clear_history_summary),
