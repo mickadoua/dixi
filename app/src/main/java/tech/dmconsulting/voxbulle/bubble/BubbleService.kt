@@ -1,6 +1,5 @@
 package tech.dmconsulting.voxbulle.bubble
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -18,24 +17,35 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import java.io.File
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
-import tech.dmconsulting.voxbulle.recording.MicrophoneForeground
+import tech.dmconsulting.voxbulle.VoxbulleApp
+import tech.dmconsulting.voxbulle.dictation.transcribeThenDelete
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
+import tech.dmconsulting.voxbulle.recording.Recorder
+import tech.dmconsulting.voxbulle.recording.RecordingError
+import tech.dmconsulting.voxbulle.recording.RecordingOutcome
+import tech.dmconsulting.voxbulle.recording.RecordingResult
 import tech.dmconsulting.voxbulle.recording.formatDuration
+import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 
 /**
- * Shows the floating bubble. A tap records 5 s of microphone audio in a
- * microphone foreground service, then copies a fixed text and notifies.
+ * Shows the floating bubble. A tap starts a dictation, a second tap stops it
+ * (5 min max, see [Recorder]); the text is copied and notified.
  */
 class BubbleService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var windowManager: WindowManager
     private var bubble: BubbleView? = null
-    private val recorder = MicrophoneRecorder(this)
+    private val scope = MainScope()
+    private val recorder: Recorder get() = (application as VoxbulleApp).recorder
     private var state = BubbleState.Idle
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -43,6 +53,7 @@ class BubbleService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannels()
+        recorder.onFinished = ::onRecordingFinished
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = (56 * resources.displayMetrics.density).toInt()
         val margin = (8 * resources.displayMetrics.density).toInt()
@@ -74,55 +85,71 @@ class BubbleService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        recorder.release()
+        scope.cancel()
+        recorder.onFinished = null
+        recorder.cancel()
         bubble?.let { windowManager.removeView(it) }
         super.onDestroy()
     }
 
     private fun onBubbleTap() {
-        if (state != BubbleState.Idle) return
-        Log.i(TAG, "bubble tapped")
-        val notification = NotificationCompat.Builder(this, CHANNEL_DICTATION)
-            .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle(getString(R.string.notif_recording))
-            .setOngoing(true)
-            .build()
-        try {
-            MicrophoneForeground.start(this, NOTIF_RECORDING, notification)
-            Log.i(TAG, "startForeground(microphone) OK")
-        } catch (e: Exception) {
-            Log.e(TAG, "startForeground(microphone) FAILED", e)
-            return
+        Log.i(TAG, "bubble tapped in state $state")
+        when (state) {
+            BubbleState.Idle -> startRecording()
+            BubbleState.Listening -> recorder.stop()
+            else -> Unit
         }
-        val file = File(cacheDir, "dictation.m4a")
-        try {
-            recorder.start(file)
-        } catch (e: Exception) {
-            Log.e(TAG, "recording FAILED", e)
-            recorder.release()
-            MicrophoneForeground.stop(this)
-            return
-        }
-        Log.i(TAG, "recording started")
-        render(BubbleState.Listening)
-        handler.postDelayed({ recorder.logRecordingState() }, 1_500)
-        handler.postDelayed({ finishRecording(file) }, RECORD_MS)
     }
 
-    private fun finishRecording(file: File) {
-        recorder.stop()
-        MicrophoneForeground.stop(this)
+    private fun startRecording() {
+        val error = recorder.start()
+        if (error != null) {
+            showError(error)
+            return
+        }
+        render(BubbleState.Listening)
+    }
+
+    /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
+    private fun onRecordingFinished(outcome: RecordingOutcome) {
+        when (outcome) {
+            is RecordingOutcome.Failure -> {
+                showError(outcome.error)
+                render(BubbleState.Idle)
+            }
+            is RecordingOutcome.Success -> transcribe(outcome.result)
+        }
+    }
+
+    private fun transcribe(result: RecordingResult) {
         render(BubbleState.Processing)
+        Log.i(TAG, "recorded file duration=${formatDuration(result.durationMs)} (${result.durationMs} ms) maxAmplitude=${result.maxAmplitude}")
+        scope.launch {
+            val container = (application as VoxbulleApp).container
+            val text = container.transcriber.transcribeThenDelete(result.file, DictationLanguage.Auto)
+            Log.i(TAG, "audio deleted=${!result.file.exists()}")
+            if (text !is VoxtralResult.Success) {
+                Log.w(TAG, "transcription FAILED: $text")
+                render(BubbleState.Idle)
+                return@launch
+            }
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", text.value))
+            Log.i(TAG, "clipboard set")
+            notifyCopied(result.durationMs)
+            render(BubbleState.Ready)
+            handler.postDelayed({ render(BubbleState.Idle) }, 1_500)
+        }
+    }
 
-        val durationMs = MicrophoneRecorder.durationMs(file)
-        Log.i(TAG, "recorded file duration=${formatDuration(durationMs)} ($durationMs ms) size=${file.length()} B")
-
-        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", getString(R.string.fixed_text)))
-        Log.i(TAG, "clipboard set")
-        notifyCopied(durationMs)
-        render(BubbleState.Ready)
-        handler.postDelayed({ render(BubbleState.Idle) }, 1_500)
+    private fun showError(error: RecordingError) {
+        val message = when (error) {
+            RecordingError.NothingHeard -> R.string.error_nothing_heard
+            RecordingError.MicrophoneDenied -> R.string.error_mic_denied
+            RecordingError.StartFailed -> R.string.error_recording_failed
+        }
+        Log.i(TAG, "recording error $error")
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun notifyCopied(durationMs: Long) {
@@ -156,9 +183,6 @@ class BubbleService : Service() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_DICTATION, getString(R.string.channel_dictation), NotificationManager.IMPORTANCE_LOW),
-        )
-        manager.createNotificationChannel(
             NotificationChannel(CHANNEL_COPIED, getString(R.string.channel_copied), NotificationManager.IMPORTANCE_DEFAULT),
         )
     }
@@ -185,10 +209,7 @@ class BubbleService : Service() {
 
     private companion object {
         const val TAG = MicrophoneRecorder.TAG
-        const val CHANNEL_DICTATION = "dictation"
         const val CHANNEL_COPIED = "copied"
-        const val NOTIF_RECORDING = 1
         const val NOTIF_COPIED = 2
-        const val RECORD_MS = 5_000L
     }
 }

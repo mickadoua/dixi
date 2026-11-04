@@ -20,6 +20,12 @@
     <string name="channel_dictation">Dictée</string>
     <string name="channel_copied">Texte copié</string>
     <string name="notif_recording">Enregistrement en cours</string>
+    <string name="notif_recording_body">Touchez la bulle pour arrêter.</string>
+    <string name="notif_recording_warning">Arrêt automatique dans 30 s.</string>
+    <string name="notif_recording_stop">Arrêter</string>
+    <string name="error_nothing_heard">Je n\'ai rien entendu. Réessayez.</string>
+    <string name="error_mic_denied">Voxbulle a besoin du micro. Autorisez-le dans les réglages.</string>
+    <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
     <string name="notif_copied_body">Appui long dans le champ pour coller.</string>
     <string name="fixed_text">Bonjour, ceci est un texte de test Voxbulle.</string>
