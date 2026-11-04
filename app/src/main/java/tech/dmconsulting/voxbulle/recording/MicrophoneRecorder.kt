@@ -40,6 +40,9 @@ class MicrophoneRecorder(private val context: Context) {
         recorder = null
     }
 
+    /** Peak amplitude since the last call, 0 to 32767; 0 when not recording. */
+    fun amplitude(): Int = recorder?.maxAmplitude ?: 0
+
     /** Android may silence a background app's mic without any error: check it. */
     fun logRecordingState() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return

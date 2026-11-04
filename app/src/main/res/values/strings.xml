@@ -17,6 +17,11 @@
     <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
     <string name="bubble_processing">Voxbulle, transcription en cours</string>
     <string name="bubble_ready">Voxbulle, texte copié</string>
+    <string name="bubble_hide_zone">Masquer la bulle</string>
+    <string name="bubble_action_hide">Masquer la bulle</string>
+    <string name="channel_bubble">Bulle</string>
+    <string name="notif_bubble_hidden_title">Bulle masquée</string>
+    <string name="notif_bubble_hidden_body">Touchez pour afficher la bulle.</string>
     <string name="channel_dictation">Dictée</string>
     <string name="channel_copied">Texte copié</string>
     <string name="notif_recording">Enregistrement en cours</string>
