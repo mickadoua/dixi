@@ -9,12 +9,11 @@ import android.util.Log
 import java.io.File
 
 /** Records the microphone to an AAC 16 kHz file. One recording at a time. */
-class MicrophoneRecorder(private val context: Context) {
+class MicrophoneRecorder(private val context: Context) : AudioCapture {
 
     private var recorder: MediaRecorder? = null
 
-    /** Starts recording into [file]. Throws if the microphone cannot start: call [release] then. */
-    fun start(file: File) {
+    override fun start(file: File) {
         newRecorder().also { recorder = it }.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -26,7 +25,9 @@ class MicrophoneRecorder(private val context: Context) {
         }
     }
 
-    fun stop() {
+    override fun sampleMaxAmplitude(): Int = recorder?.maxAmplitude ?: 0
+
+    override fun stop() {
         try {
             recorder?.stop()
         } catch (e: RuntimeException) {
@@ -35,13 +36,23 @@ class MicrophoneRecorder(private val context: Context) {
         release()
     }
 
-    fun release() {
+    override fun release() {
         recorder?.release()
         recorder = null
     }
 
-    /** Peak amplitude since the last call, 0 to 32767; 0 when not recording. */
-    fun amplitude(): Int = recorder?.maxAmplitude ?: 0
+    override fun durationMs(file: File): Long {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(file.absolutePath)
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "duration read FAILED", e)
+            0L
+        } finally {
+            retriever.release()
+        }
+    }
 
     /** Android may silence a background app's mic without any error: check it. */
     fun logRecordingState() {
@@ -50,7 +61,6 @@ class MicrophoneRecorder(private val context: Context) {
         val configs = audio.activeRecordingConfigurations
         if (configs.isEmpty()) Log.w(TAG, "no active recording configuration")
         configs.forEach { Log.i(TAG, "recording active, clientSilenced=${it.isClientSilenced}") }
-        Log.i(TAG, "maxAmplitude=${recorder?.maxAmplitude}")
     }
 
     @Suppress("DEPRECATION")
@@ -60,19 +70,5 @@ class MicrophoneRecorder(private val context: Context) {
     companion object {
         /** Kept from the PoC: scripts/emu-proof.sh reads this log tag. */
         const val TAG = "VoxbulleProof"
-
-        /** Duration of a recorded file in ms, 0 if it cannot be read. */
-        fun durationMs(file: File): Long {
-            val retriever = MediaMetadataRetriever()
-            return try {
-                retriever.setDataSource(file.absolutePath)
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-            } catch (e: RuntimeException) {
-                Log.e(TAG, "duration read FAILED", e)
-                0L
-            } finally {
-                retriever.release()
-            }
-        }
     }
 }
