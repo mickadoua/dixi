@@ -26,6 +26,8 @@ dismiss_anr() {
     echo "dismissed an ANR dialog"; sleep 2
   done
 }
+# The card label is drawn upper case; the accessibility tree keeps the string.
+card_on() { $ADB shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $ADB shell cat /sdcard/ui.xml | grep -q 'Bulle active'; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 screen() {
   $ADB shell am force-stop $PKG; sleep 1
@@ -68,9 +70,11 @@ screen Home "--ei seedHistory 1"; shot 05-ecran-principal-off
 $ADB shell input tap $((W / 2)) $((H * 18 / 100))
 # A loaded emulator redraws late: wait for the bubble, then for the card.
 for _ in 1 2 3 4 5 6 7 8 9 10; do log | grep -q 'bubble shown' && break; sleep 1; done
-sleep 6
+for _ in 1 2 3 4 5 6 7 8 9 10; do card_on && break; sleep 2; done
+sleep 2
 shot 05-ecran-principal
 check "bubble shown from the main screen card" "log | grep -q 'bubble shown'"
+check "main screen card says « Bulle active »" card_on
 }
 
 bubble() {
@@ -85,6 +89,7 @@ read -r X Y <<< "$XY"
 for s in Idle Listening Processing Ready; do
   wake; state $s; sleep 1; shot "01-bulle-$s"
 done
+check "« Texte copié » toast beside the ready bubble" "log | grep -q 'bubble toast shown'"
 state Idle; sleep 1
 wake
 $ADB shell "input motionevent DOWN $X $Y; for i in 1 2 3 4 5 6 7 8; do input motionevent MOVE \$(( $X + ($W / 2 - $X) * i / 16 )) \$(( $Y + ($H * 60 / 100 - $Y) * i / 16 )); done"
