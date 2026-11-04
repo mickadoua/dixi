@@ -17,11 +17,17 @@ import tech.dmconsulting.voxbulle.transcription.VoxtralTranscriber
 
 /**
  * Manual dependency injection: one instance per process, held by [VoxbulleApp].
+ * The app passes the DataStore-backed [history] and [settings]; tests keep the in-memory ones.
  * Without a Mistral key (the default), Voxtral is faked and nothing leaves the phone.
  * Only when [fakesAllowed] (debug builds): elsewhere a missing key is an error, so a
  * release never runs on the fakes without saying so.
  */
-class AppContainer(mistralApiKey: String, fakesAllowed: Boolean) {
+class AppContainer(
+    mistralApiKey: String,
+    fakesAllowed: Boolean,
+    val history: DictationHistory = InMemoryDictationHistory(),
+    val settings: SettingsStore = InMemorySettingsStore(),
+) {
 
     /** True without a key: the app shows « Mode démo » in debug builds. */
     val usesFakeVoxtral: Boolean = mistralApiKey.isBlank()
@@ -37,11 +43,6 @@ class AppContainer(mistralApiKey: String, fakesAllowed: Boolean) {
 
     val textCleaner: TextCleaner =
         if (usesFakeVoxtral) FakeTextCleaner() else VoxtralTextCleaner(mistralApiKey, httpClient)
-
-    // In memory until DataStore lands (DMC-138).
-    val history: DictationHistory = InMemoryDictationHistory()
-
-    val settings: SettingsStore = InMemorySettingsStore()
 
     /** Audio to raw and clean text, in the language from [settings]. */
     val transcription = TranscriptionPipeline(transcriber, textCleaner, settings)

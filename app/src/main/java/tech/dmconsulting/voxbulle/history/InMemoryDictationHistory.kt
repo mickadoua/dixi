@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
-/** History lost when the process dies. Test fake, and the app's history until DataStore (DMC-138). */
+/** History lost when the process dies. Test fake; the app uses [DataStoreDictationHistory]. */
 class InMemoryDictationHistory : DictationHistory {
     private val state = MutableStateFlow(emptyList<Dictation>())
 

@@ -12,6 +12,40 @@
     <string name="screen_history">Historique</string>
     <string name="screen_settings">Réglages</string>
 
+    <!-- Common. -->
+    <string name="action_back">Retour</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="text_copied">Texte copié</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">20 dernières dictées, texte seulement. L’audio n’est jamais conservé.</string>
+    <string name="history_empty">Aucune dictée pour l’instant.</string>
+    <string name="history_today">Aujourd’hui</string>
+    <string name="history_yesterday">Hier</string>
+    <string name="history_copy">Copier le texte</string>
+    <string name="history_copy_action">Copier</string>
+    <string name="history_clear_all">Tout effacer</string>
+    <string name="history_clear_title">Effacer l’historique ?</string>
+    <string name="history_clear_body">Les dictées gardées sur ce téléphone seront supprimées. Cette action est définitive.</string>
+    <string name="history_clear_confirm">Effacer</string>
+    <string name="history_open_settings">Réglages</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">Bulle flottante</string>
+    <string name="settings_bubble_summary">Afficher par-dessus les autres apps</string>
+    <string name="settings_auto_paste">Collage automatique</string>
+    <string name="settings_auto_paste_summary">Accessibilité · désactivé</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_auto">Détection automatique (FR, EN)</string>
+    <string name="settings_language_french">Français</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_clear_history">Effacer l’historique</string>
+    <string name="settings_clear_history_summary">Les 20 dernières dictées, texte seulement</string>
+    <string name="settings_privacy">Confidentialité</string>
+    <string name="settings_privacy_summary">L’audio est envoyé pour transcription puis supprimé : jamais conservé.</string>
+    <string name="settings_about">À propos</string>
+    <string name="settings_about_summary">Version %1$s</string>
+
     <!-- Bubble and dictation (PoC, DMC-129). -->
     <string name="bubble_idle">Voxbulle, prêt à dicter</string>
     <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
