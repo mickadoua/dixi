@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.AppContainer
 import tech.dmconsulting.voxbulle.R
@@ -111,6 +112,10 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                                 onBack = toPrevious,
                             )
                             OnboardingStep.BubbleEnabled -> BubbleEnabledScreen(
+                                notificationsAsked = { container.settings.settings.first().notificationsAsked },
+                                onNotificationsAsked = {
+                                    scope.launch { container.settings.update { it.copy(notificationsAsked = true) } }
+                                },
                                 onFinish = finishOnboarding,
                                 onAutoPaste = { navController.navigate(Screen.AutoPasteDisclosure.route) },
                                 onBack = toPrevious,

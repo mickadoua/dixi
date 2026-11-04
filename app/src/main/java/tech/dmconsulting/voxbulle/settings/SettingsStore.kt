@@ -26,6 +26,8 @@ data class AppSettings(
     val autoPasteEnabled: Boolean = false,
     val language: DictationLanguage = DictationLanguage.Auto,
     val historyEnabled: Boolean = true,
+    /** Screen 5 has shown Android's notification window (Android 13+): never shown again. */
+    val notificationsAsked: Boolean = false,
 )
 
 interface SettingsStore {

@@ -41,6 +41,7 @@ class DataStoreSettingsStoreTest {
             autoPasteEnabled = true,
             language = DictationLanguage.English,
             historyEnabled = false,
+            notificationsAsked = true,
         )
         withStore(file) { store -> store.update { changed } }
 

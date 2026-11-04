@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -61,6 +62,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -505,9 +507,45 @@ fun BubbleIntroScreen(onEnabled: () -> Unit, onNotNow: () -> Unit, onBack: () ->
  */
 const val AUTO_PASTE_AVAILABLE = false
 
-/** Screen 5: the bubble is shown; the real test happens in another app. */
+private fun notificationsEnabled(context: Context) = NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+/**
+ * Screen 5: the bubble is shown; the real test happens in another app.
+ * On Android 13+, Android's notification window opens once on arrival, for
+ * « Texte copié ». Refused: nothing blocks, the note says the text is copied
+ * without confirmation.
+ */
 @Composable
-fun BubbleEnabledScreen(onFinish: () -> Unit, onAutoPaste: () -> Unit, onBack: () -> Unit) {
+fun BubbleEnabledScreen(
+    notificationsAsked: suspend () -> Boolean,
+    onNotificationsAsked: () -> Unit,
+    onFinish: () -> Unit,
+    onAutoPaste: () -> Unit,
+    onBack: () -> Unit,
+) {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(notificationsEnabled(context)) }
+    // Null until read from the settings: no note before we know.
+    var asked by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        Log.i(MicrophoneRecorder.TAG, "notification permission granted=$granted")
+        enabled = notificationsEnabled(context)
+    }
+    LaunchedEffect(Unit) {
+        val before = asked ?: notificationsAsked()
+        if (shouldAskNotifications(Build.VERSION.SDK_INT, enabled, before)) {
+            Log.i(MicrophoneRecorder.TAG, "notification permission asked")
+            onNotificationsAsked()
+            asked = true
+            request.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            asked = before
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { enabled = notificationsEnabled(context) }
+    val notificationsOff = asked?.let { showNotificationsOff(Build.VERSION.SDK_INT, enabled, it) } ?: false
+    LaunchedEffect(notificationsOff) { Log.i(MicrophoneRecorder.TAG, "notifications off note=$notificationsOff") }
+
     OnboardingFrame(
         title = stringResource(R.string.onboarding_step, 3),
         onBack = onBack,
@@ -525,6 +563,15 @@ fun BubbleEnabledScreen(onFinish: () -> Unit, onAutoPaste: () -> Unit, onBack: (
         Badge(R.drawable.ic_check, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary)
         Heading(stringResource(R.string.bubble_enabled_title))
         Body(stringResource(R.string.bubble_enabled_body))
-        Body(stringResource(R.string.bubble_enabled_note), MaterialTheme.colorScheme.onSurfaceVariant)
+        if (notificationsOff) {
+            Text(
+                stringResource(R.string.bubble_enabled_notifications_off),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        } else {
+            Body(stringResource(R.string.bubble_enabled_note), MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

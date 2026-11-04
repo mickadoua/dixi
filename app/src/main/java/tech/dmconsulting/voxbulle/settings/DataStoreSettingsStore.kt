@@ -29,6 +29,7 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
             prefs[AUTO_PASTE_ENABLED] = next.autoPasteEnabled
             prefs[LANGUAGE] = next.language.name
             prefs[HISTORY_ENABLED] = next.historyEnabled
+            prefs[NOTIFICATIONS_ASKED] = next.notificationsAsked
         }
     }
 
@@ -42,6 +43,7 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
             autoPasteEnabled = this[AUTO_PASTE_ENABLED] ?: defaults.autoPasteEnabled,
             language = DictationLanguage.entries.firstOrNull { it.name == this[LANGUAGE] } ?: defaults.language,
             historyEnabled = this[HISTORY_ENABLED] ?: defaults.historyEnabled,
+            notificationsAsked = this[NOTIFICATIONS_ASKED] ?: defaults.notificationsAsked,
         )
     }
 
@@ -52,6 +54,7 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
         private val AUTO_PASTE_ENABLED = booleanPreferencesKey("auto_paste_enabled")
         private val LANGUAGE = stringPreferencesKey("language")
         private val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
+        private val NOTIFICATIONS_ASKED = booleanPreferencesKey("notifications_asked")
 
         /** One instance per [file] and per process. The file name must end in `.preferences_pb`. */
         fun create(
