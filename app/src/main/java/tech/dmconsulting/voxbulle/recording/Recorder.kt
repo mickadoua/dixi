@@ -102,6 +102,9 @@ class Recorder(private val context: Context) {
         return outcome
     }
 
+    /** Time recorded so far, 0 when the microphone is not open. For the counter on screen 3. */
+    fun elapsedMs(): Long = session?.elapsedMs() ?: 0
+
     /** Voice level now, 0 to 32767; 0 when the microphone is not open. */
     fun voiceLevel(): Int = session?.level() ?: 0
 

@@ -21,9 +21,9 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
     val links: List<Screen>
         get() = when (this) {
             Welcome -> listOf(MicPermission)
-            MicPermission -> listOf(Trial)
+            MicPermission -> listOf(Trial, BubbleIntro)
             Trial -> listOf(BubbleIntro)
-            BubbleIntro -> listOf(BubbleEnabled)
+            BubbleIntro -> listOf(BubbleEnabled, History)
             BubbleEnabled -> listOf(History, AutoPasteDisclosure)
             AutoPasteDisclosure -> emptyList()
             History -> listOf(Settings)
@@ -31,6 +31,10 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
         }
 
     companion object {
+        /** First screen of the onboarding. */
         val start = Welcome
+
+        /** Where the app opens once the onboarding is done. */
+        val home = History
     }
 }

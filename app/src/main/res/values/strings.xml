@@ -17,6 +17,41 @@
     <string name="action_cancel">Annuler</string>
     <string name="text_copied">Texte copié</string>
 
+    <!-- Onboarding, screens 1 to 5 (DMC-140). -->
+    <string name="onboarding_step">Étape %1$d sur 3</string>
+    <string name="welcome_tagline">Parlez, c’est écrit proprement. Dans toutes vos apps.</string>
+    <string name="welcome_no_account">Pas de compte à créer.</string>
+    <string name="welcome_start">Commencer</string>
+    <string name="mic_title">Voxbulle a besoin du micro</string>
+    <string name="mic_body">Pour transformer votre voix en texte. L’audio est envoyé pour transcription puis supprimé : jamais conservé.</string>
+    <string name="mic_allow">Autoriser le micro</string>
+    <string name="mic_later">Plus tard</string>
+    <string name="mic_open_settings">Ouvrir les réglages</string>
+    <string name="trial_top">Essayez</string>
+    <string name="trial_title">Dites une phrase</string>
+    <string name="trial_hint">Touchez le micro, parlez, puis touchez à nouveau pour arrêter.</string>
+    <string name="trial_hint_stop">Je vous écoute. Touchez pour arrêter.</string>
+    <string name="trial_start">Commencer la dictée</string>
+    <string name="trial_stop">Arrêter la dictée</string>
+    <string name="trial_processing">Mise en forme du texte…</string>
+    <string name="trial_copy">Copier</string>
+    <string name="trial_continue">Continuer</string>
+    <string name="trial_skip">Passer l’essai</string>
+    <string name="bubble_intro_preview">Elle reste à portée de pouce, dans toutes vos apps.</string>
+    <string name="bubble_intro_title">Une bulle par-dessus vos apps</string>
+    <string name="bubble_intro_step_tap">Touchez la bulle pour dicter</string>
+    <string name="bubble_intro_step_stop">Touchez encore pour arrêter</string>
+    <string name="bubble_intro_step_copied">Le texte propre est copié</string>
+    <string name="bubble_intro_system">Android va vous demander d’autoriser « Afficher par-dessus les autres applications ».</string>
+    <string name="bubble_intro_open">Ouvrir le réglage</string>
+    <string name="bubble_intro_not_now">Pas maintenant</string>
+    <string name="bubble_intro_refused">Réglage non activé</string>
+    <string name="bubble_enabled_title">La bulle est prête</string>
+    <string name="bubble_enabled_body">Ouvrez WhatsApp ou vos mails, touchez la bulle, parlez.</string>
+    <string name="bubble_enabled_note">Le texte est copié. Une notification vous le confirme.</string>
+    <string name="bubble_enabled_finish">Terminer</string>
+    <string name="bubble_enabled_auto_paste">Activer le collage automatique</string>
+
     <!-- Screen 9, history. -->
     <string name="history_intro">20 dernières dictées, texte seulement. L’audio n’est jamais conservé.</string>
     <string name="history_empty">Aucune dictée pour l’instant.</string>
@@ -78,7 +113,6 @@
 
     <!-- Debug builds without a Mistral key: transcription is faked (DMC-137). -->
     <string name="demo_mode">Mode démo</string>
-    <string name="trial_demo_run">Lancer un essai</string>
     <string name="trial_raw">Vous avez dit (brut)</string>
     <string name="trial_clean">Texte Voxbulle</string>
     <string name="demo_mode_description">Mode démo : transcription simulée, rien n\'est envoyé.</string>

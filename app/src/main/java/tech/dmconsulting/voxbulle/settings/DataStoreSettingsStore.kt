@@ -24,6 +24,7 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
         store.edit { prefs ->
             val next = transform(prefs.toSettings())
             prefs[ONBOARDING_DONE] = next.onboardingDone
+            prefs[ONBOARDING_STEP] = next.onboardingStep.name
             prefs[BUBBLE_ENABLED] = next.bubbleEnabled
             prefs[AUTO_PASTE_ENABLED] = next.autoPasteEnabled
             prefs[LANGUAGE] = next.language.name
@@ -35,6 +36,8 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
         val defaults = AppSettings()
         return AppSettings(
             onboardingDone = this[ONBOARDING_DONE] ?: defaults.onboardingDone,
+            onboardingStep = OnboardingStep.entries.firstOrNull { it.name == this[ONBOARDING_STEP] }
+                ?: defaults.onboardingStep,
             bubbleEnabled = this[BUBBLE_ENABLED] ?: defaults.bubbleEnabled,
             autoPasteEnabled = this[AUTO_PASTE_ENABLED] ?: defaults.autoPasteEnabled,
             language = DictationLanguage.entries.firstOrNull { it.name == this[LANGUAGE] } ?: defaults.language,
@@ -44,6 +47,7 @@ class DataStoreSettingsStore(private val store: DataStore<Preferences>) : Settin
 
     companion object {
         private val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+        private val ONBOARDING_STEP = stringPreferencesKey("onboarding_step")
         private val BUBBLE_ENABLED = booleanPreferencesKey("bubble_enabled")
         private val AUTO_PASTE_ENABLED = booleanPreferencesKey("auto_paste_enabled")
         private val LANGUAGE = stringPreferencesKey("language")

@@ -5,6 +5,11 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import java.time.Duration
 import java.time.Instant
@@ -13,6 +18,7 @@ import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
 import tech.dmconsulting.voxbulle.history.Dictation
+import tech.dmconsulting.voxbulle.onboarding.startScreen
 import tech.dmconsulting.voxbulle.ui.navigation.Screen
 import tech.dmconsulting.voxbulle.ui.navigation.VoxbulleNavHost
 import tech.dmconsulting.voxbulle.ui.theme.VoxbulleTheme
@@ -24,7 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val container = (application as VoxbulleApp).container
         // Test hook kept from the PoC (scripts/emu-proof.sh): start the bubble
-        // from the foreground activity. Onboarding (DMC-140) brings the real path.
+        // from the foreground activity. The real path is the onboarding, screen 4.
         if (intent.getBooleanExtra("showBubble", false) && Settings.canDrawOverlays(this)) {
             BubbleService.show(this)
         }
@@ -35,10 +41,17 @@ class MainActivity : ComponentActivity() {
             }
         }
         val demoMode = BuildConfig.DEBUG && container.usesFakeVoxtral
-        val start = debugStartScreen(container, firstCreate = savedInstanceState == null) ?: Screen.start
+        val debugStart = debugStartScreen(container, firstCreate = savedInstanceState == null)
         setContent {
             VoxbulleTheme {
-                VoxbulleNavHost(container, demoMode, start)
+                // Read once per activity, then kept across rotations so the NavHost graph stays the same.
+                var start by rememberSaveable { mutableStateOf(debugStart?.name) }
+                LaunchedEffect(Unit) {
+                    if (start == null) {
+                        start = startScreen(container.settings.settings.first(), BubbleSwitch.canShow(this@MainActivity)).name
+                    }
+                }
+                Screen.entries.firstOrNull { it.name == start }?.let { VoxbulleNavHost(container, demoMode, it) }
             }
         }
     }

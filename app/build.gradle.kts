@@ -66,6 +66,9 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    // Already in the APK through navigation-compose (2.11.0): declared because the onboarding uses them directly.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.okhttp)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.preferences)

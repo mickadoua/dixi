@@ -1,5 +1,9 @@
 package tech.dmconsulting.voxbulle.ui.navigation
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,17 +18,30 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.AppContainer
 import tech.dmconsulting.voxbulle.R
+import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.history.HistoryScreen
-import tech.dmconsulting.voxbulle.onboarding.TrialPreview
+import tech.dmconsulting.voxbulle.onboarding.BubbleEnabledScreen
+import tech.dmconsulting.voxbulle.onboarding.BubbleIntroScreen
+import tech.dmconsulting.voxbulle.onboarding.MicPermissionScreen
+import tech.dmconsulting.voxbulle.onboarding.TrialScreen
+import tech.dmconsulting.voxbulle.onboarding.WelcomeScreen
+import tech.dmconsulting.voxbulle.onboarding.onboardingStep
+import tech.dmconsulting.voxbulle.onboarding.previous
+import tech.dmconsulting.voxbulle.onboarding.screen
+import tech.dmconsulting.voxbulle.settings.OnboardingStep
 import tech.dmconsulting.voxbulle.settings.SettingsScreen
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
@@ -34,15 +51,67 @@ import tech.dmconsulting.voxbulle.ui.theme.Dimens
  * Screens without their ticket yet are empty placeholders.
  * [demoMode]: debug build on the fake Voxtral, shown by a « Mode démo » label
  * that each screen places ([LocalDemoMode]).
+ *
+ * Onboarding (screens 1 to 5): each move replaces the whole back stack, and the
+ * back arrow leads to the step before, so a relaunch on any step behaves the same.
+ * The step shown is saved; once « Terminer » or « Pas maintenant » is tapped the
+ * app opens on [Screen.home].
  */
 @Composable
 fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Screen.start) {
     val navController = rememberNavController()
-    val back: () -> Unit = { navController.popBackStack() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val back: () -> Unit = {
+        // Last screen: leave the app rather than show an empty NavHost.
+        if (navController.previousBackStackEntry != null) navController.popBackStack() else context.findActivity()?.finish()
+    }
+    val go: (Screen) -> Unit = { target ->
+        navController.navigate(target.route) { popUpTo(navController.graph.id) { inclusive = true } }
+    }
+    val finishOnboarding: () -> Unit = {
+        scope.launch {
+            container.settings.update { it.copy(onboardingDone = true) }
+            go(Screen.home)
+        }
+    }
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         NavHost(navController = navController, startDestination = start.route) {
             Screen.entries.forEach { screen ->
                 composable(screen.route) {
+                    val step = screen.onboardingStep
+                    if (step != null) {
+                        LaunchedEffect(step) { container.settings.update { it.copy(onboardingStep = step) } }
+                        val previous = step.previous
+                        val toPrevious = { previous?.let { go(it.screen) } ?: Unit }
+                        if (previous != null) BackHandler(onBack = toPrevious)
+                        when (step) {
+                            OnboardingStep.Welcome -> WelcomeScreen(onStart = { go(Screen.MicPermission) })
+                            OnboardingStep.MicPermission -> MicPermissionScreen(
+                                onGranted = { go(Screen.Trial) },
+                                // No microphone, no trial: on to the bubble, which asks again on its first tap.
+                                onLater = { go(Screen.BubbleIntro) },
+                                onBack = toPrevious,
+                            )
+                            OnboardingStep.Trial -> TrialScreen(onContinue = { go(Screen.BubbleIntro) }, onBack = toPrevious)
+                            OnboardingStep.BubbleIntro -> BubbleIntroScreen(
+                                onEnabled = {
+                                    scope.launch { container.settings.update { it.copy(bubbleEnabled = true) } }
+                                    // Shown even if the user had hidden it before.
+                                    BubbleService.show(context)
+                                    go(Screen.BubbleEnabled)
+                                },
+                                onNotNow = finishOnboarding,
+                                onBack = toPrevious,
+                            )
+                            OnboardingStep.BubbleEnabled -> BubbleEnabledScreen(
+                                onFinish = finishOnboarding,
+                                onAutoPaste = { navController.navigate(Screen.AutoPasteDisclosure.route) },
+                                onBack = toPrevious,
+                            )
+                        }
+                        return@composable
+                    }
                     when (screen) {
                         Screen.History -> HistoryScreen(
                             history = container.history,
@@ -50,10 +119,7 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                             onOpenSettings = { navController.navigate(Screen.Settings.route) },
                         )
                         Screen.Settings -> SettingsScreen(container.settings, container.history, onBack = back)
-                        else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
-                            // Real calls need a recording: only the fakes run from this preview.
-                            if (screen == Screen.Trial && demoMode) TrialPreview(container.transcription)
-                        }
+                        else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) })
                     }
                 }
             }
@@ -61,8 +127,14 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     }
 }
 
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
 @Composable
-private fun PlaceholderScreen(screen: Screen, onOpen: (Screen) -> Unit, extra: @Composable () -> Unit) {
+private fun PlaceholderScreen(screen: Screen, onOpen: (Screen) -> Unit) {
     Surface(Modifier.fillMaxSize()) {
         Column(
             Modifier.safeDrawingPadding().padding(Dimens.ScreenMargin),
@@ -80,7 +152,6 @@ private fun PlaceholderScreen(screen: Screen, onOpen: (Screen) -> Unit, extra: @
                     Text(stringResource(R.string.screen_heading, target.number, stringResource(target.title)))
                 }
             }
-            extra()
         }
         // No top bar here: the label sits in the corner, clear of the heading's start.
         if (LocalDemoMode.current) {

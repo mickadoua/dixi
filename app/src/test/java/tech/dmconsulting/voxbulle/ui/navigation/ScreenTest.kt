@@ -15,6 +15,11 @@ class ScreenTest {
     }
 
     @Test
+    fun homeIsTheHistory() {
+        assertEquals(Screen.History, Screen.home)
+    }
+
+    @Test
     fun routesAreUnique() {
         assertEquals(Screen.entries.size, Screen.entries.map { it.route }.toSet().size)
     }
