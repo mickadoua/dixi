@@ -527,8 +527,10 @@ fun BubbleEnabledScreen(
     var enabled by remember { mutableStateOf(notificationsEnabled(context)) }
     // Null until read from the settings: no note before we know.
     var asked by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    var windowOpen by rememberSaveable { mutableStateOf(false) }
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         Log.i(MicrophoneRecorder.TAG, "notification permission granted=$granted")
+        windowOpen = false
         enabled = notificationsEnabled(context)
     }
     LaunchedEffect(Unit) {
@@ -537,13 +539,14 @@ fun BubbleEnabledScreen(
             Log.i(MicrophoneRecorder.TAG, "notification permission asked")
             onNotificationsAsked()
             asked = true
+            windowOpen = true
             request.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             asked = before
         }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { enabled = notificationsEnabled(context) }
-    val notificationsOff = asked?.let { showNotificationsOff(Build.VERSION.SDK_INT, enabled, it) } ?: false
+    val notificationsOff = asked?.let { showNotificationsOff(Build.VERSION.SDK_INT, enabled, it, windowOpen) } ?: false
     LaunchedEffect(notificationsOff) { Log.i(MicrophoneRecorder.TAG, "notifications off note=$notificationsOff") }
 
     OnboardingFrame(

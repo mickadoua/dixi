@@ -34,6 +34,11 @@ class NotificationPermissionTest {
     }
 
     @Test
+    fun noOffMessageUnderTheOpenWindow() {
+        assertFalse(showNotificationsOff(36, enabled = false, asked = true, windowOpen = true))
+    }
+
+    @Test
     fun offMessageAfterARefusal() {
         assertTrue(showNotificationsOff(36, enabled = false, asked = true))
     }

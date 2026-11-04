@@ -12,7 +12,8 @@ fun shouldAskNotifications(sdkInt: Int, enabled: Boolean, asked: Boolean): Boole
 
 /**
  * « Notifications désactivées » replaces « Une notification vous le confirme »
- * when notifications are off and there is nothing left to ask.
+ * when notifications are off and there is nothing left to ask. Never under
+ * Android's window while it waits for an answer ([windowOpen]).
  */
-fun showNotificationsOff(sdkInt: Int, enabled: Boolean, asked: Boolean): Boolean =
-    !enabled && !shouldAskNotifications(sdkInt, enabled, asked)
+fun showNotificationsOff(sdkInt: Int, enabled: Boolean, asked: Boolean, windowOpen: Boolean = false): Boolean =
+    !windowOpen && !enabled && !shouldAskNotifications(sdkInt, enabled, asked)

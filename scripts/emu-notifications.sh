@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Emulator proof for the notification permission on screen 5 (DMC-264), given
 # or refused in Android's own window (no `install -g`, no `pm grant` for it).
-#   emu-run phone --wait-lock 120 -- bash scripts/emu-notifications.sh <out-dir>
+#   emu-run phone --wait-lock 120 -- bash scripts/emu-notifications.sh allow <out-dir>
+#   emu-run phone --wait-lock 120 -- bash scripts/emu-notifications.sh refuse <out-dir>
+# WAIT (seconds, 40 by default) is how long to wait for each app log line: the
+# loaded NAS can take over a minute to handle a tap.
 # The microphone and overlay are set by adb (proved by scripts/emu-onboarding.sh):
 # the journey goes 1 → 2 (« Plus tard ») → 4 → 5.
 # allow:  window shown on screen 5, allowed; back to 4 and on to 5, then a
@@ -9,7 +12,9 @@
 # refuse: fresh install, window refused: « Notifications désactivées », and
 #         « Terminer » still opens the history.
 set -u
-OUT=${1:-proof-notifications}
+PART=${1:-allow}; shift
+OUT=${1:-proof-notifications}/$PART
+WAIT=${WAIT:-40}
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.voxbulle
 APK=app/build/outputs/apk/debug/app-debug.apk
@@ -57,12 +62,12 @@ MARK=start
 mark() { MARK="$1-$RANDOM"; $ADB shell log -t VoxbulleProof "MARK $MARK"; }
 applog() { $ADB logcat -d -s VoxbulleProof:I | sed -n "/MARK $MARK/,\$p"; }
 waitlog() {
-    for i in $(seq 1 20); do applog | grep -q "$1" && return 0; sleep 2; done
+    for i in $(seq 1 $((WAIT / 2))); do applog | grep -q "$1" && return 0; sleep 2; done
     echo "no log line: $1"; return 1
 }
 notif_granted() { $ADB shell dumpsys package $PKG | grep -q "android.permission.POST_NOTIFICATIONS: granted=true"; }
 window_shown() {
-    for i in $(seq 1 15); do $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" && return 0; sleep 2; done
+    for i in $(seq 1 $((WAIT / 2))); do $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" && return 0; sleep 2; done
     return 1
 }
 asked_count() { applog | grep -c "notification permission asked"; }
@@ -78,11 +83,11 @@ fresh_install() {
 # Screens 1 → 2 (« Plus tard ») → 4 → 5, up to Android's notification window.
 to_screen5() {
     $ADB shell am start -W -n $PKG/.MainActivity >/dev/null
-    waitlog "onboarding step Welcome"; sleep 2
+    waitlog "onboarding step Welcome" || return 1; sleep 2
     tap_at Commencer $BOTTOM
-    waitlog "onboarding step MicPermission"; sleep 2
+    waitlog "onboarding step MicPermission" || return 1; sleep 2
     tap_at "Plus tard" $BOTTOM
-    waitlog "onboarding step BubbleIntro"; sleep 2
+    waitlog "onboarding step BubbleIntro" || return 1; sleep 2
     tap_at "Ouvrir le réglage" $ABOVE
     check "screen 5" "waitlog 'onboarding step BubbleEnabled'"
 }
@@ -98,13 +103,7 @@ wake; $ADB shell wm dismiss-keyguard
 $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
 $ADB logcat -c
 
-# Throwaway first launch: just after a boot the first screenshots come out black.
-fresh_install
-$ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 8
-$ADB exec-out screencap -p > "$OUT/warmup.png"
-$ADB shell am force-stop $PKG
-
-echo "== allow"
+if [ "$PART" = allow ]; then
 fresh_install
 mark allow
 to_screen5
@@ -127,12 +126,13 @@ $ADB shell am start -W -n $PKG/.MainActivity >/dev/null
 waitlog "onboarding step BubbleEnabled"; sleep 4
 check "relaunch on screen 5: no second window" "[ \$(asked_count) -eq 0 ] && ! focus | grep -q permissioncontroller"
 
-echo "== refuse"
+else
 fresh_install
 mark refuse
 to_screen5
 check "Android's notification window shown on screen 5" "window_shown"
 sleep 2; shot refuse-system-window
+check "no « Notifications désactivées » under the window" "! applog | grep -q 'notifications off note=true'"
 tap_system "com.android.permissioncontroller:id/permission_deny_button" "Don’t allow" "Don't allow" "Ne pas autoriser"
 check "refused in the window" "waitlog 'notification permission granted=false' && ! notif_granted"
 check "note: « Notifications désactivées »" "waitlog 'notifications off note=true'"
@@ -146,6 +146,7 @@ check "relaunch after a refusal: no second window, note still there" \
 tap_at Terminer $ABOVE
 check "refusal blocks nothing: « Terminer » ends the onboarding" "waitlog 'onboarding done'"
 sleep 3; shot refuse-home
+fi
 
 $ADB logcat -d -b all > "$OUT/logcat.txt"
 grep -A8 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A6 "$PKG" | head -20 > "$OUT/crashes.txt"
