@@ -59,6 +59,9 @@ run() {
   sleep 1; shot "$2-2-hide-zone-rest"
   $ADB shell "for d in 0 40 80 120; do input motionevent MOVE $((W / 2)) \$(( $H - 120 - d )); done; input motionevent MOVE $((W / 2)) $((H - 240)); input motionevent MOVE $((W / 2)) $((H - 260))"
   sleep 1; shot "$2-3-over-hide-zone"
+  # The zone window must not be capped at alpha 0.8 (non-touchable overlay).
+  $ADB shell dumpsys window windows | grep -E "ty=APPLICATION_OVERLAY" | grep -oE "\([0-9]+x[0-9]+\)|alpha=[0-9.]+|fl=[A-Z_ ]+NOT_TOUCHABLE" | paste -sd' ' > "$OUT/$2-alpha.txt"
+  cat "$OUT/$2-alpha.txt"
   $ADB shell input motionevent UP $((W / 2)) $((H - 260))
   sleep 2
   check "$2: drop on the cross hides the bubble" "log | grep -q 'bubble hidden'"
@@ -66,6 +69,8 @@ run() {
 }
 # Light first: just after a cold boot the emulator is still busy and the
 # SystemUI restart of a night mode switch leaves the display black longer.
-run no light
-run yes dark
+# $2 = modes to run, in order (default: light dark).
+for m in ${2:-light dark}; do
+  if [ "$m" = dark ]; then run yes dark; else run no light; fi
+done
 $ADB shell cmd uimode night no
