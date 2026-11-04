@@ -34,17 +34,22 @@ class BubbleOverlay(
     private val windowManager = context.getSystemService(WindowManager::class.java)
     private val density = context.resources.displayMetrics.density
     private val size = px(56f)
-    private val halo = px(8f)
+    /** Room around the disc in the backdrop window: glow and halo rings. */
+    private val glow = px(BubbleState.GLOW_MARGIN_DP)
     private val margin = px(8f)
-    private val hideZoneSize = px(96f)
-    private val hideZoneBottom = px(32f)
+    private val hideZoneWidth = px(240f)
+    private val hideZoneHeight = px(180f)
+    /** Drop target radius around the disc center (the disc itself is 72 dp). */
+    private val hideTargetRadius = px(48f)
+    /** Disc bottom 52 dp above the navigation bar, as before the neon pass. */
+    private val hideZoneBottom = px(52f - HideZoneView.GLOW_DP)
 
     private val bubble = BubbleView(context)
     private val backdrop = BubbleBackdropView(context)
     private val hideZone = HideZoneView(context)
     private val bubbleParams = params(size, touchable = true)
-    private val backdropParams = params(size + 2 * halo, touchable = false)
-    private val hideZoneParams = params(hideZoneSize, touchable = false)
+    private val backdropParams = params(size + 2 * glow, touchable = false)
+    private val hideZoneParams = params(hideZoneWidth, touchable = false, height = hideZoneHeight)
     private val tracker = TapDragTracker(ViewConfiguration.get(context).scaledTouchSlop.toFloat())
 
     private var geometry = geometry()
@@ -95,7 +100,7 @@ class BubbleOverlay(
 
     fun render(state: BubbleState) {
         bubble.state = state
-        backdrop.listening = state == BubbleState.Listening
+        backdrop.state = state
         backdrop.alpha = state.opacity
     }
 
@@ -195,8 +200,8 @@ class BubbleOverlay(
     private fun moveTo(xy: Pair<Int, Int>) {
         bubbleParams.x = xy.first
         bubbleParams.y = xy.second
-        backdropParams.x = xy.first - halo
-        backdropParams.y = xy.second - halo
+        backdropParams.x = xy.first - glow
+        backdropParams.y = xy.second - glow
         if (shown) {
             windowManager.updateViewLayout(backdrop, backdropParams)
             windowManager.updateViewLayout(bubble, bubbleParams)
@@ -204,8 +209,8 @@ class BubbleOverlay(
     }
 
     private fun placeHideZone() {
-        hideZoneParams.x = (geometry.screenWidth - hideZoneSize) / 2
-        hideZoneParams.y = geometry.screenHeight - geometry.insets.bottom - hideZoneBottom - hideZoneSize
+        hideZoneParams.x = (geometry.screenWidth - hideZoneWidth) / 2
+        hideZoneParams.y = geometry.screenHeight - geometry.insets.bottom - hideZoneBottom - hideZoneHeight
     }
 
     private fun showHideZone() {
@@ -224,9 +229,9 @@ class BubbleOverlay(
         val over = geometry.isOverHideTarget(
             centerX = bubbleParams.x + size / 2f,
             centerY = bubbleParams.y + size / 2f,
-            targetX = hideZoneParams.x + hideZoneSize / 2f,
-            targetY = hideZoneParams.y + hideZoneSize / 2f,
-            radius = hideZoneSize / 2f,
+            targetX = hideZoneParams.x + hideZoneWidth / 2f,
+            targetY = hideZoneParams.y + hideZoneHeight - hideZone.discCenterFromBottom,
+            radius = hideTargetRadius.toFloat(),
         )
         if (over && !hideZone.active) hideZone.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
         hideZone.active = over
@@ -239,9 +244,9 @@ class BubbleOverlay(
         hideZoneShown = false
     }
 
-    private fun params(side: Int, touchable: Boolean) = WindowManager.LayoutParams(
+    private fun params(side: Int, touchable: Boolean, height: Int = side) = WindowManager.LayoutParams(
         side,
-        side,
+        height,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
