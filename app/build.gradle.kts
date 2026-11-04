@@ -15,6 +15,11 @@ android {
         versionName = "0.1.0-poc"
     }
 
+    buildTypes {
+        // Shrunk so the debug APK fits the 10 MB task attachment limit.
+        debug { isMinifyEnabled = true }
+    }
+
     buildFeatures { compose = true }
 }
 
