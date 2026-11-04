@@ -67,12 +67,16 @@ tap_system() {
     sleep 3
 }
 # App screens: fixed points measured on the screenshots.
-tap_at() { echo "tap $1 at $2 $3"; wake; $ADB shell input tap "$2" "$3"; sleep 2; }
+focus() { $ADB shell dumpsys window | grep -o "mCurrentFocus=[^ ]* [^ ]* [^ }]*" | head -1; }
+tap_at() { echo "tap $1 at $2 $3"; wake; $ADB shell input tap "$2" "$3"; sleep 2; echo "  $(focus)"; }
 BOTTOM="540 2220"      # lowest 56 dp button
 ABOVE="540 2052"       # the 56 dp button above it
 MIC="540 725"          # screen 3, 72 dp microphone button (idle and recording)
 COPY="270 2220"; CONTINUE="810 2220"
-applog() { $ADB logcat -d -s VoxbulleProof:I; }
+# App log lines since the last mark (logcat is never cleared: the whole log is kept for the proof).
+MARK=start
+mark() { MARK="$1-$RANDOM"; $ADB shell log -t VoxbulleProof "MARK $MARK"; }
+applog() { $ADB logcat -d -s VoxbulleProof:I | sed -n "/MARK $MARK/,\$p"; }
 # Waits (up to ~40 s) for an app log line.
 waitlog() {
     for i in $(seq 1 20); do applog | grep -q "$1" && return 0; sleep 2; done
@@ -104,6 +108,7 @@ $ADB shell cmd uimode night $MODE; sleep 30
 wake; $ADB shell wm dismiss-keyguard
 $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
 $ADB logcat -c
+mark start
 
 # Throwaway first launch: just after a boot the first screenshots come out black.
 $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 8
@@ -163,7 +168,7 @@ check "step saved: Trial" "[ \"\$(step_saved)\" = Trial ]"
 if [ "$PART" = light ]; then
     # Leave the app in the middle: it must come back on screen 3.
     $ADB shell am force-stop $PKG; sleep 2
-    $ADB logcat -c
+    mark relaunch-mid-way
     $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 5
     debug_limits
     check "relaunch mid-way reopens screen 3" "waitlog 'onboarding step Trial' && ! applog | grep -q 'onboarding step Welcome'"
@@ -180,7 +185,7 @@ check "result shown (raw and Voxbulle text)" "applog | grep -q 'trial state Resu
 check "no overlay permission asked before the result" "! overlay_allowed"
 check "audio deleted after the trial" "[ -z \"\$($ADB shell run-as $PKG ls cache | grep dictation-)\" ]"
 tap_at Copier $COPY
-sleep 1; shot 3-trial-copied
+sleep 3; shot 3-trial-copied
 tap_at Continuer $CONTINUE
 
 # Screen 4, then Android's overlay page.
@@ -223,13 +228,13 @@ sleep 3; shot 9-home-after-onboarding
 
 # Done: a relaunch never replays the onboarding.
 $ADB shell am force-stop $PKG; sleep 2
-$ADB logcat -c
+mark relaunch-after-done
 $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 6
-check "relaunch after « Terminer » shows no onboarding step" "! applog | grep -q 'onboarding step'"
+check "relaunch after « Terminer » shows no onboarding step" "applog | grep -q 'MARK relaunch-after-done' && focus | grep -q $PKG/ && ! applog | grep -q 'onboarding step'"
 shot 9-relaunch
 
-$ADB logcat -d > "$OUT/logcat.txt"
+$ADB logcat -d -b all > "$OUT/logcat.txt"
 grep -A8 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A6 "$PKG" | head -20 > "$OUT/crashes.txt"
 echo "app crash lines: $(wc -l < "$OUT/crashes.txt")"
-applog > "$OUT/app-log.txt"
+$ADB logcat -d -s VoxbulleProof:I > "$OUT/app-log.txt"
 $ADB shell cmd uimode night no
