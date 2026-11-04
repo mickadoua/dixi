@@ -89,6 +89,22 @@ class BubbleControllerTest {
     }
 
     @Test
+    fun errorGoesBackToRestAfterItsMessage() {
+        controller.setState(BubbleState.Error)
+        scheduler.advance(BubbleController.ERROR_TO_IDLE_MS - 1)
+        assertEquals(BubbleState.Error, controller.state)
+        scheduler.advance(1)
+        assertEquals(BubbleState.Idle, controller.state)
+    }
+
+    @Test
+    fun aTapOnTheErrorStartsAgainAndTheBubbleCanHide() {
+        controller.setState(BubbleState.Error)
+        assertEquals(TapAction.Start, controller.tapAction())
+        assertTrue(controller.canHide)
+    }
+
+    @Test
     fun tapStartsStopsOrDoesNothing() {
         assertEquals(TapAction.Start, controller.tapAction())
         controller.setState(BubbleState.Listening)

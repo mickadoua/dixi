@@ -8,6 +8,8 @@ import tech.dmconsulting.voxbulle.R
  * Bubble states from the neon charter, § Bulle (DMC-213). States also differ by
  * shape, not by color only: low wave, filled disc with high wave and halo, ring, check.
  * [glow]: the two glow layers (blur in dp, alpha 0 to 1), drawn behind the disc.
+ * [Error] is not in the charter table: magenta outline and an exclamation
+ * mark, so it differs by shape too.
  */
 enum class BubbleState(
     @ColorRes val fill: Int,
@@ -31,6 +33,10 @@ enum class BubbleState(
     Ready(
         R.color.bubble_disc, R.color.bubble_cyan, R.color.bubble_cyan,
         listOf(Glow(10f, 0.8f), Glow(28f, 0.45f)), R.string.bubble_ready,
+    ),
+    Error(
+        R.color.bubble_disc, R.color.bubble_magenta, R.color.bubble_magenta,
+        listOf(Glow(10f, 0.7f), Glow(26f, 0.4f)), R.string.bubble_error,
     ),
     ;
 
