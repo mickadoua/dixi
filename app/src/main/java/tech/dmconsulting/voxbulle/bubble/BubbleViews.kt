@@ -158,9 +158,14 @@ class BubbleBackdropView(context: Context) : View(context) {
             // Outer edge 8 dp from the disc; 3 dp thick in silence, up to 8 dp loud.
             val thickness = dp(3f) + dp(5f) * voiceLevel
             halo.strokeWidth = thickness
-            halo.color = ColorUtils.setAlphaComponent(ContextCompat.getColor(context, BubbleState.Listening.background), 128)
+            halo.color = ColorUtils.setAlphaComponent(ContextCompat.getColor(context, BubbleState.Listening.background), HALO_ALPHA)
             canvas.drawCircle(c, c, discRadius + dp(8f) - thickness / 2f, halo)
         }
+    }
+
+    private companion object {
+        /** 80 %: at least 3:1 against a white or a dark background. */
+        const val HALO_ALPHA = 204
     }
 }
 
@@ -187,14 +192,19 @@ class HideZoneView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         val c = width / 2f
-        val radius = dp(if (active) 32f else 28f)
+        // 72 dp when over: an 8 dp red ring stays visible around the 56 dp bubble.
+        val radius = dp(if (active) 36f else 28f)
         fill.color = ContextCompat.getColor(
             context,
             if (active) R.color.bubble_hide_zone_active
             else R.color.bubble_hide_zone,
         )
         canvas.drawCircle(c, c, radius, fill)
-        cross.color = ContextCompat.getColor(context, R.color.bubble_on_hide_zone)
+        cross.color = ContextCompat.getColor(
+            context,
+            if (active) R.color.bubble_on_hide_zone_active
+            else R.color.bubble_on_hide_zone,
+        )
         val arm = dp(7f)
         canvas.drawLine(c - arm, c - arm, c + arm, c + arm, cross)
         canvas.drawLine(c - arm, c + arm, c + arm, c - arm, cross)

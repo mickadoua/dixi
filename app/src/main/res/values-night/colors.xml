@@ -8,7 +8,8 @@
     <color name="bubble_on_tertiary">#5E1100</color>
     <color name="bubble_secondary">#4DDAD8</color>
     <color name="bubble_on_secondary">#003737</color>
-    <color name="bubble_hide_zone">#CCE4E1E9</color>
+    <color name="bubble_hide_zone">#E4E1E9</color>
     <color name="bubble_hide_zone_active">#FFB4AB</color>
     <color name="bubble_on_hide_zone">#1B1B21</color>
+    <color name="bubble_on_hide_zone_active">#690005</color>
 </resources>
