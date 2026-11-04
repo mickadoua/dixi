@@ -8,6 +8,8 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import tech.dmconsulting.voxbulle.dictation.UnlimitedQuota
+import tech.dmconsulting.voxbulle.history.InMemoryDictationHistory
+import tech.dmconsulting.voxbulle.settings.InMemorySettingsStore
 import tech.dmconsulting.voxbulle.transcription.FakeTextCleaner
 import tech.dmconsulting.voxbulle.transcription.FakeTranscriber
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
@@ -53,5 +55,14 @@ class AppContainerTest {
     @Test
     fun quotaIsUnlimitedInV1() {
         assertSame(UnlimitedQuota, AppContainer(mistralApiKey = "", fakesAllowed = true).quota)
+    }
+
+    @Test
+    fun usesTheStoresItIsGiven() {
+        val history = InMemoryDictationHistory()
+        val settings = InMemorySettingsStore()
+        val container = AppContainer(mistralApiKey = "", fakesAllowed = true, history = history, settings = settings)
+        assertSame(history, container.history)
+        assertSame(settings, container.settings)
     }
 }
