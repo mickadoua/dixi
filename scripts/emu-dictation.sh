@@ -31,6 +31,22 @@ tap_bubble() {
   done
   return 1
 }
+focus() { $ADB shell dumpsys window | grep mCurrentFocus; }
+# The shade opens and closes seconds late on a loaded emulator: wait on the window focus.
+open_shade() {
+  for _ in 1 2 3; do
+    $ADB shell cmd statusbar expand-notifications
+    for _ in 1 2 3 4 5 6; do focus | grep -q NotificationShade && { sleep 2; return 0; }; sleep 1; done
+  done
+  return 1
+}
+close_shade() {
+  for _ in 1 2 3; do
+    $ADB shell cmd statusbar collapse
+    for _ in 1 2 3 4 5 6; do focus | grep -q NotificationShade || { sleep 1; return 0; }; sleep 1; done
+  done
+  $ADB shell input keyevent KEYCODE_BACK; sleep 2
+}
 audio_files() { $ADB shell run-as $PKG ls cache 2>/dev/null | grep -c 'dictation-.*\.m4a'; }
 notif() { $ADB shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | grep -E "NotificationRecord|id=2|timeoutAfter|android.title|android.text|actions|\[[0-9]\] \"|channel=" ; }
 # Center of the first node whose text is $2, from a fresh dump into $1.
@@ -88,9 +104,9 @@ if [ "$PART" = a ]; then
   # Android 13+ shows its own clipboard preview: kept in 4-after-copy to judge the double.
   wait_log "copied notification posted" 15; POSTED=$SECONDS
   notif | tee "$OUT/notification.txt"
-  $ADB shell cmd statusbar expand-notifications; sleep 2
+  open_shade
   shot 5-notification
-  $ADB shell cmd statusbar collapse
+  close_shade
   wait_log "bubble state Idle" 10
   log | grep -E "bubble state|tapped|recording finished|clipboard|copied" | tee "$OUT/chain.txt"
   check "tap during processing ignored" "grep -q 'tapped in state Processing' '$OUT/chain.txt'"
@@ -104,6 +120,7 @@ if [ "$PART" = a ]; then
   notif > "$OUT/notification-after-6s.txt"
   check "notification gone after 6 s" "! grep -q 'id=2 ' '$OUT/notification-after-6s.txt'"
   echo "--- a2. Paste into Contacts"
+  focus | tee "$OUT/focus-before-paste.txt"
   F=$(node_center ui-contacts.xml "First name"); [ -n "$F" ] || F="540 1026"
   for _ in 1 2 3; do
     wake; $ADB shell input tap $F; sleep 3
@@ -141,7 +158,7 @@ if [ "$PART" = b ]; then
   limits --ei min_amplitude 0
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
   wait_log "copied notification posted" 15
-  $ADB shell cmd statusbar expand-notifications; sleep 2
+  open_shade
   V=$(node_center ui-shade.xml "Voir le texte"); echo "Voir le texte at: $V"
   shot 9-shade-actions
   [ -n "$V" ] && $ADB shell input tap $V; sleep 4
@@ -154,12 +171,12 @@ if [ "$PART" = b ]; then
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
   sleep 1; wait_log "copied notification posted" 20
   for _ in 1 2 3; do
-    $ADB shell cmd statusbar expand-notifications; sleep 2
+    open_shade
     H=$(node_center ui-shade2.xml "Masquer la bulle"); echo "Masquer la bulle at: $H"
     [ -n "$H" ] && $ADB shell input tap $H
     wait_log "bubble hidden" 4 && break
   done
-  $ADB shell cmd statusbar collapse; sleep 2
+  close_shade
   check "bubble hidden from the notification" "wait_log 'bubble hidden' 2"
   shot 11-hidden
 fi
