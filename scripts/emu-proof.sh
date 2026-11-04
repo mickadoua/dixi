@@ -4,7 +4,7 @@
 #   /opt/android/admin/emu/emu-run phone -- bash scripts/emu-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle.poc
+PKG=tech.dmconsulting.voxbulle
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"

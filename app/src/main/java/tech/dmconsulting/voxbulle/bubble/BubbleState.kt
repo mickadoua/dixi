@@ -1,7 +1,7 @@
-package tech.dmconsulting.voxbulle.poc
+package tech.dmconsulting.voxbulle.bubble
 
 import androidx.annotation.StringRes
-import java.util.Locale
+import tech.dmconsulting.voxbulle.R
 
 /** Bubble states and colors from the Voxbulle charter, section 6. */
 enum class BubbleState(val color: Int, @StringRes val description: Int) {
@@ -10,7 +10,3 @@ enum class BubbleState(val color: Int, @StringRes val description: Int) {
     Processing(0xFF3A47C8.toInt(), R.string.bubble_processing),
     Ready(0xFF00696B.toInt(), R.string.bubble_ready),
 }
-
-/** "5,0 s" style duration, French decimal comma. */
-fun formatDuration(millis: Long): String =
-    String.format(Locale.FRANCE, "%.1f s", millis / 1000.0)
