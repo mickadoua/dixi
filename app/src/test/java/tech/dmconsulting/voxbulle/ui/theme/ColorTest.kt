@@ -1,52 +1,48 @@
 package tech.dmconsulting.voxbulle.ui.theme
 
-import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Every role listed in the charter (DMC-121, § 2), light and dark. */
+/** Every role set by the neon charter (DMC-213, `charte-neon`). */
 class ColorTest {
-    private fun charterRoles(s: ColorScheme) = mapOf(
-        "primary" to s.primary, "onPrimary" to s.onPrimary,
-        "primaryContainer" to s.primaryContainer, "onPrimaryContainer" to s.onPrimaryContainer,
-        "secondary" to s.secondary, "onSecondary" to s.onSecondary,
-        "tertiary" to s.tertiary, "onTertiary" to s.onTertiary,
-        "surface" to s.surface, "background" to s.background,
-        "onSurface" to s.onSurface, "onSurfaceVariant" to s.onSurfaceVariant,
-        "surfaceContainer" to s.surfaceContainer, "outline" to s.outline,
-        "error" to s.error, "onError" to s.onError,
-    )
-
     private fun hex(vararg pairs: Pair<String, Long>) = pairs.associate { (k, v) -> k to Color(v) }
 
     @Test
-    fun lightMatchesCharter() {
-        val expected = hex(
-            "primary" to 0xFF3A47C8, "onPrimary" to 0xFFFFFFFF,
-            "primaryContainer" to 0xFFE0E1FF, "onPrimaryContainer" to 0xFF0B1058,
-            "secondary" to 0xFF00696B, "onSecondary" to 0xFFFFFFFF,
-            "tertiary" to 0xFFB3402A, "onTertiary" to 0xFFFFFFFF,
-            "surface" to 0xFFFBF8FF, "background" to 0xFFFBF8FF,
-            "onSurface" to 0xFF1B1B21, "onSurfaceVariant" to 0xFF46464F,
-            "surfaceContainer" to 0xFFEFEDF4, "outline" to 0xFF777680,
-            "error" to 0xFFBA1A1A, "onError" to 0xFFFFFFFF,
+    fun matchesNeonCharter() {
+        val s = VoxbulleColors
+        val actual = mapOf(
+            "primary" to s.primary, "onPrimary" to s.onPrimary,
+            "secondary" to s.secondary, "tertiary" to s.tertiary,
+            "background" to s.background, "surface" to s.surface,
+            "onSurface" to s.onSurface, "onSurfaceVariant" to s.onSurfaceVariant,
+            "surfaceContainer" to s.surfaceContainer, "surfaceContainerHigh" to s.surfaceContainerHigh,
+            "outline" to s.outline, "outlineVariant" to s.outlineVariant,
         )
-        assertEquals(expected, charterRoles(VoxbulleLightColors))
+        val expected = hex(
+            "primary" to 0xFFFF7A1A, "onPrimary" to 0xFF0A0A0C,
+            "secondary" to 0xFF2BE4FF, "tertiary" to 0xFFFF3D9A,
+            "background" to 0xFF050507, "surface" to 0xFF050507,
+            "onSurface" to 0xFFF5F5F7, "onSurfaceVariant" to 0xFFA9A9B8,
+            "surfaceContainer" to 0xFF0E0E14, "surfaceContainerHigh" to 0xFF171720,
+            "outline" to 0xFF6E6E7E, "outlineVariant" to 0xFF262631,
+        )
+        assertEquals(expected, actual)
     }
 
+    /** WCAG contrast of the text pairs the charter measures (AA: 4.5:1 text, 3:1 non-text). */
     @Test
-    fun darkMatchesCharter() {
-        val expected = hex(
-            "primary" to 0xFFBDC2FF, "onPrimary" to 0xFF0E1780,
-            "primaryContainer" to 0xFF2A34AE, "onPrimaryContainer" to 0xFFE0E1FF,
-            "secondary" to 0xFF4DDAD8, "onSecondary" to 0xFF003737,
-            "tertiary" to 0xFFFFB4A4, "onTertiary" to 0xFF5E1100,
-            "surface" to 0xFF121318, "background" to 0xFF121318,
-            "onSurface" to 0xFFE4E1E9, "onSurfaceVariant" to 0xFFC7C5D0,
-            "surfaceContainer" to 0xFF1F1F25, "outline" to 0xFF918F9A,
-            "error" to 0xFFFFB4AB, "onError" to 0xFF690005,
+    fun textPairsMeetAA() {
+        fun lum(c: Color) = listOf(c.red, c.green, c.blue)
+            .map { if (it <= 0.03928f) it / 12.92 else Math.pow((it + 0.055) / 1.055, 2.4) }
+            .let { (r, g, b) -> 0.2126 * r + 0.7152 * g + 0.0722 * b }
+        fun ratio(a: Color, b: Color) = (maxOf(lum(a), lum(b)) + 0.05) / (minOf(lum(a), lum(b)) + 0.05)
+        val text = listOf(
+            Neon.Text to Neon.Bg, Neon.TextMuted to Neon.Surface, Neon.OrangeText to Neon.Bg,
+            Neon.OrangeText to Neon.Surface, Neon.OnOrange to Neon.Orange, Neon.Cyan to Neon.Bg,
+            Neon.Magenta to Neon.Surface,
         )
-        assertEquals(expected, charterRoles(VoxbulleDarkColors))
+        text.forEach { (fg, bg) -> assert(ratio(fg, bg) >= 4.5) { "$fg on $bg: ${ratio(fg, bg)}" } }
+        assert(ratio(Neon.Outline, Neon.Bg) >= 3.0)
     }
 }
