@@ -102,6 +102,9 @@ class Recorder(private val context: Context) {
         return outcome
     }
 
+    /** Voice level now, 0 to 32767; 0 when the microphone is not open. */
+    fun voiceLevel(): Int = session?.level() ?: 0
+
     /** Stops without a result and deletes the audio (the bubble is going away). */
     fun cancel() {
         if (_state.value == RecorderState.Idle) return

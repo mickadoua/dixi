@@ -1,6 +1,5 @@
 package tech.dmconsulting.voxbulle
 
-import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
         // Test hook kept from the PoC (scripts/emu-proof.sh): start the bubble
         // from the foreground activity. Onboarding (DMC-140) brings the real path.
         if (intent.getBooleanExtra("showBubble", false) && Settings.canDrawOverlays(this)) {
-            startService(Intent(this, BubbleService::class.java))
+            BubbleService.show(this)
         }
         // Bubble switched on in the settings (screen 10): bring it back after a restart.
         lifecycleScope.launch {

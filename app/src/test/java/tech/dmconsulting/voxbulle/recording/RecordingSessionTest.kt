@@ -86,6 +86,24 @@ class RecordingSessionTest {
     }
 
     @Test
+    fun peakReadByTheBubbleLevelStillCounts() {
+        session.start(file())
+        clock.now += 2_000
+        capture.amplitude = 1_200
+        assertEquals(1_200, session.level())
+        capture.amplitude = 0
+        session.tick()
+
+        val outcome = session.stop() as RecordingOutcome.Success
+        assertEquals(1_200, outcome.result.maxAmplitude)
+    }
+
+    @Test
+    fun levelIsZeroWhenNotRecording() {
+        assertEquals(0, session.level())
+    }
+
+    @Test
     fun microphoneThatFailsGivesStartFailedAndNoFile() {
         val failing = RecordingSession(FakeAudioCapture(failOnStart = true), clock, RecordingLimits.DEFAULT)
         assertEquals(RecordingError.StartFailed, failing.start(file()))

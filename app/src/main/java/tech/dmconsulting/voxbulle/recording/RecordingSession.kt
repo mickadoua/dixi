@@ -36,6 +36,12 @@ class RecordingSession(
 
     fun elapsedMs(): Long = timer.elapsedMs()
 
+    /**
+     * Voice level now, 0 to 32767, for the bubble halo. Reads the microphone
+     * through the session so the peak kept for « nothing heard » sees it too.
+     */
+    fun level(): Int = if (isRecording) sampleAmplitude() else 0
+
     /** Call every 250 ms or so while recording. */
     fun tick(): TimerEvent? {
         if (!isRecording) return null
@@ -70,7 +76,10 @@ class RecordingSession(
         recorded.delete()
     }
 
-    private fun sampleAmplitude() {
-        maxAmplitude = maxOf(maxAmplitude, capture.sampleMaxAmplitude())
+    /** MediaRecorder resets its peak on each read: every read goes through here. */
+    private fun sampleAmplitude(): Int {
+        val sample = capture.sampleMaxAmplitude()
+        maxAmplitude = maxOf(maxAmplitude, sample)
+        return sample
     }
 }

@@ -1,25 +1,27 @@
 package tech.dmconsulting.voxbulle.bubble
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PixelFormat
+import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
-import android.view.Gravity
-import android.view.View
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -37,16 +39,28 @@ import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 
 /**
  * Shows the floating bubble. A tap starts a dictation, a second tap stops it
- * (5 min max, see [Recorder]); the text is copied and notified.
+ * (5 min max, see [Recorder]); the text is copied and notified. Dropped on the
+ * hide zone, the bubble hides until its notification (or [show]) brings it back.
  */
 class BubbleService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
-    private lateinit var windowManager: WindowManager
-    private var bubble: BubbleView? = null
     private val scope = MainScope()
     private val recorder: Recorder get() = (application as VoxbulleApp).recorder
-    private var state = BubbleState.Idle
+    private val controller = BubbleController { delayMs, block ->
+        val runnable = Runnable(block)
+        handler.postDelayed(runnable, delayMs)
+        return@BubbleController { handler.removeCallbacks(runnable) }
+    }
+    private lateinit var store: BubblePositionStore
+    private lateinit var overlay: BubbleOverlay
+    private var debugReceiver: BroadcastReceiver? = null
+    private val levelRunnable = object : Runnable {
+        override fun run() {
+            controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
+            handler.postDelayed(this, LEVEL_MS)
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -54,50 +68,56 @@ class BubbleService : Service() {
         super.onCreate()
         createChannels()
         recorder.onFinished = ::onRecordingFinished
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        val size = (56 * resources.displayMetrics.density).toInt()
-        val margin = (8 * resources.displayMetrics.density).toInt()
-        val params = WindowManager.LayoutParams(
-            size,
-            size,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            x = margin
-            y = (300 * resources.displayMetrics.density).toInt()
-        }
-        val view = BubbleView(this).apply {
-            setOnClickListener { onBubbleTap() }
-        }
-        windowManager.addView(view, params)
-        bubble = view
-        render(BubbleState.Idle)
-        view.post {
-            val loc = IntArray(2)
-            view.getLocationOnScreen(loc)
-            Log.i(TAG, "bubble shown at x=${loc[0] + view.width / 2} y=${loc[1] + view.height / 2}")
-        }
+        store = BubblePositionStore(this)
+        overlay = BubbleOverlay(this, controller, store, onTap = ::onBubbleTap, onHide = ::hide)
+        controller.onStateChanged = overlay::render
+        controller.onVoiceLevel = overlay::setVoiceLevel
+        registerDebugReceiver()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_NOT_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_SHOW) {
+            store.hidden = false
+            NotificationManagerCompat.from(this).cancel(NOTIF_HIDDEN)
+        }
+        if (store.hidden) {
+            Log.i(TAG, "bubble is hidden: not shown")
+            stopSelf()
+        } else {
+            overlay.show()
+        }
+        return START_NOT_STICKY
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        overlay.onConfigurationChanged()
+    }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         scope.cancel()
+        debugReceiver?.let { unregisterReceiver(it) }
         recorder.onFinished = null
         recorder.cancel()
-        bubble?.let { windowManager.removeView(it) }
+        overlay.remove()
         super.onDestroy()
     }
 
+    private fun hide() {
+        Log.i(TAG, "bubble hidden")
+        overlay.remove()
+        store.hidden = true
+        notifyHidden()
+        stopSelf()
+    }
+
     private fun onBubbleTap() {
-        Log.i(TAG, "bubble tapped in state $state")
-        when (state) {
-            BubbleState.Idle -> startRecording()
-            BubbleState.Listening -> recorder.stop()
-            else -> Unit
+        Log.i(TAG, "bubble tapped in state ${controller.state}")
+        when (controller.tapAction()) {
+            TapAction.Start -> startRecording()
+            TapAction.Stop -> recorder.stop()
+            TapAction.None -> Unit
         }
     }
 
@@ -107,23 +127,26 @@ class BubbleService : Service() {
             showError(error)
             return
         }
-        render(BubbleState.Listening)
+        controller.setState(BubbleState.Listening)
+        handler.post(levelRunnable)
     }
 
     /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
     private fun onRecordingFinished(outcome: RecordingOutcome) {
+        handler.removeCallbacks(levelRunnable)
+        controller.setVoiceLevel(0f)
         when (outcome) {
             is RecordingOutcome.Failure -> {
                 showError(outcome.error)
-                render(BubbleState.Idle)
+                controller.setState(BubbleState.Idle)
             }
             is RecordingOutcome.Success -> transcribe(outcome.result)
-            RecordingOutcome.Cancelled -> render(BubbleState.Idle)
+            RecordingOutcome.Cancelled -> controller.setState(BubbleState.Idle)
         }
     }
 
     private fun transcribe(result: RecordingResult) {
-        render(BubbleState.Processing)
+        controller.setState(BubbleState.Processing)
         Log.i(TAG, "recorded file duration=${formatDuration(result.durationMs)} (${result.durationMs} ms) maxAmplitude=${result.maxAmplitude}")
         scope.launch {
             val container = (application as VoxbulleApp).container
@@ -131,15 +154,14 @@ class BubbleService : Service() {
             Log.i(TAG, "audio deleted=${!result.file.exists()}")
             if (text !is VoxtralResult.Success) {
                 Log.w(TAG, "transcription FAILED: $text")
-                render(BubbleState.Idle)
+                controller.setState(BubbleState.Idle)
                 return@launch
             }
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", text.value))
             Log.i(TAG, "clipboard set")
             notifyCopied(result.durationMs)
-            render(BubbleState.Ready)
-            handler.postDelayed({ render(BubbleState.Idle) }, 1_500)
+            controller.setState(BubbleState.Ready)
         }
     }
 
@@ -170,47 +192,71 @@ class BubbleService : Service() {
         }
     }
 
-    private fun render(newState: BubbleState) {
-        state = newState
-        bubble?.apply {
-            color = newState.color
-            contentDescription = getString(newState.description)
-            alpha = if (newState == BubbleState.Idle) 0.9f else 1f
-            invalidate()
+    // The visible result of the tap is the bubble itself, over the current app:
+    // opening an activity here would hide that app.
+    @SuppressLint("LaunchActivityFromNotification")
+    private fun notifyHidden() {
+        val show = PendingIntent.getService(
+            this, 0, Intent(this, BubbleService::class.java).setAction(ACTION_SHOW),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notification = NotificationCompat.Builder(this, CHANNEL_BUBBLE)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(getString(R.string.notif_bubble_hidden_title))
+            .setContentText(getString(R.string.notif_bubble_hidden_body))
+            .setContentIntent(show)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(this).notify(NOTIF_HIDDEN, notification)
+            Log.i(TAG, "hidden notification posted")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "hidden notification FAILED", e)
         }
+    }
+
+    /** Debug builds only: lets the emulator proof set each state over another app. */
+    private fun registerDebugReceiver() {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val state = intent.getStringExtra("state")?.let { name -> BubbleState.entries.find { it.name == name } }
+                    ?: return
+                Log.i(TAG, "debug state $state")
+                // A screenshot takes more than 1.5 s on the NAS emulator.
+                controller.readyToIdleMs = intent.getLongExtra("readyMs", BubbleController.READY_TO_IDLE_MS)
+                controller.setState(state)
+            }
+        }
+        ContextCompat.registerReceiver(this, receiver, IntentFilter(ACTION_DEBUG_STATE), ContextCompat.RECEIVER_EXPORTED)
+        debugReceiver = receiver
     }
 
     private fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_BUBBLE, getString(R.string.channel_bubble), NotificationManager.IMPORTANCE_LOW),
+        )
+        manager.createNotificationChannel(
             NotificationChannel(CHANNEL_COPIED, getString(R.string.channel_copied), NotificationManager.IMPORTANCE_DEFAULT),
         )
     }
 
-    private class BubbleView(service: Service) : View(service) {
-        var color: Int = BubbleState.Idle.color
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val icon = service.getDrawable(R.drawable.ic_mic)!!
+    companion object {
+        /** Shows the bubble again, even if the user hid it. */
+        const val ACTION_SHOW = "tech.dmconsulting.voxbulle.action.SHOW_BUBBLE"
 
-        init {
-            elevation = 6 * resources.displayMetrics.density
-            isClickable = true
+        fun show(context: Context) {
+            context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_SHOW))
         }
 
-        override fun onDraw(canvas: Canvas) {
-            paint.color = color
-            val r = width / 2f
-            canvas.drawCircle(r, r, r, paint)
-            val inset = (width * 0.2f).toInt()
-            icon.setBounds(inset, inset, width - inset, height - inset)
-            icon.draw(canvas)
-        }
-    }
-
-    private companion object {
-        const val TAG = MicrophoneRecorder.TAG
-        const val CHANNEL_COPIED = "copied"
-        const val NOTIF_COPIED = 2
+        private const val ACTION_DEBUG_STATE = "tech.dmconsulting.voxbulle.debug.SET_BUBBLE_STATE"
+        private const val TAG = MicrophoneRecorder.TAG
+        private const val CHANNEL_BUBBLE = "bubble"
+        private const val NOTIF_HIDDEN = 3
+        private const val LEVEL_MS = 100L
+        private const val CHANNEL_COPIED = "copied"
+        private const val NOTIF_COPIED = 2
     }
 }
