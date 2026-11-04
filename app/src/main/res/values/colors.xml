@@ -11,4 +11,5 @@
     <color name="bubble_hide_zone">#CC1B1B21</color>
     <color name="bubble_hide_zone_active">#BA1A1A</color>
     <color name="bubble_on_hide_zone">#FFFFFF</color>
+    <color name="bubble_on_hide_zone_active">#FFFFFF</color>
 </resources>
