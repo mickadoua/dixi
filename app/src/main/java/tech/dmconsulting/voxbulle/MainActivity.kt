@@ -20,9 +20,11 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra("showBubble", false) && Settings.canDrawOverlays(this)) {
             startService(Intent(this, BubbleService::class.java))
         }
+        val container = (application as VoxbulleApp).container
+        val demoMode = BuildConfig.DEBUG && container.usesFakeVoxtral
         setContent {
             VoxbulleTheme {
-                VoxbulleNavHost()
+                VoxbulleNavHost(container.transcription, demoMode)
             }
         }
     }

@@ -28,4 +28,19 @@
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
     <string name="notif_copied_body">Appui long dans le champ pour coller.</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">Pas de connexion. Réessayez dans un instant.</string>
+    <string name="error_timeout">Le service met trop de temps à répondre. Réessayez.</string>
+    <string name="error_audio_too_long">Dictée trop longue. Faites-en plusieurs plus courtes.</string>
+    <string name="error_invalid_key">Service non autorisé. Mettez l\'app à jour, puis réessayez.</string>
+    <string name="error_rate_limited">Trop de dictées d\'un coup. Réessayez dans une minute.</string>
+    <string name="error_service_unavailable">Service indisponible. Réessayez dans quelques minutes.</string>
+
+    <!-- Debug builds without a Mistral key: transcription is faked (DMC-137). -->
+    <string name="demo_mode">Mode démo</string>
+    <string name="trial_demo_run">Lancer un essai</string>
+    <string name="trial_raw">Vous avez dit (brut)</string>
+    <string name="trial_clean">Texte Voxbulle</string>
+    <string name="demo_mode_description">Mode démo : transcription simulée, rien n\'est envoyé.</string>
 </resources>
