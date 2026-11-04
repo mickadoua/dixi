@@ -118,6 +118,7 @@ class BubbleService : Service() {
                 render(BubbleState.Idle)
             }
             is RecordingOutcome.Success -> transcribe(outcome.result)
+            RecordingOutcome.Cancelled -> render(BubbleState.Idle)
         }
     }
 

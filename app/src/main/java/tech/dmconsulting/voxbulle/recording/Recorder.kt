@@ -35,6 +35,9 @@ class Recorder(private val context: Context) {
     private var session: RecordingSession? = null
     private var service: RecordingService? = null
 
+    /** Token of the latest [start]; a service command with an older one is stale. */
+    private var startToken = 0
+
     private val tick = object : Runnable {
         override fun run() {
             when (session?.tick()) {
@@ -68,8 +71,12 @@ class Recorder(private val context: Context) {
             return RecordingError.MicrophoneDenied
         }
         _state.value = RecorderState.Starting
+        startToken++
         return try {
-            ContextCompat.startForegroundService(context, Intent(context, RecordingService::class.java))
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, RecordingService::class.java).putExtra(RecordingService.EXTRA_TOKEN, startToken),
+            )
             null
         } catch (e: RuntimeException) {
             Log.e(TAG, "recording service start FAILED", e)
@@ -78,11 +85,18 @@ class Recorder(private val context: Context) {
         }
     }
 
-    /** Stops the current recording, sends the outcome to [onFinished] and returns it. */
+    /**
+     * Stops the current recording, sends the outcome to [onFinished] and returns it.
+     * Before the microphone is open, or when nothing records, the outcome is [RecordingOutcome.Cancelled]:
+     * the caller goes back to idle without a message.
+     */
     fun stop(): RecordingOutcome {
-        if (_state.value == RecorderState.Idle) return RecordingOutcome.Failure(RecordingError.NothingHeard)
+        if (_state.value == RecorderState.Idle) {
+            onFinished?.invoke(RecordingOutcome.Cancelled)
+            return RecordingOutcome.Cancelled
+        }
         handler.removeCallbacks(tick)
-        val outcome = session?.stop() ?: RecordingOutcome.Failure(RecordingError.NothingHeard)
+        val outcome = session?.stop() ?: RecordingOutcome.Cancelled
         session = null
         finish(outcome)
         return outcome
@@ -98,13 +112,21 @@ class Recorder(private val context: Context) {
     }
 
     /** Called by [RecordingService] once it is in the foreground, or [error] if it could not be. */
-    internal fun onForeground(service: RecordingService, error: RecordingError? = null) {
-        this.service = service
-        if (_state.value != RecorderState.Starting) {
-            // Stopped before the service was ready.
-            finish(null)
-            return
+    internal fun onForeground(service: RecordingService, token: Int, error: RecordingError? = null) {
+        when (foregroundDecision(token, startToken, _state.value)) {
+            ForegroundDecision.Ignore -> {
+                // Command of an older start; a newer start owns this service now.
+                Log.i(TAG, "stale service command ignored (token $token, current $startToken)")
+                return
+            }
+            ForegroundDecision.StopService -> {
+                // Stopped before the service was ready.
+                service.stopRecordingForeground()
+                return
+            }
+            ForegroundDecision.Open -> Unit
         }
+        this.service = service
         if (error != null) {
             finish(RecordingOutcome.Failure(error))
             return
@@ -124,14 +146,16 @@ class Recorder(private val context: Context) {
         handler.postDelayed({ if (session === newSession) capture.logRecordingState() }, 1_500)
     }
 
-    /** The service is going away without a stop (system kill): drop the audio. */
+    /** The service is going away without a stop (system kill): drop the audio and tell the caller. */
     internal fun onServiceDestroyed(destroyed: RecordingService) {
         if (destroyed !== service) return
+        Log.w(TAG, "recording service destroyed while recording")
         handler.removeCallbacks(tick)
         session?.cancel()
         session = null
         service = null
         _state.value = RecorderState.Idle
+        onFinished?.invoke(RecordingOutcome.Failure(RecordingError.StartFailed))
     }
 
     private fun finish(outcome: RecordingOutcome?) {
@@ -143,7 +167,21 @@ class Recorder(private val context: Context) {
         onFinished?.invoke(outcome)
     }
 
+    internal enum class ForegroundDecision { Open, StopService, Ignore }
+
     companion object {
+        /**
+         * What to do when the service reaches the foreground for start [token].
+         * A stale token while a newer start runs is ignored, so it cannot stop that recording.
+         */
+        internal fun foregroundDecision(token: Int, currentToken: Int, state: RecorderState): ForegroundDecision =
+            when {
+                state == RecorderState.Idle -> ForegroundDecision.StopService
+                token != currentToken -> ForegroundDecision.Ignore
+                state == RecorderState.Starting -> ForegroundDecision.Open
+                else -> ForegroundDecision.Ignore
+            }
+
         private const val TAG = MicrophoneRecorder.TAG
         private const val TICK_MS = 250L
         const val AUDIO_PREFIX = "dictation-"

@@ -33,8 +33,11 @@ class RecordingService : Service() {
         if (intent?.action == ACTION_STOP) {
             Log.i(TAG, "stop action from notification")
             recorder.stop()
+            // Stale notification: nothing was recording, so nothing stopped this service.
+            if (recorder.state.value == RecorderState.Idle) stopSelf(startId)
             return START_NOT_STICKY
         }
+        val token = intent?.getIntExtra(EXTRA_TOKEN, NO_TOKEN) ?: NO_TOKEN
         createChannel(this)
         startedAt = System.currentTimeMillis()
         try {
@@ -42,10 +45,10 @@ class RecordingService : Service() {
             Log.i(TAG, "startForeground(microphone) OK")
         } catch (e: Exception) {
             Log.e(TAG, "startForeground(microphone) FAILED", e)
-            recorder.onForeground(this, RecordingError.StartFailed)
+            recorder.onForeground(this, token, RecordingError.StartFailed)
             return START_NOT_STICKY
         }
-        recorder.onForeground(this)
+        recorder.onForeground(this, token)
         return START_NOT_STICKY
     }
 
@@ -94,6 +97,8 @@ class RecordingService : Service() {
         private const val TAG = MicrophoneRecorder.TAG
         const val CHANNEL_DICTATION = "dictation"
         const val NOTIF_RECORDING = 1
+        const val EXTRA_TOKEN = "tech.dmconsulting.voxbulle.extra.START_TOKEN"
+        private const val NO_TOKEN = -1
         private const val ACTION_STOP = "tech.dmconsulting.voxbulle.action.STOP_RECORDING"
 
         /** « Dictée » channel, low importance: no sound, no pop-up (mockups, screen 7). */

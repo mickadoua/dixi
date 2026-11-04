@@ -21,4 +21,7 @@ sealed interface RecordingOutcome {
     data class Success(val result: RecordingResult) : RecordingOutcome
 
     data class Failure(val error: RecordingError) : RecordingOutcome
+
+    /** Stopped before the microphone was open, or nothing was recording: no message. */
+    data object Cancelled : RecordingOutcome
 }
