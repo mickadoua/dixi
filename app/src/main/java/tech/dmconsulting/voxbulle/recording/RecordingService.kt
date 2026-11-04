@@ -24,6 +24,9 @@ class RecordingService : Service() {
 
     private val recorder: Recorder get() = (application as VoxbulleApp).recorder
 
+    /** Start time shown by the notification chronometer; kept when the text changes. */
+    private var startedAt = 0L
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -33,6 +36,7 @@ class RecordingService : Service() {
             return START_NOT_STICKY
         }
         createChannel(this)
+        startedAt = System.currentTimeMillis()
         try {
             MicrophoneForeground.start(this, NOTIF_RECORDING, notification(warning = false))
             Log.i(TAG, "startForeground(microphone) OK")
@@ -75,6 +79,8 @@ class RecordingService : Service() {
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_recording))
             .setContentText(getString(if (warning) R.string.notif_recording_warning else R.string.notif_recording_body))
+            .setWhen(startedAt)
+            .setShowWhen(true)
             .setUsesChronometer(true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

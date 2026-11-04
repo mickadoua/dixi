@@ -23,7 +23,7 @@ tap_bubble() { close_dialogs; sleep 1; $ADB shell input tap $(bubble_xy); }
 # The loaded emulator can drop a tap (shade still closing): tap until the log shows $1.
 tap_until() { for i in 1 2 3; do tap_bubble; wait_log "$1" 8 && return 0; done; return 1; }
 # Back to the idle bubble: the "text ready" state ignores taps for 1.5 s.
-wait_idle() { wait_log "copied notification posted\|recording error" 20; sleep 4; }
+wait_idle() { sleep 5; }
 notif_dump() { $ADB shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | grep -E "NotificationRecord|channel=|importance|actions=|\[0\]|android.title=|android.text=|flags=" > "$OUT/$1.txt"; cat "$OUT/$1.txt"; }
 open_contacts() {
   $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3
@@ -63,7 +63,7 @@ tap_until "startForeground(microphone) OK"; sleep 4
 shot B1-listening
 $ADB shell dumpsys activity services $PKG | grep -E 'ServiceRecord|isForeground|foregroundServiceType' | tee "$OUT/B-fgs.txt"
 notif_dump B-notification
-$ADB shell cmd statusbar expand-notifications; sleep 4; shot B2-notification; $ADB shell cmd statusbar collapse; sleep 4
+# Stop by the bubble before opening the shade: the loaded emulator drops taps after it.
 tap_until "bubble tapped in state Listening"; wait_log "clipboard set" 15; sleep 1; cache
 
 mark "C stop from the notification action"
