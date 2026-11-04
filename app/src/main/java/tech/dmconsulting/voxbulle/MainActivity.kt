@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         val demoMode = BuildConfig.DEBUG && container.usesFakeVoxtral
-        val start = debugStartScreen(container) ?: Screen.start
+        val start = debugStartScreen(container, firstCreate = savedInstanceState == null) ?: Screen.start
         setContent {
             VoxbulleTheme {
                 VoxbulleNavHost(container, demoMode, start)
@@ -48,10 +48,11 @@ class MainActivity : ComponentActivity() {
      * Debug builds only, for emulator proofs: `--es screen History` opens a screen
      * directly, `--ei seedHistory N` adds N sample dictations (fictitious texts).
      */
-    private fun debugStartScreen(container: AppContainer): Screen? {
+    private fun debugStartScreen(container: AppContainer, firstCreate: Boolean): Screen? {
         if (!BuildConfig.DEBUG) return null
         val seed = intent.getIntExtra("seedHistory", 0)
-        if (seed > 0) {
+        // Seed once per launch: a rotation recreates the activity with the same intent.
+        if (seed > 0 && firstCreate) {
             lifecycleScope.launch {
                 val now = Instant.now()
                 (seed downTo 1).forEach { i ->

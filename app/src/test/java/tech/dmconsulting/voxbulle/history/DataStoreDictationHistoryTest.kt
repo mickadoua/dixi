@@ -1,5 +1,6 @@
 package tech.dmconsulting.voxbulle.history
 
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
@@ -78,8 +79,21 @@ class DataStoreDictationHistoryTest {
     }
 
     @Test
-    fun emptyFileStartsEmpty() {
+    fun missingFileStartsEmpty() {
         val file = folder.newFile("history.json").apply { delete() }
+        assertTrue(withHistory(file) { it.entries.first() }.isEmpty())
+    }
+
+    @Test
+    fun zeroByteFileReadsAsEmptyHistory() {
+        val read = runBlocking { DictationListSerializer.readFrom(ByteArrayInputStream(ByteArray(0))) }
+        assertTrue(read.isEmpty())
+    }
+
+    @Test
+    fun zeroByteFileStartsEmpty() {
+        val file = folder.newFile("history.json")
+        assertEquals(0L, file.length())
         assertTrue(withHistory(file) { it.entries.first() }.isEmpty())
     }
 }

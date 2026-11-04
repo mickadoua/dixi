@@ -57,13 +57,17 @@ internal object DictationListSerializer : Serializer<List<Dictation>> {
 
     override val defaultValue: List<Dictation> = emptyList()
 
-    override suspend fun readFrom(input: InputStream): List<Dictation> =
-        try {
-            format.decodeFromString(listSerializer, input.readBytes().decodeToString())
+    override suspend fun readFrom(input: InputStream): List<Dictation> {
+        val bytes = input.readBytes()
+        // A 0-byte file (write cut short) is an empty history, not a corrupt one.
+        if (bytes.isEmpty()) return defaultValue
+        return try {
+            format.decodeFromString(listSerializer, bytes.decodeToString())
                 .map { Dictation(it.text, Instant.ofEpochMilli(it.createdAtMillis)) }
         } catch (e: SerializationException) {
             throw CorruptionException("Unreadable dictation history", e)
         }
+    }
 
     override suspend fun writeTo(t: List<Dictation>, output: OutputStream) {
         val stored = t.map { StoredDictation(it.text, it.createdAt.toEpochMilli()) }
