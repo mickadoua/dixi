@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Voxbulle PoC</string>
+    <string name="bubble_idle">Voxbulle, prêt à dicter</string>
+    <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
+    <string name="bubble_processing">Voxbulle, transcription en cours</string>
+    <string name="bubble_ready">Voxbulle, texte copié</string>
+    <string name="channel_dictation">Dictée</string>
+    <string name="channel_copied">Texte copié</string>
+    <string name="notif_recording">Enregistrement en cours</string>
+    <string name="notif_copied_title">Texte copié</string>
+    <string name="notif_copied_body">Appui long dans le champ pour coller.</string>
+    <string name="fixed_text">Bonjour, ceci est un texte de test Voxbulle.</string>
+</resources>
