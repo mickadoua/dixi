@@ -14,7 +14,7 @@ log() { $ADB logcat -d -s VoxbulleProof; }
 # Center "x y" from the last log line matching $1 ("... at x=X y=Y").
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
-state() { $ADB shell am broadcast -p $PKG -a $PKG.debug.SET_BUBBLE_STATE --es state "$1" >/dev/null; }
+state() { $ADB shell am broadcast -p $PKG -a $PKG.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs "${2:-1500}" >/dev/null; }
 contacts() { $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4; }
 show_bubble() { $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3; }
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
@@ -30,6 +30,11 @@ $ADB shell settings put global hide_error_dialogs 1
 $ADB shell settings put system accelerometer_rotation 0
 $ADB shell settings put system user_rotation 0
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
+# Contacts asks for its permissions in a window that hides every overlay
+# (Android rule, DMC-129): grant them all first.
+for p in $($ADB shell dumpsys package com.google.android.contacts | sed -n 's/^ *\(android\.permission\.[A-Z_]*\): granted=false.*/\1/p' | sort -u); do
+  $ADB shell pm grant com.google.android.contacts "$p" 2>/dev/null
+done
 # A cold boot on a loaded NAS can show "System UI isn't responding": let it settle.
 sleep 25
 close_dialogs
@@ -44,12 +49,14 @@ XY=$(center "bubble shown")
 echo "bubble center: $XY"
 [ -n "$XY" ] || { $ADB logcat -d > "$OUT/logcat-full.txt"; echo "bubble not shown"; exit 2; }
 $ADB shell dumpsys activity activities | grep -m1 -E 'topResumedActivity' | tee "$OUT/top-activity.txt"
+check "Contacts editor in front, no permission window" "! grep -q RequestPermissions '$OUT/top-activity.txt'"
 shot 1-idle
 state Listening; sleep 1; shot 2-listening
 state Processing; sleep 1; shot 3-processing
-# « Texte prêt » goes back to « repos » after 1.5 s: shoot at once.
-state Ready; shot 4-ready
-sleep 2; shot 5-back-to-idle
+# « Texte prêt » goes back to « repos » after 1.5 s, faster than a screenshot
+# here: hold it 6 s for the capture (the 1.5 s itself is a unit test).
+state Ready 6000; sleep 1; shot 4-ready
+sleep 6; shot 5-back-to-idle
 for _ in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml | grep -q dumped && break; sleep 3; done
 $ADB shell cat /sdcard/ui.xml > "$OUT/ui-idle.xml"
 grep -o 'content-desc="Voxbulle[^"]*"' "$OUT/ui-idle.xml" | head -3

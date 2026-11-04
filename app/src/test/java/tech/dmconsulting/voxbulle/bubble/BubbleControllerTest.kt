@@ -79,6 +79,16 @@ class BubbleControllerTest {
     }
 
     @Test
+    fun readyDelayCanBeChanged() {
+        controller.readyToIdleMs = 8_000
+        controller.setState(BubbleState.Ready)
+        scheduler.advance(7_999)
+        assertEquals(BubbleState.Ready, controller.state)
+        scheduler.advance(1)
+        assertEquals(BubbleState.Idle, controller.state)
+    }
+
+    @Test
     fun tapStartsStopsOrDoesNothing() {
         assertEquals(TapAction.Start, controller.tapAction())
         controller.setState(BubbleState.Listening)

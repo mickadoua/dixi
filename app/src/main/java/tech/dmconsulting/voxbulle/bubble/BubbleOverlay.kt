@@ -40,7 +40,7 @@ class BubbleOverlay(
     private val hideZoneBottom = px(32f)
 
     private val bubble = BubbleView(context)
-    private val backdrop = BubbleBackdropView(context, size / 2f)
+    private val backdrop = BubbleBackdropView(context)
     private val hideZone = HideZoneView(context)
     private val bubbleParams = params(size, touchable = true)
     private val backdropParams = params(size + 2 * halo, touchable = false)
@@ -68,8 +68,13 @@ class BubbleOverlay(
 
     fun show() {
         if (shown) return
+        geometry = geometry()
         render(controller.state)
         moveTo(geometry.place(store.position))
+        // Added first, so the bubble stays above the cross while dragging.
+        placeHideZone()
+        hideZone.visibility = View.INVISIBLE
+        windowManager.addView(hideZone, hideZoneParams)
         windowManager.addView(backdrop, backdropParams)
         windowManager.addView(bubble, bubbleParams)
         shown = true
@@ -82,6 +87,7 @@ class BubbleOverlay(
         if (!shown) return
         windowManager.removeView(bubble)
         windowManager.removeView(backdrop)
+        windowManager.removeView(hideZone)
         shown = false
     }
 
@@ -117,6 +123,8 @@ class BubbleOverlay(
                 ignoreGesture = dx * dx + dy * dy > r * r
                 if (ignoreGesture) return true
                 snapAnimator?.cancel()
+                // Bars and cutout can change while the bubble is shown: measure again.
+                geometry = geometry()
                 tracker.down(event.rawX, event.rawY)
                 downRawX = event.rawX
                 downRawY = event.rawY
@@ -130,16 +138,13 @@ class BubbleOverlay(
                     view.isPressed = false
                     if (controller.canHide) showHideZone()
                 }
-                if (tracker.isDragging) {
-                    val x = (startX + (event.rawX - downRawX)).toInt().coerceIn(0, geometry.screenWidth - size)
-                    val y = geometry.clampY((startY + (event.rawY - downRawY)).toInt())
-                    moveTo(x to y)
-                    updateHideZone()
-                }
+                if (tracker.isDragging) dragTo(event)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 view.isPressed = false
                 if (ignoreGesture) return true
+                // Slow devices can drop the last moves: the release point wins.
+                if (tracker.isDragging) dragTo(event)
                 val wasTap = tracker.up()
                 if (wasTap) {
                     if (event.actionMasked == MotionEvent.ACTION_UP) view.performClick()
@@ -154,6 +159,13 @@ class BubbleOverlay(
             }
         }
         return true
+    }
+
+    private fun dragTo(event: MotionEvent) {
+        val x = (startX + (event.rawX - downRawX)).toInt().coerceIn(0, geometry.screenWidth - size)
+        val y = geometry.clampY((startY + (event.rawY - downRawY)).toInt())
+        moveTo(x to y)
+        updateHideZone()
     }
 
     private fun snap() {
@@ -185,13 +197,18 @@ class BubbleOverlay(
         }
     }
 
-    private fun showHideZone() {
-        if (hideZoneShown) return
+    private fun placeHideZone() {
         hideZoneParams.x = (geometry.screenWidth - hideZoneSize) / 2
         hideZoneParams.y = geometry.screenHeight - geometry.insets.bottom - hideZoneBottom - hideZoneSize
+    }
+
+    private fun showHideZone() {
+        if (hideZoneShown || !shown) return
+        placeHideZone()
+        windowManager.updateViewLayout(hideZone, hideZoneParams)
         hideZone.active = false
         hideZone.alpha = 0f
-        windowManager.addView(hideZone, hideZoneParams)
+        hideZone.visibility = View.VISIBLE
         hideZone.animate().alpha(1f).setDuration(FADE_MS).start()
         hideZoneShown = true
     }
@@ -212,7 +229,7 @@ class BubbleOverlay(
     private fun hideHideZone() {
         if (!hideZoneShown) return
         hideZone.animate().cancel()
-        windowManager.removeView(hideZone)
+        hideZone.visibility = View.INVISIBLE
         hideZoneShown = false
     }
 

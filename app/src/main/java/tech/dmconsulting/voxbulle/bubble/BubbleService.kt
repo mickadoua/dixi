@@ -1,5 +1,6 @@
 package tech.dmconsulting.voxbulle.bubble
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -177,6 +178,9 @@ class BubbleService : Service() {
         }
     }
 
+    // The visible result of the tap is the bubble itself, over the current app:
+    // opening an activity here would hide that app.
+    @SuppressLint("LaunchActivityFromNotification")
     private fun notifyHidden() {
         val show = PendingIntent.getService(
             this, 0, Intent(this, BubbleService::class.java).setAction(ACTION_SHOW),
@@ -205,6 +209,8 @@ class BubbleService : Service() {
                 val state = intent.getStringExtra("state")?.let { name -> BubbleState.entries.find { it.name == name } }
                     ?: return
                 Log.i(TAG, "debug state $state")
+                // A screenshot takes more than 1.5 s on the NAS emulator.
+                controller.readyToIdleMs = intent.getLongExtra("readyMs", BubbleController.READY_TO_IDLE_MS)
                 controller.setState(state)
             }
         }

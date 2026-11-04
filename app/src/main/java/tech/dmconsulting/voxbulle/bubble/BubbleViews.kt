@@ -13,6 +13,7 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.PathParser
+import androidx.core.graphics.withTranslation
 import tech.dmconsulting.voxbulle.R
 
 private fun View.dp(value: Float) = value * resources.displayMetrics.density
@@ -48,6 +49,9 @@ class BubbleView(context: Context) : View(context) {
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         state = BubbleState.Idle
     }
+
+    // Taps come from BubbleOverlay's touch listener, TalkBack from here.
+    override fun performClick(): Boolean = super.performClick()
 
     override fun onDraw(canvas: Canvas) {
         val r = width / 2f
@@ -96,11 +100,10 @@ class BubbleView(context: Context) : View(context) {
         val size = dp(28f)
         val scale = size / 24f
         ink.color = color
-        canvas.save()
-        canvas.translate((width - size) / 2f, (height - size) / 2f)
-        canvas.scale(scale, scale)
-        canvas.drawPath(check, ink)
-        canvas.restore()
+        canvas.withTranslation((width - size) / 2f, (height - size) / 2f) {
+            scale(scale, scale)
+            drawPath(check, ink)
+        }
     }
 
     private companion object {
@@ -112,7 +115,9 @@ class BubbleView(context: Context) : View(context) {
  * Drawn behind the disc in a window that takes no touch: the soft shadow
  * (elevation 6 dp) and, when listening, the 8 dp halo that follows the voice.
  */
-class BubbleBackdropView(context: Context, private val discRadius: Float) : View(context) {
+class BubbleBackdropView(context: Context) : View(context) {
+
+    private val discRadius = dp(28f)
 
     var listening = false
         set(value) {

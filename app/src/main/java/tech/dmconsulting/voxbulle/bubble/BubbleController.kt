@@ -22,6 +22,9 @@ class BubbleController(private val scheduler: Scheduler) {
     /** Voice level, 0 to 1, while listening: the halo follows it. */
     var onVoiceLevel: (Float) -> Unit = {}
 
+    /** How long « Texte prêt » stays. Only the debug proof hook changes it. */
+    var readyToIdleMs: Long = READY_TO_IDLE_MS
+
     private var cancelReadyTimeout: (() -> Unit)? = null
 
     fun setState(newState: BubbleState) {
@@ -30,7 +33,7 @@ class BubbleController(private val scheduler: Scheduler) {
         state = newState
         onStateChanged(newState)
         if (newState == BubbleState.Ready) {
-            cancelReadyTimeout = scheduler.schedule(READY_TO_IDLE_MS) {
+            cancelReadyTimeout = scheduler.schedule(readyToIdleMs) {
                 cancelReadyTimeout = null
                 setState(BubbleState.Idle)
             }
