@@ -202,6 +202,61 @@ class BubbleBackdropView(context: Context) : View(context) {
 }
 
 /**
+ * « Texte copié » beside the bubble in the Ready state: a 40 dp pill, surface-2,
+ * 1.5 dp cyan border and glow (0 0 14 dp at 45 %), 16 sp Inter Medium. Decoration
+ * only: the bubble already says « Voxbulle, texte copié » to TalkBack.
+ */
+class BubbleToastView(context: Context) : View(context) {
+
+    private val label = context.getString(R.string.text_copied)
+    private val cyan = ContextCompat.getColor(context, R.color.bubble_cyan)
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.bubble_toast) }
+    private val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(1.5f)
+        color = cyan
+    }
+    private val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        maskFilter = BlurMaskFilter(blur(14f), BlurMaskFilter.Blur.OUTER)
+        color = ColorUtils.setAlphaComponent(cyan, 115)
+    }
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16f, resources.displayMetrics)
+        typeface = ResourcesCompat.getFont(context, R.font.inter_medium)
+        color = ContextCompat.getColor(context, R.color.bubble_hide_zone_label)
+    }
+    private val pill = RectF()
+
+    /** Room around the pill in the window, for the glow. */
+    val glowMargin = dp(GLOW_DP).toInt()
+
+    /** Window size: the pill (16 dp padding) and its glow margin. */
+    val windowWidth = (text.measureText(label) + dp(32f)).toInt() + 2 * glowMargin
+    val windowHeight = dp(40f).toInt() + 2 * glowMargin
+
+    init {
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        allowBlur()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        val m = glowMargin.toFloat()
+        pill.set(m, m, width - m, height - m)
+        val r = pill.height() / 2f
+        canvas.drawRoundRect(pill, r, r, glow)
+        canvas.drawRoundRect(pill, r, r, fill)
+        pill.inset(border.strokeWidth / 2f, border.strokeWidth / 2f)
+        canvas.drawRoundRect(pill, r, r, border)
+        canvas.drawText(label, pill.centerX(), pill.centerY() - (text.ascent() + text.descent()) / 2f, text)
+    }
+
+    companion object {
+        const val GLOW_DP = 16f
+    }
+}
+
+/**
  * The « Masquer » target at the bottom while dragging: « Lâchez ici pour masquer »
  * above a 72 dp disc with a magenta outline and cross. Over it, the disc fills magenta.
  */

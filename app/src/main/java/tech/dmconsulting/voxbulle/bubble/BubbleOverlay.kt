@@ -21,7 +21,9 @@ import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 
 /**
  * The bubble windows: the disc (takes touches, never the focus), its shadow and
- * halo behind (no touch), and the hide zone while dragging. Drag moves the
+ * halo behind (no touch), the « Texte copié » toast beside it when ready (no
+ * touch, so a long press in the app's field still pastes), and the hide zone
+ * while dragging. Drag moves the
  * bubble; on release it snaps to the nearest side, or hides over the cross.
  */
 class BubbleOverlay(
@@ -47,6 +49,10 @@ class BubbleOverlay(
     private val bubble = BubbleView(context)
     private val backdrop = BubbleBackdropView(context)
     private val hideZone = HideZoneView(context)
+    private val toast = BubbleToastView(context)
+    private val toastParams = params(toast.windowWidth, touchable = false, height = toast.windowHeight)
+    /** Between the disc and the toast pill (mockup 02). */
+    private val toastGap = px(12f)
     private val edgeTab = EdgeTabView(context)
     private val edgeWidth = px(48f)
     private val edgeParams = params(edgeWidth, touchable = true, height = size + px(32f))
@@ -84,7 +90,7 @@ class BubbleOverlay(
         placeHideZone()
         hideZone.visibility = View.INVISIBLE
         addAllOrNone(
-            listOf(hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
+            listOf(hideZone to hideZoneParams, backdrop to backdropParams, toast to toastParams, bubble to bubbleParams),
             add = { (view, params) -> windowManager.addView(view, params) },
             remove = { (view, _) -> windowManager.removeView(view) },
         )
@@ -124,6 +130,7 @@ class BubbleOverlay(
         if (!shown) return
         windowManager.removeView(bubble)
         windowManager.removeView(backdrop)
+        windowManager.removeView(toast)
         windowManager.removeView(hideZone)
         shown = false
     }
@@ -132,6 +139,8 @@ class BubbleOverlay(
         bubble.state = state
         backdrop.state = state
         backdrop.alpha = state.opacity
+        toast.visibility = if (state == BubbleState.Ready) View.VISIBLE else View.INVISIBLE
+        if (shown && state == BubbleState.Ready) logCenter("bubble toast shown")
     }
 
     fun setVoiceLevel(level: Float) {
@@ -236,8 +245,13 @@ class BubbleOverlay(
         bubbleParams.y = xy.second
         backdropParams.x = xy.first - glow
         backdropParams.y = xy.second - glow
+        // On the screen side of the bubble's center, the toast goes the other way.
+        val toastLeft = xy.first + size / 2 > geometry.screenWidth / 2
+        toastParams.x = if (toastLeft) xy.first - toastGap - toast.windowWidth + toast.glowMargin else xy.first + size + toastGap - toast.glowMargin
+        toastParams.y = xy.second + size / 2 - toast.windowHeight / 2
         if (shown) {
             windowManager.updateViewLayout(backdrop, backdropParams)
+            windowManager.updateViewLayout(toast, toastParams)
             windowManager.updateViewLayout(bubble, bubbleParams)
         }
     }
