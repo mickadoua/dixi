@@ -61,11 +61,11 @@ class BubbleOverlay(
         bubble.setOnClickListener { onTap() }
         bubble.setOnTouchListener(::onTouch)
         ViewCompat.addAccessibilityAction(bubble, context.getString(R.string.bubble_action_hide)) { _, _ ->
-            onHide()
-            true
+            controller.hideIfAllowed(onHide)
         }
     }
 
+    /** Throws if the system refuses a window; then no window stays attached. */
     fun show() {
         if (shown) return
         geometry = geometry()
@@ -74,9 +74,11 @@ class BubbleOverlay(
         // Added first, so the bubble stays above the cross while dragging.
         placeHideZone()
         hideZone.visibility = View.INVISIBLE
-        windowManager.addView(hideZone, hideZoneParams)
-        windowManager.addView(backdrop, backdropParams)
-        windowManager.addView(bubble, bubbleParams)
+        addAllOrNone(
+            listOf(hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
+            add = { (view, params) -> windowManager.addView(view, params) },
+            remove = { (view, _) -> windowManager.removeView(view) },
+        )
         shown = true
         logCenter("bubble shown")
     }
@@ -145,16 +147,20 @@ class BubbleOverlay(
                 if (ignoreGesture) return true
                 // Slow devices can drop the last moves: the release point wins.
                 if (tracker.isDragging) dragTo(event)
-                val wasTap = tracker.up()
-                if (wasTap) {
-                    if (event.actionMasked == MotionEvent.ACTION_UP) view.performClick()
-                } else if (hideZoneShown && hideZone.active) {
-                    hideHideZone()
-                    Log.i(TAG, "bubble dropped on hide zone")
-                    onHide()
-                } else {
-                    hideHideZone()
-                    snap()
+                val release = releaseAction(
+                    wasTap = tracker.up(),
+                    cancelled = event.actionMasked == MotionEvent.ACTION_CANCEL,
+                    overHideZone = hideZoneShown && hideZone.active,
+                )
+                hideHideZone()
+                when (release) {
+                    Release.Click -> view.performClick()
+                    Release.Hide -> {
+                        Log.i(TAG, "bubble dropped on hide zone")
+                        onHide()
+                    }
+                    Release.Snap -> snap()
+                    Release.None -> Unit
                 }
             }
         }
@@ -282,5 +288,22 @@ class BubbleOverlay(
         const val TAG = MicrophoneRecorder.TAG
         const val SNAP_MS = 200L
         const val FADE_MS = 150L
+    }
+}
+
+/**
+ * Adds each item in order. If one add fails, removes the items already added,
+ * last first, then throws: no window stays attached without its owner knowing.
+ */
+internal fun <T> addAllOrNone(items: List<T>, add: (T) -> Unit, remove: (T) -> Unit) {
+    val added = mutableListOf<T>()
+    try {
+        items.forEach {
+            add(it)
+            added += it
+        }
+    } catch (e: RuntimeException) {
+        added.asReversed().forEach { runCatching { remove(it) } }
+        throw e
     }
 }

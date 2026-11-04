@@ -52,6 +52,16 @@ class BubbleController(private val scheduler: Scheduler) {
     /** The hide zone is offered only when no dictation is running. */
     val canHide: Boolean get() = state == BubbleState.Idle || state == BubbleState.Ready
 
+    /**
+     * Calls [hide] only when [canHide]. Hiding stops the service: during a
+     * dictation that would cut the microphone and lose the text.
+     */
+    fun hideIfAllowed(hide: () -> Unit): Boolean {
+        if (!canHide) return false
+        hide()
+        return true
+    }
+
     companion object {
         const val READY_TO_IDLE_MS = 1_500L
     }

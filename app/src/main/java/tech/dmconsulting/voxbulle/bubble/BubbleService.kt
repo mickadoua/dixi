@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -66,6 +67,12 @@ class BubbleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // The user can take the "display over other apps" permission back at any time.
+        if (!Settings.canDrawOverlays(this)) {
+            Log.w(TAG, "overlay permission missing: bubble not shown")
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_SHOW) {
             store.hidden = false
             NotificationManagerCompat.from(this).cancel(NOTIF_HIDDEN)
@@ -74,7 +81,12 @@ class BubbleService : Service() {
             Log.i(TAG, "bubble is hidden: not shown")
             stopSelf()
         } else {
-            overlay.show()
+            try {
+                overlay.show()
+            } catch (e: RuntimeException) {
+                Log.e(TAG, "bubble show FAILED", e)
+                stopSelf()
+            }
         }
         return START_NOT_STICKY
     }
