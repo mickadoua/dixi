@@ -35,7 +35,8 @@ class TranscriptionPipeline(
         }
         return when (val result = cleaner.clean(raw, language)) {
             is VoxtralResult.Success -> VoxtralResult.Success(Transcript(raw, result.value))
-            // Only hesitations: nothing worth copying.
+            // Nothing worth copying. FakeTextCleaner says so for a dictation of only « euh »;
+            // VoxtralTextCleaner only for a blank text, which VoxtralTranscriber never returns.
             is VoxtralResult.Failure if result.error == VoxtralError.NothingHeard -> result
             is VoxtralResult.Failure -> VoxtralResult.Success(Transcript(raw, cleaned = null, cleanupError = result.error))
         }

@@ -47,10 +47,15 @@ class VoxtralTextCleaner(
             .build()
 
         return MistralHttp.execute(client.newCall(request)) { body ->
-            val text = MistralHttp.json.decodeFromString<ChatResponse>(body)
-                .choices.firstOrNull()?.message?.content?.let(::contentText).orEmpty().trim()
-            // The raw text was not blank: an empty answer is the service's fault.
-            if (text.isEmpty()) VoxtralResult.Failure(VoxtralError.ServiceUnavailable) else VoxtralResult.Success(text)
+            val choice = MistralHttp.json.decodeFromString<ChatResponse>(body).choices.firstOrNull()
+            val text = choice?.message?.content?.let(::contentText).orEmpty().trim()
+            when {
+                // The raw text was not blank: an empty answer is the service's fault.
+                text.isEmpty() -> VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
+                // Cut by max_tokens or another stop: words would be lost, the pipeline keeps the raw text.
+                choice?.isComplete != true -> VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
+                else -> VoxtralResult.Success(text)
+            }
         }
     }
 
@@ -78,7 +83,16 @@ class VoxtralTextCleaner(
     private data class ChatResponse(val choices: List<Choice>)
 
     @Serializable
-    private data class Choice(val message: AnswerMessage? = null)
+    private data class Choice(
+        val message: AnswerMessage? = null,
+        @SerialName("finish_reason") val finishReason: String? = null,
+    ) {
+        /**
+         * Mistral ends with `stop` when the answer is whole. `length` and `model_length`
+         * mean it was cut, `error` that it broke off. Absent counts as whole.
+         */
+        val isComplete: Boolean get() = finishReason == null || finishReason == "stop"
+    }
 
     @Serializable
     private data class AnswerMessage(val content: JsonElement? = null)

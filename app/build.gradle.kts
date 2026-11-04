@@ -30,10 +30,15 @@ android {
     }
 
     buildTypes {
-        // Shrunk so the debug APK fits the 10 MB task attachment limit.
+        // Shrunk so the debug APK fits the 10 MB task attachment limit. The real Mistral
+        // path under R8 is checked on a device with the debug probe (scripts/mistral-probe.sh).
         debug {
             isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "MISTRAL_API_KEY", buildConfigString(mistralApiKey))
+        }
+        release {
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -41,6 +46,18 @@ android {
         compose = true
         buildConfig = true
     }
+}
+
+// Release builds get no Mistral key yet (how it ships is decided before any release), and
+// AppContainer refuses the fake Voxtral outside debug: stop here rather than build an APK
+// that would not start.
+val checkReleaseMistralKey by tasks.registering {
+    doLast {
+        throw GradleException("Release build without MISTRAL_API_KEY: the fake Voxtral is for debug builds only.")
+    }
+}
+tasks.configureEach {
+    if (name == "preReleaseBuild") dependsOn(checkReleaseMistralKey)
 }
 
 dependencies {
