@@ -18,11 +18,17 @@ import tech.dmconsulting.voxbulle.transcription.VoxtralTranscriber
 /**
  * Manual dependency injection: one instance per process, held by [VoxbulleApp].
  * Without a Mistral key (the default), Voxtral is faked and nothing leaves the phone.
+ * Only when [fakesAllowed] (debug builds): elsewhere a missing key is an error, so a
+ * release never runs on the fakes without saying so.
  */
-class AppContainer(mistralApiKey: String) {
+class AppContainer(mistralApiKey: String, fakesAllowed: Boolean) {
 
     /** True without a key: the app shows « Mode démo » in debug builds. */
     val usesFakeVoxtral: Boolean = mistralApiKey.isBlank()
+
+    init {
+        check(fakesAllowed || !usesFakeVoxtral) { "No Mistral key: the fake Voxtral is for debug builds only." }
+    }
 
     private val httpClient by lazy { MistralHttp.newClient() }
 

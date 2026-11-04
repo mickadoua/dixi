@@ -1,5 +1,6 @@
 package tech.dmconsulting.voxbulle.transcription
 
+import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -18,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import tech.dmconsulting.voxbulle.settings.InMemorySettingsStore
 
 class VoxtralTextCleanerTest {
     private val server = MockWebServer()
@@ -105,6 +107,25 @@ class VoxtralTextCleanerTest {
     }
 
     @Test
+    fun cutAnswersAreServiceErrors() = runTest {
+        listOf("length", "model_length", "error").forEach { reason ->
+            server.answer(200, chatAnswer("Bonjour Claire, je voulais", finishReason = reason))
+            assertEquals(reason, VoxtralResult.Failure(VoxtralError.ServiceUnavailable), cleaner.clean(RAW, DictationLanguage.Auto))
+        }
+    }
+
+    @Test
+    fun cutAnswerKeepsTheRawTextInThePipeline() = runTest {
+        server.answer(200, chatAnswer("Bonjour Claire, je voulais", finishReason = "length"))
+        val pipeline = TranscriptionPipeline(FakeTranscriber(VoxtralResult.Success(RAW)), cleaner, InMemorySettingsStore())
+
+        val transcript = (pipeline.run(File("dictation.m4a")) as VoxtralResult.Success).value
+
+        assertEquals(Transcript(RAW, cleaned = null, cleanupError = VoxtralError.ServiceUnavailable), transcript)
+        assertEquals(RAW, transcript.text)
+    }
+
+    @Test
     fun httpErrorsAreTyped() = runTest {
         mapOf(
             401 to VoxtralError.InvalidKey,
@@ -147,8 +168,8 @@ class VoxtralTextCleanerTest {
 
     private fun sentJson(body: String): JsonObject = Json.parseToJsonElement(body).jsonObject
 
-    private fun chatAnswer(content: String) =
-        """{"id":"c1","model":"mistral-small-2603","choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"stop"}]}"""
+    private fun chatAnswer(content: String, finishReason: String = "stop") =
+        """{"id":"c1","model":"mistral-small-2603","choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"$finishReason"}]}"""
 
     private companion object {
         /** Fictitious dictation, like the mockups' sample. */
