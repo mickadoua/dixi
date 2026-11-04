@@ -38,6 +38,7 @@ class BubbleService : Service() {
     private var bubble: BubbleView? = null
     private var recorder: MediaRecorder? = null
     private var state = BubbleState.Idle
+    private var peakAmplitude = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -102,6 +103,7 @@ class BubbleService : Service() {
             Log.i(TAG, "startForeground(microphone) OK")
         } catch (e: Exception) {
             Log.e(TAG, "startForeground(microphone) FAILED", e)
+            saveTrial(foreground = false, durationMs = 0)
             return
         }
         val file = File(cacheDir, "dictation.m4a")
@@ -117,16 +119,30 @@ class BubbleService : Service() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "recording FAILED", e)
+            recorder?.release()
+            recorder = null
             stopFg()
+            saveTrial(foreground = true, durationMs = 0)
             return
         }
         Log.i(TAG, "recording started")
         render(BubbleState.Listening)
+        peakAmplitude = 0
+        handler.post(samplePeak)
         handler.postDelayed({ logRecordingState() }, 1_500)
         handler.postDelayed({ finishRecording(file) }, RECORD_MS)
     }
 
+    /** maxAmplitude resets on each read: poll it to keep the loudest sample of the take. */
+    private val samplePeak: Runnable = Runnable {
+        val current = recorder ?: return@Runnable
+        peakAmplitude = maxOf(peakAmplitude, current.maxAmplitude)
+        handler.postDelayed(samplePeak, AMPLITUDE_POLL_MS)
+    }
+
     private fun finishRecording(file: File) {
+        handler.removeCallbacks(samplePeak)
+        recorder?.let { peakAmplitude = maxOf(peakAmplitude, it.maxAmplitude) }
         try {
             recorder?.stop()
         } catch (e: RuntimeException) {
@@ -148,21 +164,28 @@ class BubbleService : Service() {
             retriever.release()
         }
         Log.i(TAG, "recorded file duration=${formatDuration(durationMs)} ($durationMs ms) size=${file.length()} B")
+        val trial = saveTrial(foreground = true, durationMs = durationMs)
 
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", getString(R.string.fixed_text)))
         Log.i(TAG, "clipboard set")
-        notifyCopied(durationMs)
+        notifyCopied(trial)
         render(BubbleState.Ready)
         handler.postDelayed({ render(BubbleState.Idle) }, 1_500)
     }
 
-    private fun notifyCopied(durationMs: Long) {
+    private fun saveTrial(foreground: Boolean, durationMs: Long): Trial {
+        val trial = TrialStore.add(this, foreground, durationMs, peakAmplitude)
+        Log.i(TAG, "trial ${trial.label()}")
+        return trial
+    }
+
+    private fun notifyCopied(trial: Trial) {
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
             .setContentText(getString(R.string.notif_copied_body))
-            .setSubText(formatDuration(durationMs))
+            .setSubText("Essai ${trial.number} · ${formatDuration(trial.durationMs)} · max ${trial.maxAmplitude}")
             .setTimeoutAfter(6_000)
             .setAutoCancel(true)
             .build()
@@ -181,7 +204,7 @@ class BubbleService : Service() {
         val configs = audio.activeRecordingConfigurations
         if (configs.isEmpty()) Log.w(TAG, "no active recording configuration")
         configs.forEach { Log.i(TAG, "recording active, clientSilenced=${it.isClientSilenced}") }
-        Log.i(TAG, "maxAmplitude=${recorder?.maxAmplitude}")
+        Log.i(TAG, "peak maxAmplitude so far=$peakAmplitude")
     }
 
     private fun stopFg() = ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -238,5 +261,6 @@ class BubbleService : Service() {
         const val NOTIF_RECORDING = 1
         const val NOTIF_COPIED = 2
         const val RECORD_MS = 5_000L
+        const val AMPLITUDE_POLL_MS = 250L
     }
 }

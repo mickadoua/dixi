@@ -16,12 +16,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -33,6 +37,8 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { }
 
+    private val trials = mutableStateOf(emptyList<Trial>())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Test hook: same start path as the button, from the foreground activity.
@@ -41,17 +47,27 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF3A47C8))) {
                 Surface(Modifier.fillMaxSize()) {
                     Column(
-                        Modifier.safeDrawingPadding().padding(24.dp),
+                        Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text("Preuve technique : bulle + micro", style = MaterialTheme.typography.titleLarge)
                         Action("1. Autoriser le micro et les notifications") { askPermissions() }
                         Action("2. Autoriser l'affichage par-dessus") { openOverlaySettings() }
                         Action("3. Afficher la bulle") { showBubble() }
+                        Trials(trials.value) { TrialStore.clear(this@MainActivity); refreshTrials() }
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshTrials()
+    }
+
+    private fun refreshTrials() {
+        trials.value = TrialStore.all(this)
     }
 
     private fun askPermissions() {
@@ -77,5 +93,17 @@ class MainActivity : ComponentActivity() {
 private fun Action(label: String, onClick: () -> Unit) {
     Button(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
         Text(label)
+    }
+}
+
+@Composable
+private fun Trials(trials: List<Trial>, onClear: () -> Unit) {
+    val passed = trials.count { it.passed }
+    Text("Essais : $passed réussis sur ${trials.size}", style = MaterialTheme.typography.titleMedium)
+    trials.forEach { Text(it.label(), style = MaterialTheme.typography.bodyMedium) }
+    if (trials.isNotEmpty()) {
+        OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text("Effacer les essais")
+        }
     }
 }
