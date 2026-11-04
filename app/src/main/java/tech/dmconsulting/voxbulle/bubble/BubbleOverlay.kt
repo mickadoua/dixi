@@ -47,6 +47,10 @@ class BubbleOverlay(
     private val bubble = BubbleView(context)
     private val backdrop = BubbleBackdropView(context)
     private val hideZone = HideZoneView(context)
+    private val edgeTab = EdgeTabView(context)
+    private val edgeWidth = px(48f)
+    private val edgeParams = params(edgeWidth, touchable = true, height = size + px(32f))
+    private var edgeShown = false
     private val bubbleParams = params(size, touchable = true)
     private val backdropParams = params(size + 2 * glow, touchable = false)
     private val hideZoneParams = params(hideZoneWidth, touchable = false, height = hideZoneHeight)
@@ -88,7 +92,33 @@ class BubbleOverlay(
         logCenter("bubble shown")
     }
 
+    /** Hidden in edge mode: the tab at the bubble's side and height. Throws if the system refuses it. */
+    fun showEdge(onShowBubble: () -> Unit) {
+        if (edgeShown) return
+        geometry = geometry()
+        val position = store.position
+        edgeTab.setOnClickListener { onShowBubble() }
+        placeEdge()
+        windowManager.addView(edgeTab, edgeParams)
+        edgeShown = true
+        Log.i(TAG, "bubble edge shown side=${position.side} at x=${edgeParams.x} y=${edgeParams.y + edgeParams.height / 2}")
+    }
+
+    private fun placeEdge() {
+        val position = store.position
+        edgeTab.side = position.side
+        edgeParams.x = if (position.side == Side.Left) geometry.insets.left else geometry.screenWidth - geometry.insets.right - edgeWidth
+        edgeParams.y = geometry.place(position).second - px(16f)
+    }
+
+    fun removeEdge() {
+        if (!edgeShown) return
+        windowManager.removeView(edgeTab)
+        edgeShown = false
+    }
+
     fun remove() {
+        removeEdge()
         snapAnimator?.cancel()
         hideHideZone()
         if (!shown) return
@@ -112,6 +142,10 @@ class BubbleOverlay(
     fun onConfigurationChanged() {
         bubble.post {
             geometry = geometry()
+            if (edgeShown) {
+                placeEdge()
+                windowManager.updateViewLayout(edgeTab, edgeParams)
+            }
             if (!shown || tracker.isDragging) return@post
             snapAnimator?.cancel()
             moveTo(geometry.place(store.position))

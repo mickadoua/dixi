@@ -23,17 +23,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.BuildConfig
 import tech.dmconsulting.voxbulle.R
+import tech.dmconsulting.voxbulle.bubble.BubblePositionStore
 import tech.dmconsulting.voxbulle.history.ClearHistoryDialog
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
@@ -74,6 +77,10 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var chooseLanguage by rememberSaveable { mutableStateOf(false) }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var chooseHideMode by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val bubbleStore = remember { BubblePositionStore(context) }
+    var hideToEdge by remember { mutableStateOf(bubbleStore.hideToEdge) }
     val current = settings ?: return
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -92,6 +99,12 @@ fun SettingsScreen(
             summary = stringResource(R.string.settings_bubble_summary),
             checked = bubble.shown == true,
             onCheckedChange = bubble.set,
+        )
+        SettingRow(
+            title = R.string.settings_hide_mode,
+            summary = stringResource(R.string.settings_hide_mode_summary),
+            value = stringResource(if (hideToEdge) R.string.settings_hide_mode_edge else R.string.settings_hide_mode_notification),
+            onClick = { chooseHideMode = true },
         )
 
         Section(R.string.settings_section_dictation)
@@ -131,6 +144,20 @@ fun SettingsScreen(
                 scope.launch { settingsStore.update { it.copy(language = language) } }
             },
             onDismiss = { chooseLanguage = false },
+        )
+    }
+
+    if (chooseHideMode) {
+        ChoiceDialog(
+            title = R.string.settings_hide_mode,
+            options = listOf(true to R.string.settings_hide_mode_edge, false to R.string.settings_hide_mode_notification),
+            selected = hideToEdge,
+            onSelect = { edge ->
+                chooseHideMode = false
+                bubbleStore.hideToEdge = edge
+                hideToEdge = edge
+            },
+            onDismiss = { chooseHideMode = false },
         )
     }
 
@@ -204,12 +231,16 @@ private fun RowFrame(modifier: Modifier, content: @Composable RowScope.() -> Uni
     }
 }
 
+/** [value]: the current choice, in orange before the chevron (mockup « Liseré › »). */
 @Composable
-private fun SettingRow(@StringRes title: Int, summary: String, onClick: (() -> Unit)? = null) {
+private fun SettingRow(@StringRes title: Int, summary: String, value: String? = null, onClick: (() -> Unit)? = null) {
     val clickable = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     RowFrame(Modifier.settingRow().then(clickable)) {
         RowText(title, summary, Modifier.weight(1f))
-        if (onClick != null) Text("›", style = MaterialTheme.typography.titleLarge, color = Neon.TextMuted)
+        if (value != null) {
+            Text(value, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), color = Neon.OrangeText)
+        }
+        if (onClick != null) Text("›", style = MaterialTheme.typography.titleLarge, color = if (value != null) Neon.OrangeText else Neon.TextMuted)
     }
 }
 
@@ -237,26 +268,44 @@ private fun LanguageDialog(
     onSelect: (DictationLanguage) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    ChoiceDialog(
+        title = R.string.settings_language,
+        options = DictationLanguage.entries.map { it to it.label },
+        selected = selected,
+        onSelect = onSelect,
+        onDismiss = onDismiss,
+    )
+}
+
+/** One choice among [options] (value to label), radio buttons, cancel. */
+@Composable
+private fun <T> ChoiceDialog(
+    @StringRes title: Int,
+    options: List<Pair<T, Int>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_language)) },
+        title = { Text(stringResource(title)) },
         text = {
             Column(Modifier.selectableGroup()) {
-                DictationLanguage.entries.forEach { language ->
+                options.forEach { (option, label) ->
                     Row(
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = Dimens.MinTouchTarget + 8.dp)
                             .selectable(
-                                selected = language == selected,
+                                selected = option == selected,
                                 role = Role.RadioButton,
-                                onClick = { onSelect(language) },
+                                onClick = { onSelect(option) },
                             ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Dimens.VerticalSpacing),
                     ) {
-                        RadioButton(selected = language == selected, onClick = null)
-                        Text(stringResource(language.label), style = MaterialTheme.typography.bodyLarge)
+                        RadioButton(selected = option == selected, onClick = null)
+                        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

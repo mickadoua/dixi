@@ -3,7 +3,7 @@ package tech.dmconsulting.voxbulle.bubble
 import android.content.Context
 import androidx.core.content.edit
 
-/** Bubble place and hidden flag, kept across service restarts and process death. */
+/** Bubble place, hidden flag and hide mode, kept across service restarts and process death. */
 class BubblePositionStore(context: Context) {
 
     private val prefs = context.getSharedPreferences("bubble", Context.MODE_PRIVATE)
@@ -19,9 +19,15 @@ class BubblePositionStore(context: Context) {
         get() = prefs.getBoolean(KEY_HIDDEN, false)
         set(value) = prefs.edit { putBoolean(KEY_HIDDEN, value) }
 
+    /** Hidden bubble: a 20 dp edge tab (true, default) or only a notification. */
+    var hideToEdge: Boolean
+        get() = prefs.getBoolean(KEY_HIDE_TO_EDGE, true)
+        set(value) = prefs.edit { putBoolean(KEY_HIDE_TO_EDGE, value) }
+
     private companion object {
         const val KEY_SIDE = "side"
         const val KEY_Y = "y_fraction"
         const val KEY_HIDDEN = "hidden"
+        const val KEY_HIDE_TO_EDGE = "hide_to_edge"
     }
 }

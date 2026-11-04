@@ -270,3 +270,57 @@ class HideZoneView(context: Context) : View(context) {
         const val GLOW_DP = 32f
     }
 }
+
+/**
+ * The hidden bubble in edge mode: a 20 × 56 dp half-pill against the screen
+ * [side], orange outline and glow, 85 %. Its window is 48 dp wide: the touch
+ * target. A tap shows the bubble again.
+ */
+class EdgeTabView(context: Context) : View(context) {
+
+    var side: Side = Side.Right
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    private val orange = ContextCompat.getColor(context, R.color.bubble_orange)
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.bubble_disc) }
+    private val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(2f)
+        color = orange
+    }
+    private val glow = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val near = BlurMaskFilter(blur(10f), BlurMaskFilter.Blur.OUTER)
+    private val far = BlurMaskFilter(blur(22f), BlurMaskFilter.Blur.OUTER)
+    private val tab = Path()
+
+    init {
+        isClickable = true
+        alpha = 0.85f
+        contentDescription = context.getString(R.string.bubble_edge)
+        allowBlur()
+    }
+
+    override fun performClick(): Boolean = super.performClick()
+
+    override fun onDraw(canvas: Canvas) {
+        val w = dp(20f)
+        val h = dp(56f)
+        val top = (height - h) / 2f
+        val r = h / 2f
+        // Rounded on the screen side only: wider than the view, the flat end stays off screen.
+        val left = if (side == Side.Right) width - w else -r
+        val right = if (side == Side.Right) width + r else w
+        tab.rewind()
+        tab.addRoundRect(RectF(left, top, right, top + h), r, r, Path.Direction.CW)
+        listOf(near to 0.7f, far to 0.35f).forEach { (filter, a) ->
+            glow.maskFilter = filter
+            glow.color = ColorUtils.setAlphaComponent(orange, (a * 255).toInt())
+            canvas.drawPath(tab, glow)
+        }
+        canvas.drawPath(tab, fill)
+        canvas.drawPath(tab, outline)
+    }
+}

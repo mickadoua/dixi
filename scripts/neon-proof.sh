@@ -91,6 +91,16 @@ sleep 1; shot 03-bulle-sur-zone
 $ADB shell input motionevent UP $((W / 2)) $((H - 260))
 sleep 2
 check "drop on the cross hides the bubble" "log | grep -q 'bubble hidden'"
+sleep 1; shot 04-bulle-masquee-lisere
+EDGE=$(center "bubble edge shown")
+check "hidden bubble leaves the 20 dp edge tab" "[ -n '$EDGE' ]"
+if [ -n "$EDGE" ]; then
+  read -r EX EY <<< "$EDGE"
+  # The tab window is 48 dp wide from the screen side: tap its middle.
+  $ADB shell input tap $((EX < W / 2 ? 63 : W - 63)) "$EY"; sleep 2
+  check "tap on the edge tab shows the bubble again" "log | grep -q 'bubble shown from the edge'"
+  shot 04-bulle-reaffichee
+fi
 $ADB logcat -d > "$OUT/logcat.txt"
 }
 
