@@ -19,13 +19,13 @@ import androidx.core.graphics.withClip
 import androidx.core.graphics.withTranslation
 import tech.dmconsulting.voxbulle.R
 
-private fun View.dp(value: Float) = value * resources.displayMetrics.density
+internal fun View.dp(value: Float) = value * resources.displayMetrics.density
 
 /** CSS blur radius (2 sigma) to the Android BlurMaskFilter radius (sigma = 0.57735 r + 0.5). */
-private fun View.blur(cssDp: Float) = (dp(cssDp) / 2f - 0.5f).coerceAtLeast(0.5f) / 0.57735f
+internal fun View.blur(cssDp: Float) = (dp(cssDp) / 2f - 0.5f).coerceAtLeast(0.5f) / 0.57735f
 
 /** BlurMaskFilter needs a software layer before Android 9. */
-private fun View.allowBlur() {
+internal fun View.allowBlur() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 }
 

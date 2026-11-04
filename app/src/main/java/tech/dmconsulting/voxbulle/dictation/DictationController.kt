@@ -22,6 +22,23 @@ interface DictationRecorder {
     fun start(): RecordingError?
 
     fun stop()
+
+    /** Stops without a result and deletes the audio. */
+    fun cancel()
+}
+
+/** The panel next to the bubble (mockups 09 and 10). */
+sealed interface DictationPanel {
+    data object None : DictationPanel
+
+    /** « Je vous écoute », since [startedAtMs] on the elapsedMs clock. */
+    data class Listening(val startedAtMs: Long) : DictationPanel
+
+    /** « Je mets en texte… », after « Terminer ». */
+    data object Processing : DictationPanel
+
+    /** The final text, to correct, then « Valider » or « Refaire ». */
+    data class Suggestion(val text: String) : DictationPanel
 }
 
 /** What the user sees and gets at the end of a dictation. */
@@ -33,13 +50,16 @@ interface DictationOutput {
     fun notifyCopied(recordingMs: Long)
 
     fun showError(@StringRes message: Int)
+
+    fun showPanel(panel: DictationPanel)
 }
 
 /**
  * One dictation, from the bubble tap to the clipboard (brief § 3):
- * repos → écoute → traitement → texte prêt (or error) → repos. The bubble follows.
- * One dictation at a time: a tap while the text is processed does nothing.
- * The audio file is deleted after the transcription, success or not.
+ * repos → écoute → traitement → suggestion → texte prêt (or error) → repos. The bubble
+ * and the panel follow. « Terminer » is a tap on the bubble; « Annuler » deletes the audio.
+ * The bubble stays in « traitement » while the suggestion waits: a tap does nothing.
+ * One dictation at a time. The audio file is deleted after the transcription, success or not.
  */
 class DictationController(
     private val bubble: BubbleController,
@@ -51,6 +71,11 @@ class DictationController(
     private val elapsedMs: () -> Long,
     private val now: () -> Instant = Instant::now,
 ) {
+
+    /** The suggestion shown, with what [validate] needs. */
+    private var pending: Pending? = null
+
+    private class Pending(val stoppedAtMs: Long, val durationMs: Long)
 
     fun onTap() {
         when (bubble.tapAction()) {
@@ -67,6 +92,41 @@ class DictationController(
             return
         }
         bubble.setState(BubbleState.Listening)
+        output.showPanel(DictationPanel.Listening(elapsedMs()))
+    }
+
+    /** « Terminer »: same as a tap on the bubble while listening. */
+    fun finish() {
+        if (bubble.state == BubbleState.Listening) onTap()
+    }
+
+    /** « Annuler »: stops the recording, deletes the audio, back to rest. */
+    fun cancel() {
+        if (bubble.state != BubbleState.Listening) return
+        recorder.cancel()
+        output.showPanel(DictationPanel.None)
+        bubble.setState(BubbleState.Idle)
+    }
+
+    /** « Valider »: copies [text], the suggestion as the user corrected it. */
+    fun validate(text: String) {
+        val done = pending ?: return
+        pending = null
+        output.showPanel(DictationPanel.None)
+        output.copy(text, done.stoppedAtMs)
+        bubble.setState(BubbleState.Ready)
+        output.notifyCopied(done.durationMs)
+        val at = now()
+        scope.launch { history.add(Dictation(text, at)) }
+    }
+
+    /** « Refaire »: drops the suggestion and listens again. */
+    fun redo() {
+        if (pending == null) return
+        pending = null
+        output.showPanel(DictationPanel.None)
+        bubble.setState(BubbleState.Idle)
+        start()
     }
 
     /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
@@ -78,7 +138,10 @@ class DictationController(
         }
         when (outcome) {
             is RecordingOutcome.Failure -> fail(outcome.error.message)
-            RecordingOutcome.Cancelled -> bubble.setState(BubbleState.Idle)
+            RecordingOutcome.Cancelled -> {
+                output.showPanel(DictationPanel.None)
+                bubble.setState(BubbleState.Idle)
+            }
             is RecordingOutcome.Success -> process(outcome)
         }
     }
@@ -87,6 +150,7 @@ class DictationController(
         val stoppedAt = elapsedMs()
         val recording = outcome.result
         bubble.setState(BubbleState.Processing)
+        output.showPanel(DictationPanel.Processing)
         scope.launch {
             val result = try {
                 transcribe(recording.file)
@@ -96,17 +160,15 @@ class DictationController(
             when (result) {
                 is VoxtralResult.Failure -> fail(result.error.message)
                 is VoxtralResult.Success -> {
-                    val text = result.value.text
-                    output.copy(text, stoppedAt)
-                    bubble.setState(BubbleState.Ready)
-                    output.notifyCopied(recording.durationMs)
-                    history.add(Dictation(text, now()))
+                    pending = Pending(stoppedAt, recording.durationMs)
+                    output.showPanel(DictationPanel.Suggestion(result.value.text))
                 }
             }
         }
     }
 
     private fun fail(@StringRes message: Int) {
+        output.showPanel(DictationPanel.None)
         output.showError(message)
         bubble.setState(BubbleState.Error)
     }

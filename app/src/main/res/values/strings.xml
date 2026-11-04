@@ -127,4 +127,17 @@
     <string name="trial_raw">Vous avez dit (brut)</string>
     <string name="trial_clean">Texte Voxbulle</string>
     <string name="demo_mode_description">Mode démo : transcription simulée, rien n\'est envoyé.</string>
+    <!-- Panel next to the bubble: mockups 09 and 10, v1 without live text (DMC-234). -->
+    <string name="panel_listening">● Je vous écoute</string>
+    <string name="panel_processing">Je mets en texte…</string>
+    <string name="panel_suggestion">Suggestion</string>
+    <string name="panel_cancel">Annuler</string>
+    <string name="panel_finish">Terminer</string>
+    <string name="panel_redo">Refaire</string>
+    <string name="panel_validate">Valider</string>
+    <string name="panel_correct_hint">Touchez un mot pour le corriger.</string>
+    <string name="panel_validate_hint">« Valider » insère le texte dans le champ (ou le copie).</string>
+    <string name="panel_wave_description">Niveau du micro</string>
+    <string name="panel_elapsed_description">Durée de l\'enregistrement : %1$s</string>
+    <string name="toast_copied">Texte copié</string>
 </resources>

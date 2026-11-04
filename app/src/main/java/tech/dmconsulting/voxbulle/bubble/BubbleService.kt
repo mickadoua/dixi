@@ -29,10 +29,12 @@ import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.VoxbulleApp
 import tech.dmconsulting.voxbulle.dictation.DictationController
 import tech.dmconsulting.voxbulle.dictation.DictationOutput
+import tech.dmconsulting.voxbulle.dictation.DictationPanel
 import tech.dmconsulting.voxbulle.dictation.DictationRecorder
 import tech.dmconsulting.voxbulle.history.copyToClipboard
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.recording.Recorder
+import tech.dmconsulting.voxbulle.recording.RecorderState
 import tech.dmconsulting.voxbulle.recording.RecordingError
 import tech.dmconsulting.voxbulle.recording.formatDuration
 import tech.dmconsulting.voxbulle.ui.navigation.Screen
@@ -61,6 +63,8 @@ class BubbleService : Service(), DictationOutput {
                 override fun stop() {
                     recorder.stop()
                 }
+
+                override fun cancel() = recorder.cancel()
             },
             transcribe = app.container.transcription::run,
             history = app.container.history,
@@ -74,7 +78,8 @@ class BubbleService : Service(), DictationOutput {
     private var debugReceiver: BroadcastReceiver? = null
     private val levelRunnable = object : Runnable {
         override fun run() {
-            controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
+            // Only a real recording moves the wave: the debug proof sets its own levels.
+            if (recorder.state.value != RecorderState.Idle) controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
             handler.postDelayed(this, LEVEL_MS)
         }
     }
@@ -86,9 +91,15 @@ class BubbleService : Service(), DictationOutput {
         createChannels()
         recorder.onFinished = dictation::onRecordingFinished
         store = BubblePositionStore(this)
-        overlay = BubbleOverlay(this, controller, store, onTap = ::onBubbleTap, onHide = ::hide)
+        overlay = BubbleOverlay(
+            this, controller, store, onTap = ::onBubbleTap, onHide = ::hide,
+            onCancel = { dictation.cancel() },
+            onFinish = { dictation.finish() },
+            onRedo = { dictation.redo() },
+            onValidate = { dictation.validate(it) },
+        )
         controller.onStateChanged = ::onStateChanged
-        controller.onVoiceLevel = overlay::setVoiceLevel
+        controller.onVoiceLevel = { overlay.setVoiceLevel(it, SystemClock.elapsedRealtime()) }
         registerDebugReceiver()
     }
 
@@ -196,6 +207,10 @@ class BubbleService : Service(), DictationOutput {
         Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop")
     }
 
+    override fun showPanel(panel: DictationPanel) {
+        overlay.showPanel(panel, SystemClock.elapsedRealtime())
+    }
+
     override fun showError(message: Int) {
         Log.i(TAG, "dictation error: ${getString(message)}")
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -261,6 +276,10 @@ class BubbleService : Service(), DictationOutput {
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                if (intent.hasExtra("panel")) {
+                    showDebugPanel(intent)
+                    return
+                }
                 val state = intent.getStringExtra("state")?.let { name -> BubbleState.entries.find { it.name == name } }
                     ?: return
                 Log.i(TAG, "debug state $state")
@@ -272,6 +291,26 @@ class BubbleService : Service(), DictationOutput {
         }
         ContextCompat.registerReceiver(this, receiver, IntentFilter(ACTION_DEBUG_STATE), ContextCompat.RECEIVER_EXPORTED)
         debugReceiver = receiver
+    }
+
+    /**
+     * Debug proof: « panel » = Listening, Processing, Suggestion or None; « text » for the
+     * suggestion, « mark » to mark the word at that offset; « levels » (floats, 0 to 1) fill the wave.
+     */
+    private fun showDebugPanel(intent: Intent) {
+        val now = SystemClock.elapsedRealtime()
+        val panel = when (intent.getStringExtra("panel")) {
+            "Listening" -> DictationPanel.Listening(now - intent.getLongExtra("elapsedMs", 0))
+            "Processing" -> DictationPanel.Processing
+            "Suggestion" -> DictationPanel.Suggestion(intent.getStringExtra("text").orEmpty())
+            else -> DictationPanel.None
+        }
+        Log.i(TAG, "debug panel $panel")
+        if (panel is DictationPanel.Listening) controller.setState(BubbleState.Listening)
+        overlay.showPanel(panel, now)
+        intent.getFloatArrayExtra("levels")?.forEach { overlay.setVoiceLevel(it, now) }
+        val mark = intent.getIntExtra("mark", -1)
+        if (mark >= 0) overlay.markSuggestionWord(mark)
     }
 
     private fun createChannels() {

@@ -92,4 +92,22 @@ class BubbleGeometryTest {
         assertTrue(g.isOverHideTarget(180f + 48f, 600f, 180f, 600f, 48f))
         assertFalse(g.isOverHideTarget(180f + 35f, 600f + 35f, 180f, 600f, 48f)) // 49.5 px away
     }
+
+    @Test
+    fun thePanelSitsAboveTheBubbleWhenThereIsRoom() {
+        val g = BubbleGeometry(1080, 2400, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
+        assertEquals(1680 - 12 - 800, g.panelTop(bubbleY = 1680, panelHeight = 800, gap = 12))
+    }
+
+    @Test
+    fun thePanelGoesBelowABubbleNearTheTop() {
+        val g = BubbleGeometry(1080, 2400, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
+        assertEquals(300 + 168 + 12, g.panelTop(bubbleY = 300, panelHeight = 800, gap = 12))
+    }
+
+    @Test
+    fun aPanelTooTallForBothSidesStaysOnScreen() {
+        val g = BubbleGeometry(1080, 1200, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
+        assertEquals(1200 - 144 - 24 - 900, g.panelTop(bubbleY = 400, panelHeight = 900, gap = 12))
+    }
 }
