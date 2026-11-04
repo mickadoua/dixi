@@ -6,11 +6,11 @@ import tech.dmconsulting.voxbulle.settings.DictationLanguage
 
 /**
  * Answers [result] after [delayMs] without any network call. Used in tests and
- * whenever the build has no Mistral key.
+ * whenever the build has no Mistral key (« Mode démo »).
  */
 class FakeTranscriber(
     private val result: VoxtralResult<String> = VoxtralResult.Success(SAMPLE_RAW_TEXT),
-    private val delayMs: Long = 0,
+    private val delayMs: Long = DEFAULT_DELAY_MS,
 ) : Transcriber {
     /** Audio files received, in order: lets tests check what was sent. */
     val received = mutableListOf<File>()
@@ -22,6 +22,9 @@ class FakeTranscriber(
     }
 
     companion object {
+        /** Roughly what a short real dictation takes, so the « Traitement » state shows. */
+        const val DEFAULT_DELAY_MS = 1_500L
+
         /** Fictitious sample, never shipped as real content. */
         const val SAMPLE_RAW_TEXT = "bonjour euh ceci est un texte de test voxbulle"
     }
