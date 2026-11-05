@@ -327,6 +327,7 @@ Mesures réelles du 03/11 (N100, KVM, démarrage à froid, `-wipe-data`) :
 
 - **RAM de `phone`** : l'émulateur passe toute image téléphone API 36 à 4 Go (« Increasing RAM size to 4096MB »), quel que soit l'écran (8 appareils essayés, de 720×1280 à 1080×2400) et même avec `-memory 2048`. Ni la fonction AVF ni `advancedFeatures.ini` n'y changent rien. La RAM de chaque profil reste donc celle de son `config.ini` (2 Go pour `tv`).
 - **Plafond du conteneur** : 4,4 Go de qemu dans un plafond de 5 Go laissent peu de marge à `phone` pendant un test. Demande à Micka : passer `mem_limit` de `android-emu` à 6 Go (10,4 Go libres sur l'hôte le 03/11).
+- **« Prêt »** (DMC-294, 05/11) : le superviseur attend `sys.boot_completed=1` **et** `sys.user.0.ce_available=true`, dans le même délai de démarrage (300 s, `EMU_BOOT_TIMEOUT`). Juste après `sys.boot_completed`, l'utilisateur 0 n'est pas encore déverrouillé : écran noir et `com.android.phone` qui redémarre toutes les 30 s. Même règle avant la prise du snapshot propre. Le temps noté dans `metrics.csv` compte cette attente.
 - `emu-start` attend que l'appareil réponde aussi par `tcp:android-emu:5037` (60 s au plus, `EMU_CLIENT_WAIT`) avant de rendre la main : juste après le démarrage, un premier essai sur `tv` avait reçu « device not found ».
 
 **Agent : toujours `emu-run`.** Il demande l'émulateur, lance la commande, puis le rend, même si la commande échoue ou est interrompue. La commande voit `ADB_SERVER_SOCKET=tcp:android-emu:5037` et `ANDROID_SERIAL=emulator-5554` : `adb` sans `-s` vise l'émulateur.
