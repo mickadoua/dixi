@@ -5,6 +5,7 @@ import java.io.File
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleController
@@ -48,6 +49,12 @@ interface DictationOutput {
     /** Puts [text] in the clipboard. [stoppedAtMs]: end of the recording, on the elapsedMs clock. */
     fun copy(text: String, stoppedAtMs: Long)
 
+    /**
+     * Auto-paste (DMC-141): pastes the clipboard into the focused field of the app below.
+     * False when the option is off or the paste missed: the caller falls back to [notifyCopied].
+     */
+    suspend fun paste(): Boolean
+
     /** « Texte copié », with the length of the recording. */
     fun notifyCopied(recordingMs: Long)
 
@@ -57,7 +64,7 @@ interface DictationOutput {
 }
 
 /**
- * One dictation, from the bubble tap to the clipboard (brief § 3):
+ * One dictation, from the bubble tap to the clipboard, or the focused field with auto-paste (brief § 3):
  * repos → écoute → traitement → suggestion → texte prêt (or error) → repos. The bubble
  * and the panel follow. « Terminer » is a tap on the bubble; « Annuler » deletes the audio.
  * The bubble stays in « traitement » while the suggestion waits: a tap does nothing.
@@ -110,15 +117,29 @@ class DictationController(
         bubble.setState(BubbleState.Idle)
     }
 
-    /** « Valider »: copies [text], the suggestion as the user corrected it. A blank text does nothing. */
+    /**
+     * « Valider »: copies [text], the suggestion as the user corrected it, then pastes it if
+     * auto-paste is on; « Texte copié » only when it was not pasted. A blank text does nothing.
+     * The bubble stays in « traitement » during the paste (about 1 s at most).
+     */
     fun validate(text: String) {
         if (text.isBlank()) return
         val done = pending ?: return
         pending = null
         output.showPanel(DictationPanel.None)
         output.copy(text, done.stoppedAtMs)
-        bubble.setState(BubbleState.Ready)
-        output.notifyCopied(done.durationMs)
+        // Undispatched: with auto-paste off, the end is immediate, as before DMC-141.
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val pasted = try {
+                output.paste()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            }
+            bubble.setState(BubbleState.Ready)
+            if (!pasted) output.notifyCopied(done.durationMs)
+        }
         val at = now()
         scope.launch {
             try {

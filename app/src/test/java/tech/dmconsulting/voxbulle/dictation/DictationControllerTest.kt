@@ -1,7 +1,9 @@
 package tech.dmconsulting.voxbulle.dictation
 
 import java.time.Instant
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,6 +62,15 @@ class DictationControllerTest {
         val errors = mutableListOf<Int>()
         val panels = mutableListOf<DictationPanel>()
         var suggestedAt = -1L
+        var pastes = 0
+        var pasteMs = 0L
+        var pasteResult: () -> Boolean = { false }
+
+        override suspend fun paste(): Boolean {
+            pastes++
+            if (pasteMs > 0) delay(pasteMs)
+            return pasteResult()
+        }
 
         override fun copy(text: String, stoppedAtMs: Long) {
             texts += text
@@ -394,4 +405,79 @@ class DictationControllerTest {
         assertEquals(R.string.error_recording_failed, RecordingError.StartFailed.message)
     }
 
+
+    private fun suggestion(): String {
+        recorder.nextOutcome = recorded()
+        controller.onTap()
+        controller.onTap()
+        scope.advanceUntilIdle()
+        return (output.panels.last() as DictationPanel.Suggestion).text
+    }
+
+    @Test
+    fun autoPasteOffEndsRightAway() {
+        val text = suggestion()
+        controller.validate(text)
+
+        assertEquals(1, output.pastes)
+        assertEquals(BubbleState.Ready, states.last())
+        assertEquals(listOf(4_000L), output.notified)
+    }
+
+    @Test
+    fun pastedTextIsCopiedTooButNotNotified() {
+        output.pasteResult = { true }
+        val text = suggestion()
+        controller.validate(text)
+        scope.advanceUntilIdle()
+
+        assertEquals("copied first: the paste takes it from the clipboard", listOf(text), output.texts)
+        assertEquals(BubbleState.Ready, states.last())
+        assertTrue("« Texte copié » only when not pasted", output.notified.isEmpty())
+        assertEquals(listOf(text), history.entries.value.map { it.text })
+    }
+
+    @Test
+    fun bubbleStaysProcessingWhileItPastes() {
+        output.pasteMs = 1_000
+        output.pasteResult = { true }
+        val text = suggestion()
+        controller.validate(text)
+        scope.runCurrent()
+
+        assertEquals(BubbleState.Processing, states.last())
+        assertEquals(DictationPanel.None, output.panels.last())
+        controller.onTap()
+        assertEquals("a tap does nothing during the paste", 1, recorder.starts)
+
+        scope.advanceUntilIdle()
+        assertEquals(BubbleState.Ready, states.last())
+        assertTrue(output.notified.isEmpty())
+    }
+
+    @Test
+    fun missedPasteFallsBackToTheCopiedNotification() {
+        output.pasteMs = 1_000
+        output.pasteResult = { false }
+        val text = suggestion()
+        controller.validate(text)
+        scope.runCurrent()
+        assertTrue("not before the paste is tried", output.notified.isEmpty())
+
+        scope.advanceUntilIdle()
+        assertEquals(listOf(text), output.texts)
+        assertEquals(BubbleState.Ready, states.last())
+        assertEquals(listOf(4_000L), output.notified)
+    }
+
+    @Test
+    fun failingPasteFallsBackToTheCopiedNotification() {
+        output.pasteResult = { throw IllegalStateException("settings unreadable") }
+        val text = suggestion()
+        controller.validate(text)
+        scope.advanceUntilIdle()
+
+        assertEquals(BubbleState.Ready, states.last())
+        assertEquals(listOf(4_000L), output.notified)
+    }
 }
