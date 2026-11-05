@@ -97,6 +97,9 @@ chmod +x "$F/emulator/emulator" "$F/emulator/qemu/linux-x86_64/qemu-system-x86_6
 export ANDROID_HOME="$F" EMU_AVD_DIR="$W/avd" EMU_CTL="$W/ctl" EMU_DATA="$W/data" EMU_LIBS="$W/libs" \
   EMU_ADB_HOST=127.0.0.1 EMU_ADB_PORT=5639 FAKE_DIR="$W" PAPERCLIP_AGENT_ID=agent-A PAPERCLIP_TASK_ID=task-1 \
   ADB_SERVER_SOCKET=tcp:adb:5037
+# Charge de l'hôte simulée (DMC-285) : les tests ne dépendent pas de la charge réelle.
+export EMU_LOADAVG="$W/loadavg"
+echo "0.50 0.50 0.50 1/100 1" >"$W/loadavg"
 # shellcheck source=emu-lib.sh
 . "$here/emu-lib.sh"
 set +e
@@ -662,6 +665,54 @@ reset
 "$here/emu-run" phone --boot snapshot -- true 2>/dev/null
 check "snapshot : réglage retiré : à froid" 'grep -q -- "-wipe-data" "$W/emulator.args"'
 check "snapshot : tout arrêté" wait_clean
+
+# 33. Charge de l'hôte (DMC-285) : au-dessus d'EMU_MAX_LOAD (12), refus (76)
+#     sans rien démarrer ; à 12 ou moins, démarrage comme avant. Un client en
+#     file n'est jugé qu'à son tour, émulateur libre.
+load() { echo "$1 9.00 8.00 3/400 999" >"$W/loadavg"; }
+queue_tickets() { ls "$W/ctl/queue" 2>/dev/null | grep -v '^parked-'; }
+reset
+load 15.00
+rm -f "$W/emulator.args" "$W/ran33"
+n0=$(ls "$W/ctl/results" | wc -l)
+"$here/emu-run" phone -- touch "$W/ran33" 2>"$W/err33"; rc=$?
+check "charge : 15 > 12 : code 76, message en une ligne" '[ $rc = 76 ] && [ "$(cat "$W/err33")" = "emu-start: Hôte chargé (charge 15.00 > 12) : réessaie plus tard" ]'
+check "charge : 15 : ni émulateur ni commande, rien laissé" '[ ! -e "$W/emulator.args" ] && [ ! -e "$W/ran33" ] && [ ! -e "$W/ctl/session" ] && [ "$(ls "$W/ctl/results" | wc -l)" = "$n0" ] && [ -z "$(queue_tickets)" ]'
+load 12.01
+"$here/emu-start" phone --wait-lock 5 2>"$W/err33"; rc=$?
+check "charge : 12,01 : refusé aussi par emu-start, sans attendre le délai" '[ $rc = 76 ] && grep -q "charge 12.01 > 12" "$W/err33" && [ ! -e "$W/emulator.args" ] && [ -z "$(queue_tickets)" ]'
+load 3.00
+"$here/emu-run" phone -- touch "$W/ran33" 2>/dev/null; rc=$?
+check "charge : 3 : démarrage comme avant" '[ $rc = 0 ] && [ -e "$W/emulator.args" ] && [ -e "$W/ran33" ] && wait_clean'
+reset
+load 12.00
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "charge : 12,00 (pas au-dessus) : démarrage" '[ $rc = 0 ] && wait_clean'
+reset
+load 15.00
+EMU_MAX_LOAD=20 "$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "charge : EMU_MAX_LOAD=20 : 15 passe" '[ $rc = 0 ] && wait_clean'
+reset
+EMU_LOADAVG="$W/absent" "$here/emu-run" phone -- true 2>"$W/err33"; rc=$?
+check "charge : fichier illisible : démarrage, sans message parasite" '[ $rc = 0 ] && ! grep -q "absent\|loadavg" "$W/err33" && wait_clean'
+# En file : la charge monte pendant que A tient l'émulateur. B attend sans
+# être refusé, puis est refusé à son tour, sans qu'aucun émulateur démarre pour lui.
+reset
+load 3.00
+rm -f "$W/ran33b"
+"$here/emu-run" phone -- sleep 4 2>/dev/null &
+qa=$!
+wait_ready
+starts=$(wc -l <"$W/emulator.all")
+load 25.00
+PAPERCLIP_AGENT_ID=agent-B "$here/emu-run" phone --wait-lock 60 -- touch "$W/ran33b" 2>"$W/err33b" &
+qb=$!
+sleep 1.5
+check "charge : en file, pas refusé tant que l'émulateur est pris" 'kill -0 $qb 2>/dev/null && [ -n "$(queue_tickets)" ]'
+wait "$qa"; ra=$?; wait "$qb"; rb=$?
+check "charge : A finit normalement" '[ $ra = 0 ]'
+check "charge : B refusé à son tour (76), rien démarré pour lui, ticket retiré" '[ $rb = 76 ] && grep -q "charge 25.00 > 12" "$W/err33b" && [ ! -e "$W/ran33b" ] && [ "$(wc -l <"$W/emulator.all")" = "$starts" ] && [ -z "$(queue_tickets)" ] && wait_clean'
+load 0.50
 
 stop_sup
 echo "---"

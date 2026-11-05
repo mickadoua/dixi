@@ -390,6 +390,7 @@ Règles tenues :
   - s'il existe déjà : code 75, avec le profil, l'agent et la tâche propriétaires, ou attente avec `--wait-lock <s>` ;
   - **file d'attente par ordre d'arrivée** (DMC-168) : avec `--wait-lock`, le client dépose un ticket `/opt/android-emu/queue/<arrivée en µs>-<id>`, réécrit chaque seconde, et seul le plus ancien ticket vivant prend l'émulateur. Celui qui vient de le rendre repasse derrière ceux qui attendaient ; un client sans `--wait-lock` est refusé (75) tant que quelqu'un attend. Un ticket muet depuis 15 s (client tué) est ignoré puis retiré ;
   - délai écoulé : le rang est mis de côté (`queue/parked-<run>`) ; le même run Paperclip qui redemande dans les 5 minutes garde sa place ;
+  - **charge de l'hôte** (DMC-285) : au moment de prendre l'émulateur, `emu-start` lit la charge sur 1 minute (`/proc/loadavg`, `EMU_LOADAVG` dans les tests). Au-dessus de `EMU_MAX_LOAD` (12 par défaut, 12,00 passe), refus en code 76 avec « Hôte chargé (charge X > 12) : réessaie plus tard », sans rien démarrer ; `emu-run` rend ce code tel quel. Raison : le 04/11, avec une charge de 27 à 45, le démarrage de `phone` est passé de 91 à 256 s et 5 démarrages sur 15 ont échoué au délai de 300 s, chacun relançant un démarrage complet. Un client en file n'est jugé qu'à son tour et émulateur libre : la charge due à l'émulateur en cours ne le fait pas refuser, et un refus le retire de la file sans garder son rang. Fichier illisible : pas de refus. Les plafonds par session (30 minutes, bail de 90 s d'`emu-run`) ne changent pas ;
   - le superviseur ne fait tourner qu'un émulateur.
 - **Toujours arrêté** :
   - `adb emu kill`, puis TERM, puis KILL sur tout le groupe de processus de l'émulateur ;
@@ -403,6 +404,7 @@ Règles tenues :
   - `emu-renew --id` : nouveau bail de 10 à 600 s, même agent et même run seulement (DMC-174) ;
   - dans tous les cas, 30 minutes au plus par session.
 - **Sans KVM** : refus immédiat (code 4).
+- **Hôte chargé** : refus immédiat (code 76), voir « Un seul à la fois ». L'agent pose une attente datée d'une heure au lieu de réessayer.
 - **Plafonds** : 5 Go de RAM (6 Go demandés, voir plus haut) et 3 cœurs pour le conteneur `android-emu` ; au-delà, seul ce conteneur est touché.
 - **Mesures** : à chaque démarrage, le temps de démarrage et la RAM du qemu sont affichés et ajoutés à `/opt/android-emu/metrics.csv` (`date,profil,secondes,Mo,mode` ; mode `cold`, `snapshot` ou `fallback` depuis DMC-174, absent avant).
 - **Comptes rendus** : `/opt/android-emu/results/<id>` (résultat, code, fin du journal de l'émulateur en cas d'échec), gardés un jour. Émulateur arrêté seul : le message donne aussi le code du lanceur et, si le compteur `oom_kill` du cgroup du conteneur a bougé pendant la session, « tué faute de mémoire » avec le plafond (DMC-168).
@@ -418,4 +420,4 @@ Durée : `--wait-lock` + démarrage (jusqu'à 330 s) + attente réseau (jusqu'à
 
 Bibliothèques : le qemu headless a besoin de `libX11` et de ses dépendances. Le bac à sable des agents les a, l'image du conteneur non : `sdk-sync.sh` compte comme manquante toute bibliothèque résolue hors du SDK et de `emulator-libs`, sauf la glibc et `libgcc_s`. Il les extrait des paquets Debian trixie (signatures vérifiées) dans `/opt/android/emulator-libs`, et le superviseur les ajoute à `LD_LIBRARY_PATH`. Le rendu charge aussi `libX11-xcb` à l'exécution (`dlopen`), que `ldd` ne voit pas : elle est listée dans `EMULATOR_DLOPEN_LIBS`, et `sdk-sync.sh` vérifie sa présence (premier démarrage du 03/11 : arrêt sur cette bibliothèque, corrigé sans intervention sur l'hôte).
 
-Tests : `admin/emu/tests/test-emu.sh <dossier-temporaire>` copie les scripts et lance le superviseur avec un faux émulateur et un faux adb, sans KVM : 133 contrôles, environ 8 min.
+Tests : `admin/emu/tests/test-emu.sh <dossier-temporaire>` copie les scripts et lance le superviseur avec un faux émulateur et un faux adb, sans KVM : 143 contrôles, environ 7 à 8 min. La charge y est simulée (`EMU_LOADAVG`) : la charge réelle du NAS ne change pas le résultat, mais ne lancer la suite que sous 12.

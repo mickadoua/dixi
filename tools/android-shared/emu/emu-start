@@ -14,8 +14,12 @@
 # --boot (DMC-174) : snapshot = charger le snapshot propre si le profil le
 #   permet (sinon à froid) ; cold = toujours à froid. Sans l'option : réglage
 #   du profil (/opt/android/emu-snapshot.conf).
+# Charge de l'hôte (DMC-285) : au moment de prendre l'émulateur, si la charge
+#   sur 1 minute dépasse EMU_MAX_LOAD (12 par défaut), refus (76) sans rien
+#   démarrer. Un client en file n'est jugé qu'à son tour, émulateur libre.
 # Codes : 0 prêt ; 2 usage ; 4 KVM absent ; 69 conteneur android-emu absent ;
 #         75 un autre émulateur tourne (ou maintenance du SDK) ;
+#         76 hôte chargé : réessayer dans une heure ;
 #         1 démarrage en échec (tout est déjà arrêté et nettoyé).
 EMU_CMD=emu-start
 # shellcheck source=emu-lib.sh
@@ -50,6 +54,21 @@ emu_valid_profile "$profile" ||
 [ "$lease" -ge 10 ] && [ "$lease" -le "$EMU_MAX_SECONDS" ] || emu_die 2 "--lease entre 10 et $EMU_MAX_SECONDS s."
 [ -d "$EMU_CTL" ] && [ -w "$EMU_CTL" ] || emu_die 69 "$EMU_CTL absent ou en lecture seule (montage manquant)."
 emu_supervisor_alive || emu_die 69 "le conteneur android-emu ne répond pas (superviseur arrêté) : signaler à Sacha."
+
+# Charge de l'hôte (DMC-285) : un démarrage sur un NAS chargé dépasse le délai
+# de démarrage et relance un démarrage complet, qui le charge encore (04/11 :
+# charge 27 à 45, 5 échecs sur 15). Fichier illisible : pas de refus.
+: "${EMU_LOADAVG:=/proc/loadavg}"
+[[ "${EMU_MAX_LOAD:-}" =~ ^[0-9]+$ ]] || EMU_MAX_LOAD=12
+check_load() {
+  local load int frac
+  read -r load _ 2>/dev/null <"$EMU_LOADAVG" || return 0
+  [[ "$load" =~ ^([0-9]+)(\.([0-9]+))?$ ]] || return 0
+  int=$((10#${BASH_REMATCH[1]})) frac=${BASH_REMATCH[3]:-0}
+  if [ "$int" -gt "$EMU_MAX_LOAD" ] || { [ "$int" -eq "$EMU_MAX_LOAD" ] && [[ "$frac" =~ [1-9] ]]; }; then
+    emu_die 76 "Hôte chargé (charge $load > $EMU_MAX_LOAD) : réessaie plus tard"
+  fi
+}
 
 # File d'attente (DMC-168) : chaque client qui attend dépose un ticket
 # queue/<arrivée en µs>-<id>, réécrit à chaque tour. Seul le plus ancien ticket
@@ -127,8 +146,11 @@ while :; do
   [ "$queued" = 0 ] || refresh_ticket
   live=$(queue_live)
   head=${live%%$'\n'*}
-  if { [ -z "$head" ] || [ "$head" = "$ticket_name" ]; } && mkdir "$EMU_SESSION" 2>/dev/null; then
-    break
+  if [ -z "$head" ] || [ "$head" = "$ticket_name" ]; then
+    # Notre tour et l'émulateur libre : la charge ne vient pas d'un émulateur
+    # en cours. Refus = départ de la file, sans garder le rang.
+    [ -e "$EMU_SESSION" ] || check_load
+    mkdir "$EMU_SESSION" 2>/dev/null && break
   fi
   # Tickets arrivés avant le nôtre.
   # shellcheck disable=SC2086 # noms sans espace : un mot par ticket
