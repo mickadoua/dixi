@@ -49,7 +49,7 @@
     <string name="bubble_enabled_title">La bulle est prête</string>
     <string name="bubble_enabled_body">Ouvrez WhatsApp ou vos mails, touchez la bulle, parlez.</string>
     <string name="bubble_enabled_note">Le texte est copié. Une notification vous le confirme.</string>
-    <string name="bubble_enabled_notifications_off">Notifications désactivées : le texte est copié sans confirmation.</string>
+    <string name="bubble_enabled_notifications_off">Notifications désactivées : le texte est quand même copié.</string>
     <string name="bubble_enabled_finish">Terminer</string>
     <string name="bubble_enabled_auto_paste">Activer le collage automatique</string>
 
