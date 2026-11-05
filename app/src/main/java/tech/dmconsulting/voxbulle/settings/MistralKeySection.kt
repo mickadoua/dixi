@@ -50,7 +50,7 @@ val KeyStatus.label: Int
     }
 
 /**
- * Screen 10, « Clé API Mistral » (DMC-227): paste, save, test, delete. Only the
+ * Screen 10, body of the « Clé API Mistral » section (DMC-227): paste, save, test, delete. Only the
  * [KeyStatus] is shown, never the key or its first characters.
  */
 @Composable
@@ -103,14 +103,10 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+            .padding(horizontal = Dimens.ListMargin, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            stringResource(R.string.key_section),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        // The « Clé API Mistral » heading is the screen's section label (neon charter).
         Text(
             stringResource(status.label),
             style = MaterialTheme.typography.bodyLarge,

@@ -1,6 +1,6 @@
 <resources>
-    <!-- Window behind Compose: charter surface, so no white flash in dark mode. -->
-    <style name="Theme.Voxbulle" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- Window behind Compose: neon charter bg, dark only (DMC-213), so no white flash. -->
+    <style name="Theme.Voxbulle" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/surface</item>
     </style>
 </resources>

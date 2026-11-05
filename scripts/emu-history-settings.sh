@@ -149,11 +149,11 @@ waitfor
 shot 10-language-dialog-light
 tap "English" "346 1351"
 dump; grep -o 'text="English"' "$OUT/ui.xml" | head -1 | sed 's/^/language row: /'
-tap "Bulle flottante" "360 420"
+tap "Afficher la bulle" "360 420"
 sleep 2
 $ADB shell dumpsys activity services $PKG | grep -c 'BubbleService' | sed 's/^/bubble service records: /'
 shot 10-bubble-on-light
-tap "Bulle flottante" "360 420"
+tap "Afficher la bulle" "360 420"
 sleep 2
 $ADB shell dumpsys activity services $PKG | grep -c 'BubbleService' | sed 's/^/bubble service records after off: /'
 $ADB shell am force-stop $PKG

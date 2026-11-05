@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Emulator proof for the « Clé API Mistral » section of screen 10 (DMC-227), light then dark:
+# Emulator proof for the « Clé API Mistral » section of screen 10 (DMC-227), dark neon theme:
 # no key, key saved, key refused (a fake key: « Tester la clé » gets 401 from Mistral).
 # Also checks: key kept encrypted across a restart, never in logcat nor the UI tree,
 # key file excluded from backups.
 #   emu-run phone --wait-lock 120 -- bash scripts/emu-mistral-key.sh <out-dir> [apk]
-# MODES="dark" runs one theme only (shorter session when the shared emulator is busy).
+# One dark theme since the neon charter (DMC-226): MODES="light dark" is no longer needed.
 # Never use a real key here: FAKE_KEY below is not one.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
@@ -15,6 +15,13 @@ FAKE_KEY=fausse-cle-de-preuve-0000000000
 mkdir -p "$OUT"
 shot() { dump; $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(stat -c %s "$OUT/$1.png") bytes)"; }
 open() { $ADB shell am start -S -W -n $PKG/.MainActivity "$@" >/dev/null; waitfor; }
+# Screen 10 scrolls: swipe up until the key section's « Tester la clé » button is on screen.
+to_key() {
+    for i in 1 2 3 4 5; do
+        has 'text="Tester la clé"' && return 0
+        $ADB shell input swipe 540 1600 540 700 400; sleep 2
+    done
+}
 night() { $ADB shell cmd uimode night "$1" >/dev/null; sleep 3; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 waitfor() {
@@ -131,10 +138,10 @@ night no
 open --es screen Settings
 shot warmup
 
-for mode in ${MODES:-light dark}; do
+for mode in ${MODES:-dark}; do
     [ $mode = dark ] && night yes || night no
     $ADB shell run-as $PKG rm -rf no_backup
-    open --es screen Settings
+    open --es screen Settings; to_key
     status "$mode no key"; shot "$mode-1-aucune-cle"
     save_fake_key
     status "$mode saved"; shot "$mode-2-cle-enregistree"
@@ -143,7 +150,7 @@ for mode in ${MODES:-light dark}; do
     test_key
     status "$mode refused"; shot "$mode-3-cle-refusee"
     # Restart: the status comes back from the files (Keystore decrypts on the next dictation).
-    open --es screen Settings
+    open --es screen Settings; to_key
     status "$mode after restart"
 done
 

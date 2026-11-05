@@ -31,8 +31,8 @@
     <string name="history_open_settings">Réglages</string>
 
     <!-- Screen 10, settings. -->
-    <string name="settings_bubble">Bulle flottante</string>
-    <string name="settings_bubble_summary">Afficher par-dessus les autres apps</string>
+    <string name="settings_bubble">Afficher la bulle</string>
+    <string name="settings_bubble_summary">Par-dessus vos autres apps</string>
     <string name="settings_auto_paste">Collage automatique</string>
     <string name="settings_auto_paste_summary">Accessibilité · désactivé</string>
     <string name="settings_language">Langue</string>
@@ -46,13 +46,56 @@
     <string name="settings_about">À propos</string>
     <string name="settings_about_summary">Version %1$s</string>
 
+    <!-- Main screen, neon mockup 05 (DMC-213). -->
+    <string name="screen_home">Accueil</string>
+    <string name="screen_offer">Offre</string>
+    <string name="home_bubble_on">● Bulle active</string>
+    <string name="home_bubble_off">Bulle désactivée</string>
+    <string name="home_bubble_on_body">Prête à dicter dans toutes vos apps</string>
+    <string name="home_bubble_off_body">Activez-la pour dicter dans toutes vos apps</string>
+    <string name="home_dictate_title">Touchez, parlez</string>
+    <string name="home_dictate_body">Essayez ici, ou depuis la bulle dans n\'importe quelle app.</string>
+    <string name="home_dictate_action">Dicter</string>
+    <string name="home_last_dictation">Dernière dictée</string>
+
+    <!-- Onboarding screen 1, neon mockup 08. -->
+    <string name="welcome_tagline">Parlez, c\'est écrit proprement. Dans toutes vos apps.</string>
+    <string name="welcome_no_account">Pas de compte à créer.</string>
+    <string name="welcome_start">Commencer</string>
+    <string name="welcome_step">Étape %1$d sur %2$d</string>
+
+    <!-- Offers, neon mockups 06 and 07: slots only, no price before the founder decides. -->
+    <string name="offer_your_offer">Ton offre</string>
+    <string name="offer_free">Gratuite</string>
+    <string name="offer_current">Offre actuelle</string>
+    <string name="offer_upgrade">Passer à l\'offre payante</string>
+    <string name="offer_label">Changer d\'offre</string>
+    <string name="offer_title">Choisissez votre offre</string>
+    <string name="offer_paid">Payante</string>
+    <string name="offer_paid_name">Nom à définir</string>
+    <string name="offer_slot_free_features">[EMPLACEMENT · contenu à définir par le fondateur : fonctions incluses]</string>
+    <string name="offer_slot_paid_features">[EMPLACEMENT · contenu à définir : fonctions payantes]</string>
+    <string name="offer_slot_price">[EMPLACEMENT · prix : aucun montant avant décision du fondateur]</string>
+    <string name="offer_mockup_note">MAQUETTE · contenus factices, parcours de paiement non défini</string>
+
+    <!-- Settings sections, neon mockup 06. -->
+    <string name="settings_section_bubble">Bulle</string>
+    <string name="settings_hide_mode">Masquer la bulle</string>
+    <string name="settings_hide_mode_summary">Liseré au bord, ou notification</string>
+    <string name="settings_hide_mode_edge">Liseré</string>
+    <string name="settings_hide_mode_notification">Notification</string>
+    <string name="settings_section_dictation">Dictée</string>
+    <string name="settings_section_other">Données et infos</string>
+
     <!-- Bubble and dictation (PoC, DMC-129). -->
     <string name="bubble_idle">Voxbulle, prêt à dicter</string>
     <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
     <string name="bubble_processing">Voxbulle, transcription en cours</string>
     <string name="bubble_ready">Voxbulle, texte copié</string>
     <string name="bubble_hide_zone">Masquer la bulle</string>
+    <string name="bubble_hide_zone_label">Lâchez ici pour masquer</string>
     <string name="bubble_action_hide">Masquer la bulle</string>
+    <string name="bubble_edge">Afficher la bulle</string>
     <string name="channel_bubble">Bulle</string>
     <string name="notif_bubble_hidden_title">Bulle masquée</string>
     <string name="notif_bubble_hidden_body">Touchez pour afficher la bulle.</string>
