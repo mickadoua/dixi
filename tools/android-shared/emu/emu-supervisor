@@ -322,6 +322,29 @@ make_avd() {
     printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android\n' "$1/$profile.avd" >"$1/$profile.ini"
 }
 
+# AVD de la session chargée depuis le snapshot : l'émulateur écrit dans les
+# images .qcow2 de l'AVD même en -read-only (05/11 : encryptionkey.img.qcow2 et
+# userdata-qemu.img.qcow2 du snapshot modifiés par une session, donc invalidé).
+# La session a ses propres copies des .qcow2 et des petits fichiers hors .img
+# (dates gardées) ; le reste (images brutes .img, dossier snapshots), lu
+# seulement, est un lien vers le snapshot. golden_check_intact vérifie toujours à l'arrêt.
+make_snap_avd() {
+  local src=$GOLDEN/$profile/avd/$profile.avd dst=$RUN/avd f n t
+  mkdir -p "$dst/$profile.avd" "$UHOME/.android" || return 1
+  printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android\n' "$dst/$profile.avd" >"$dst/$profile.ini" || return 1
+  t=$EPOCHSECONDS
+  for f in "$src"/*; do
+    [ -e "$f" ] || continue
+    n=${f##*/}
+    if [[ "$n" == *.qcow2 ]] || { [[ "$n" != *.img ]] && [ -f "$f" ] && [ "$(stat -c %s -- "$f")" -lt 1048576 ]; }; then
+      cp --reflink=auto -p -- "$f" "$dst/$profile.avd/$n" || return 1
+    else
+      ln -s -- "$f" "$dst/$profile.avd/$n" || return 1
+    fi
+  done
+  log "session $id : copies du snapshot prêtes en $((EPOCHSECONDS - t)) s ($(du -smc "$dst/$profile.avd"/*.qcow2 2>/dev/null | tail -n 1 | cut -f1) Mo de .qcow2)"
+}
+
 # Lance le serveur adb et l'émulateur de $profile sur les AVD de <dossier>.
 # <cold> : à froid, données remises à zéro ; <snapshot> : chargement du
 # snapshot propre, en lecture seule (les écritures vont dans des copies
@@ -366,7 +389,7 @@ start_emulator() {
   fi
   kill_strays
   rm -rf -- "$RUN"
-  if ! { mkdir -p "$RUN" && { [ "$boot" = snapshot ] || make_avd "$RUN/avd"; }; }; then
+  if ! { mkdir -p "$RUN" && if [ "$boot" = snapshot ]; then make_snap_avd; else make_avd "$RUN/avd"; fi; }; then
     write_result "$id" failed 1 "impossible de préparer $RUN (disque plein ?)."
     rm -rf -- "$RUN"
     drop_own_session
@@ -376,7 +399,7 @@ start_emulator() {
   [ "${1:-0}" = 1 ] || t0=$EPOCHSECONDS
   tb=$EPOCHSECONDS
   if [ "$boot" = snapshot ]; then
-    launch_emulator "$GOLDEN/$profile/avd" snapshot
+    launch_emulator "$RUN/avd" snapshot
   else
     launch_emulator "$RUN/avd" cold
   fi

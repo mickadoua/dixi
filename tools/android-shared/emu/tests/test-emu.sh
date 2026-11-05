@@ -41,7 +41,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 d=$ANDROID_AVD_HOME/$avd.avd
-[ "$wipe" = 0 ] || echo data > "$d/userdata-qemu.img"
+[ "$wipe" = 0 ] || { echo data > "$d/userdata-qemu.img"; echo q > "$d/userdata-qemu.img.qcow2"; }
 if [ "$force" = 1 ] && { [ ! -d "$d/snapshots/$snap" ] || [ -e "$FAKE_DIR/load-fail" ]; }; then
   echo "ERROR | Snapshot '$snap' can not be loaded"; exit 1
 fi
@@ -49,7 +49,9 @@ if [ "$ro" = 1 ]; then touch "$FAKE_DIR/ro-boot"; else rm -f "$FAKE_DIR/ro-boot"
 if [ "$ro" = 1 ]; then
   echo overlay > "$TMPDIR/userdata-qemu.img.qcow2"
   [ ! -e "$FAKE_DIR/write-golden" ] || echo dirty >> "$d/userdata-qemu.img"
-  # Comme le vrai émulateur (05/11) : description du snapshot réécrite au chargement.
+  # Comme le vrai émulateur (05/11) : écritures dans le .qcow2 de l'AVD malgré -read-only.
+  [ ! -e "$FAKE_DIR/write-qcow2" ] || echo session >> "$d/userdata-qemu.img.qcow2"
+  # Description du snapshot réécrite au chargement.
   [ ! -e "$FAKE_DIR/touch-pb" ] || echo load >> "$d/snapshots/$snap/snapshot.pb"
 fi
 "$(dirname "$0")/qemu/linux-x86_64/qemu-system-x86_64-headless" &
@@ -153,7 +155,7 @@ trap 'stop_sup; leftovers' EXIT
 reset() {
   wait_clean >/dev/null
   rm -f "$W/fail" "$W/client-hidden-until" "$W/never-boot" "$W/ignore-kill" "$W/boot-s" "$W/qemu.pid" "$W/qemu.start" \
-    "$W/load-fail" "$W/write-golden" "$W/touch-pb" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot" "$W/ce-s"
+    "$W/load-fail" "$W/write-golden" "$W/touch-pb" "$W/write-qcow2" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot" "$W/ce-s"
 }
 # Attend que la commande de test tourne (emu-start a rendu la main).
 wait_cmd() { local _; for _ in $(seq 100); do [ -n "$(procs "$1")" ] && return 0; sleep 0.2; done; return 1; }
@@ -582,7 +584,7 @@ check "snapshot : opt-in sans --boot : à froid" '[ $rc = 0 ] && grep -q -- "-wi
 reset
 out=$("$here/emu-run" phone --boot snapshot -- bash -c 'echo "$ADB_SERVER_SOCKET $ANDROID_SERIAL"' 2>"$W/err32"); rc=$?
 check "snapshot : chargé en lecture seule, sans -wipe-data" '[ $rc = 0 ] && grep -q -- "-read-only -snapshot clean -force-snapshot-load -no-snapshot-save" "$W/emulator.args" && ! grep -q -- "-wipe-data" "$W/emulator.args"'
-check "snapshot : AVD du snapshot, copies temporaires sous la session" 'grep -q "^ANDROID_AVD_HOME=$G/avd$" "$W/emulator.env" && grep -q "^TMPDIR=$W/data/run/tmp$" "$W/emulator.env"'
+check "snapshot : AVD propre à la session, copies temporaires sous la session" 'grep -q "^ANDROID_AVD_HOME=$W/data/run/avd$" "$W/emulator.env" && grep -q "^TMPDIR=$W/data/run/tmp$" "$W/emulator.env"'
 check "snapshot : la commande vise l'émulateur ; mode affiché" '[ "$out" = "tcp:127.0.0.1:5639 emulator-5554" ] && grep -q "prêt en .* s, snapshot" "$W/err32"'
 check "snapshot : métrique avec le mode" '[ "$(tail -n 1 "$W/ctl/metrics.csv" | cut -d, -f5)" = snapshot ]'
 check "snapshot : copies temporaires supprimées, snapshot toujours valide" 'wait_clean && [ -f "$G/stamp" ]'
@@ -620,6 +622,18 @@ echo 12 >"$W/boot-s"
 check "snapshot : chargement trop long : froid complet, sans échec (code 0)" '[ $rc = 0 ] && grep -q "invalidé : chargement plus long que 6 s" "$W/supervisor.log" && [ "$(tail -n 1 "$W/ctl/metrics.csv" | cut -d, -f3)" -ge 17 ]'
 rm -f "$W/snap-hang" "$W/boot-s"
 check "snapshot : reconstruit après le chargement trop long" wait_golden
+# AVD de la session : .qcow2 et petits fichiers copiés, le reste en lien vers le snapshot.
+reset
+A34=$W/data/run/avd/phone.avd
+"$here/emu-run" phone -- sh -c '[ -f "$1/userdata-qemu.img.qcow2" ] && [ ! -L "$1/userdata-qemu.img.qcow2" ] && [ -L "$1/snapshots" ] && [ ! -L "$1/config.ini" ] && [ "$(readlink "$1/snapshots")" = "$2/avd/phone.avd/snapshots" ]' _ "$A34" "$G" 2>/dev/null; rc=$?
+check "snapshot : session sur ses copies des .qcow2, liens vers le reste" '[ $rc = 0 ] && wait_clean && grep -q "copies du snapshot prêtes en" "$W/supervisor.log"'
+# Écritures de la session dans son .qcow2 : le snapshot n'est pas touché.
+reset
+touch "$W/write-qcow2"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+"$here/emu-run" phone -- true 2>/dev/null; rc2=$?
+check "snapshot : écritures dans le .qcow2 de la session : snapshot intact, toujours valide" '[ $rc = 0 ] && [ $rc2 = 0 ] && wait_clean && [ -f "$G/stamp" ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = ready ] && ! grep -q session "$G/avd/phone.avd/userdata-qemu.img.qcow2" && grep -q -- "-read-only" "$W/emulator.args"'
+rm -f "$W/write-qcow2"
 # Session qui modifie les fichiers du snapshot : invalidé à l'arrêt.
 reset
 touch "$W/write-golden"
