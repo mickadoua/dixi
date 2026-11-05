@@ -19,7 +19,7 @@ PEGADO AUTOMÁTICO (OPCIONAL)
 Desactivado por defecto. Si lo activas, Voxbulle usa el servicio de accesibilidad de Android para una sola cosa: pegar el texto dictado en el campo donde escribes. No lee el contenido de tu pantalla y no recoge ningún dato. Sin esta opción, el texto se copia y lo pegas tú.
 
 TUS DATOS
-• El audio se envía a Mistral para la transcripción. Voxbulle nunca lo conserva.
+• El audio y el texto transcrito pasan por Mistral para la transcripción. Voxbulle nunca conserva el audio.
 • El texto de tus últimos dictados se queda en tu teléfono.
 • Tu clave API se queda en tu teléfono, cifrada.
 

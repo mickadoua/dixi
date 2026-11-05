@@ -19,7 +19,7 @@ AUTO-PASTE (OPTIONAL)
 Off by default. If you turn it on, Voxbulle uses Android's accessibility service for one thing only: pasting the dictated text into the field where you are typing. It does not read your screen content and collects no data. Without this option, the text is copied and you paste it yourself.
 
 YOUR DATA
-• Audio is sent to Mistral for transcription. Voxbulle never keeps it.
+• Audio and the transcribed text go through Mistral for transcription. Voxbulle never keeps the audio.
 • The text of your last dictations stays on your phone.
 • Your API key stays on your phone, encrypted.
 

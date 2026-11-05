@@ -19,7 +19,7 @@ COLLAGE AUTOMATIQUE (OPTIONNEL)
 Désactivé par défaut. Si vous l'activez, Voxbulle utilise le service d'accessibilité d'Android pour une seule chose : coller le texte dicté dans le champ où vous écrivez. Il ne lit pas le contenu de votre écran et ne collecte aucune donnée. Sans cette option, le texte est copié et vous le collez vous-même.
 
 VOS DONNÉES
-• L'audio est envoyé à Mistral pour la transcription. Voxbulle ne le conserve jamais.
+• L'audio et le texte transcrit passent par Mistral, pour la transcription. Voxbulle ne conserve jamais l'audio.
 • Le texte des dernières dictées reste sur votre téléphone.
 • Votre clé API reste sur votre téléphone, chiffrée.
 

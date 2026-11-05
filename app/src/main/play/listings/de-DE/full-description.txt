@@ -19,7 +19,7 @@ AUTOMATISCHES EINFÜGEN (OPTIONAL)
 Standardmäßig aus. Wenn Sie es aktivieren, nutzt Voxbulle den Bedienungshilfen-Dienst von Android für genau eines: den diktierten Text in das Feld einzufügen, in dem Sie schreiben. Er liest keine Bildschirminhalte und sammelt keine Daten. Ohne diese Option wird der Text kopiert, und Sie fügen ihn selbst ein.
 
 IHRE DATEN
-• Das Audio wird zur Transkription an Mistral gesendet. Voxbulle speichert es nie.
+• Das Audio und der transkribierte Text laufen für die Transkription über Mistral. Voxbulle speichert das Audio nie.
 • Der Text Ihrer letzten Diktate bleibt auf Ihrem Telefon.
 • Ihr API-Schlüssel bleibt verschlüsselt auf Ihrem Telefon.
 
