@@ -37,6 +37,8 @@ import tech.dmconsulting.voxbulle.recording.Recorder
 import tech.dmconsulting.voxbulle.recording.RecorderState
 import tech.dmconsulting.voxbulle.recording.RecordingError
 import tech.dmconsulting.voxbulle.recording.formatDuration
+import tech.dmconsulting.voxbulle.transcription.VoxtralError
+import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 import tech.dmconsulting.voxbulle.ui.navigation.Screen
 
 /**
@@ -66,13 +68,22 @@ class BubbleService : Service(), DictationOutput {
 
                 override fun cancel() = recorder.cancel()
             },
-            transcribe = app.container.transcription::run,
+            transcribe = { audio ->
+                // Read before the call: the keyed transcriber picks the fake without a key.
+                demoDictation = app.container.usesFakeVoxtral
+                app.container.transcription.run(audio).also {
+                    // A Failure prints only its VoxtralError: never the key.
+                    if (it == VoxtralResult.Failure(VoxtralError.InvalidKey)) notifyKeyRefused()
+                }
+            },
             history = app.container.history,
             output = this,
             scope = scope,
             elapsedMs = SystemClock::elapsedRealtime,
         )
     }
+    /** The last dictation went to the fakes: no key saved (DMC-227). */
+    private var demoDictation = false
     private lateinit var store: BubblePositionStore
     private lateinit var overlay: BubbleOverlay
     private var debugReceiver: BroadcastReceiver? = null
@@ -204,7 +215,7 @@ class BubbleService : Service(), DictationOutput {
 
     override fun copy(text: String, stoppedAtMs: Long) {
         copyToClipboard(this, text)
-        Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop")
+        Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop demo=$demoDictation")
     }
 
     override fun showPanel(panel: DictationPanel) {
@@ -216,7 +227,10 @@ class BubbleService : Service(), DictationOutput {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
-    /** « Texte copié », gone after 6 s. A tap or « Voir le texte » opens the history (screen 7). */
+    /**
+     * « Texte copié », gone after 6 s. A tap or « Voir le texte » opens the history (screen 7).
+     * In « Mode démo » the fake Voxtral wrote the text: a tap opens screen 10 to add a key (DMC-227).
+     */
     override fun notifyCopied(recordingMs: Long) {
         val history = PendingIntent.getActivity(
             this, 0,
@@ -232,13 +246,23 @@ class BubbleService : Service(), DictationOutput {
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
-            .setContentText(getString(R.string.notif_copied_body))
             .setSubText(formatDuration(recordingMs))
-            .setContentIntent(history)
             .addAction(0, getString(R.string.notif_copied_show_text), history)
             .addAction(0, getString(R.string.bubble_action_hide), hide)
-            .setTimeoutAfter(debugCopiedTimeoutMs ?: COPIED_TIMEOUT_MS)
             .setAutoCancel(true)
+            .apply {
+                if (demoDictation) {
+                    val body = getString(R.string.notif_demo_body)
+                    setContentText(body)
+                    setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                    setContentIntent(openSettingsIntent())
+                    setTimeoutAfter(debugCopiedTimeoutMs ?: DEMO_TIMEOUT_MS)
+                } else {
+                    setContentText(getString(R.string.notif_copied_body))
+                    setContentIntent(history)
+                    setTimeoutAfter(debugCopiedTimeoutMs ?: COPIED_TIMEOUT_MS)
+                }
+            }
             .build()
         try {
             NotificationManagerCompat.from(this).notify(NOTIF_COPIED, notification)
@@ -247,6 +271,32 @@ class BubbleService : Service(), DictationOutput {
             Log.e(TAG, "copied notification FAILED", e)
         }
     }
+
+    /** Mistral refused the saved key: say so, tapping opens screen 10. */
+    private fun notifyKeyRefused() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(getString(R.string.notif_key_refused_title))
+            .setContentText(getString(R.string.notif_key_refused_body))
+            .setContentIntent(openSettingsIntent())
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(this).notify(NOTIF_COPIED, notification)
+            Log.i(TAG, "key refused notification posted")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "key refused notification FAILED", e)
+        }
+    }
+
+    private fun openSettingsIntent(): PendingIntent = PendingIntent.getActivity(
+        this,
+        REQUEST_OPEN_SETTINGS,
+        Intent(this, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_OPEN_SETTINGS, true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     // The visible result of the tap is the bubble itself, over the current app:
     // opening an activity here would hide that app.
@@ -355,5 +405,7 @@ class BubbleService : Service(), DictationOutput {
         private const val CHANNEL_COPIED = "copied"
         private const val NOTIF_COPIED = 2
         private const val COPIED_TIMEOUT_MS = 6_000L
+        private const val DEMO_TIMEOUT_MS = 15_000L
+        private const val REQUEST_OPEN_SETTINGS = 1
     }
 }
