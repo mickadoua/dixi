@@ -131,12 +131,12 @@ fi
 echo "--- 5. Captures with the mockup text (debug hook)"
 TEXT="Bonjour, je vous confirme le rendez-vous de jeudi à dix heures."
 panel --es panel Listening --el elapsedMs 12000 --efa levels 0.02,0.05,0.2,0.45,0.15,0.6,0.3,0.08,0.4,0.85,0.25,0.05,0.35,0.5,0.1,0.28,0.03,0.18,0.38,0.06,0.02
-sleep 1; shot 09-listening
-panel --es panel Processing; sleep 1; shot 09b-processing
+sleep 4; shot 09-listening
+panel --es panel Processing; sleep 4; shot 09b-processing
 panel --es panel Suggestion --es text "'$TEXT'" --ei mark 44
-sleep 1; shot 10-suggestion
+sleep 4; shot 10-suggestion
 panel --es panel None
-panel --es state Ready --el readyMs 6000; sleep 1; shot 01-toast
+panel --es state Ready --el readyMs 8000; sleep 4; shot 01-toast
 
 $ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
 echo "--- VoxbulleProof log"; grep -E "panel|bubble state|clipboard|recording|FATAL" "$OUT/logcat.txt" | tail -60
