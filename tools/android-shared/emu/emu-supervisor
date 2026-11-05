@@ -1,0 +1,912 @@
+#!/usr/bin/env bash
+# emu-supervisor : processus principal du conteneur android-emu (DMC-114).
+# Au repos, il ne fait que surveiller le dossier de contrôle (quelques Mo de
+# RAM). Sur demande d'un agent (emu-start), il démarre un émulateur headless,
+# à froid, et l'arrête à la demande (emu-stop), à l'échéance du bail, au bout
+# de EMU_MAX_SECONDS, ou si le conteneur s'arrête. Un seul à la fois.
+#
+# Snapshot propre (DMC-174) : pour un profil réglé dans EMU_SNAPSHOT_CONF, il
+# prend au repos un snapshot juste après un démarrage à froid, et les sessions
+# le chargent en lecture seule (-read-only) au lieu de redémarrer à froid.
+# Rien n'est gardé d'une session à l'autre ; chargement en échec : retour à froid.
+# La construction peut aussi être demandée (emu-start --boot build) : elle passe
+# alors par la file comme une session, et une autre demande ne l'interrompt pas.
+#
+# Seul ce conteneur voit /dev/kvm : les agents n'ont aucun privilège en plus.
+# Le dossier de contrôle est écrit par tous les agents : tout ce qui en vient
+# est validé (profil connu, identifiant hexadécimal), lu par emu_kv (borné,
+# sans suivre de lien), jamais exécuté. Une erreur ne doit jamais arrêter le
+# superviseur : pas de set -e ici.
+EMU_CMD=emu-supervisor
+self=$(readlink -f "$0")
+lib=$(dirname "$self")/emu-lib.sh
+# shellcheck source=emu-lib.sh
+. "$lib"
+set +e +o pipefail
+
+# Données jetables de la session (userdata, journaux) : propres au conteneur.
+: "${EMU_DATA:=/emu-data}"
+: "${EMU_LIBS:=/opt/android/emulator-libs}"
+: "${EMU_EMULATOR_DIR:=$ANDROID_HOME/emulator}"
+: "${EMU_ADB:=$ANDROID_HOME/platform-tools/adb}"
+: "${EMU_POLL:=1}"
+# Session créée sans demande (client mort entre mkdir et request) : retirée.
+: "${EMU_ABANDON_S:=30}"
+# Délai laissé à « adb emu kill » avant TERM puis KILL.
+: "${EMU_STOP_GRACE:=20}"
+# cgroup v2 du conteneur : plafond mémoire et tueries faute de mémoire (DMC-168).
+: "${EMU_CGROUP:=/sys/fs/cgroup}"
+# Snapshot propre par profil : <profil>=off|opt-in|on, dans le volume SDK
+# (écrit par Sacha seul). Absent : tout démarre à froid, aucun snapshot.
+#   opt-in : seulement pour emu-start --boot snapshot (essai) ;
+#   on     : par défaut, sauf emu-start --boot cold.
+: "${EMU_SNAPSHOT_CONF:=/opt/android/emu-snapshot.conf}"
+# Construction : après ce repos de l'émulateur, avec cette place libre ;
+# besoin vérifié toutes les EMU_GOLDEN_CHECK_S s.
+: "${EMU_GOLDEN_IDLE_S:=120}"
+: "${EMU_GOLDEN_CHECK_S:=30}"
+: "${EMU_GOLDEN_MIN_FREE_MB:=12000}"
+# Pause entre la fin du démarrage et la prise du snapshot ; durée maximale de la prise.
+: "${EMU_GOLDEN_SETTLE_S:=30}"
+: "${EMU_GOLDEN_SAVE_S:=300}"
+# Démarrage à froid de la construction : plus long que EMU_BOOT_TIMEOUT, car
+# elle ne fait attendre aucun agent (04/11 : échec à 300 s, NAS chargé à 30).
+: "${EMU_GOLDEN_BOOT_TIMEOUT:=480}"
+# Après un échec de construction, pas de nouvel essai avant ce délai.
+: "${EMU_GOLDEN_RETRY_S:=3600}"
+# Chargement d'un snapshot plus long que EMU_SNAP_BOOT_TIMEOUT (emu-lib.sh) : retour à froid.
+
+RUN=$EMU_DATA/run
+UHOME=$EMU_DATA/user-home
+GOLDEN=$EMU_DATA/golden
+SNAP_NAME=clean
+EMU_EMULATOR_DIR=$(readlink -m "$EMU_EMULATOR_DIR")
+EMU_ADB_REAL=$(readlink -m "$EMU_ADB")
+self_stamp=$(stat -c %i:%Y "$self" "$lib" | paste -sd,)
+
+ts() { printf '%(%FT%T%z)T' -1; }
+log() { printf '%s %s\n' "$(ts)" "$*"; }
+# Battement : les clients jugent le superviseur mort après 60 s de silence.
+beat() { echo "t=$EPOCHSECONDS" | emu_write "$EMU_CTL/supervisor.alive"; }
+
+# Programme d'un processus : argv[0], ou argv[1] derrière un interpréteur.
+prog_of() {
+  local args=()
+  mapfile -d '' -t args 2>/dev/null <"/proc/$1/cmdline" || return 1
+  [ ${#args[@]} -gt 0 ] || return 1
+  case "${args[0]##*/}" in
+    bash | sh | dash) [ ${#args[@]} -gt 1 ] && printf '%s' "${args[1]}" ;;
+    *) printf '%s' "${args[0]}" ;;
+  esac
+}
+# Tous les qemu du conteneur (il n'y tourne que l'émulateur).
+qemu_pids() {
+  local d p
+  for d in /proc/[0-9]*; do
+    p=$(prog_of "${d#/proc/}") || continue
+    case "${p##*/}" in qemu-system-*) printf '%s\n' "${d#/proc/}" ;; esac
+  done
+}
+# Restes possibles hors du groupe de l'émulateur : tout programme du dossier
+# emulator du SDK (netsimd, crashpad...) et tout adb (un serveur relancé seul
+# garderait le port 5037).
+stray_pids() {
+  local d p
+  for d in /proc/[0-9]*; do
+    [ "${d#/proc/}" = "$$" ] && continue
+    p=$(prog_of "${d#/proc/}") || continue
+    case "$p" in
+      "$EMU_EMULATOR_DIR"/* | "$EMU_ADB_REAL" | "$EMU_ADB") printf '%s\n' "${d#/proc/}" ;;
+    esac
+  done
+}
+kill_strays() {
+  local p
+  p=$(stray_pids)
+  [ -z "$p" ] && return 0
+  # shellcheck disable=SC2086
+  kill -KILL $p 2>/dev/null
+  sleep 0.5
+  [ -z "$(stray_pids)" ]
+}
+# Groupe de processus d'un PID, vide pour un zombie (5e champ de /proc/<pid>/stat).
+pgrp_of() {
+  local stat rest
+  stat=$(cat 2>/dev/null "/proc/$1/stat") || return 1
+  rest=${stat##*) }
+  # shellcheck disable=SC2086
+  set -- $rest
+  [ "$1" != Z ] || return 1
+  printf '%s' "$3"
+}
+group_pids() {
+  local d
+  [ -n "$1" ] || return 0
+  for d in /proc/[0-9]*; do
+    [ "$(pgrp_of "${d#/proc/}")" = "$1" ] && printf '%s\n' "${d#/proc/}"
+  done
+  return 0
+}
+group_gone() {
+  local n=$(($2 * 2))
+  while [ "$n" -gt 0 ]; do
+    [ -z "$(group_pids "$1")" ] && return 0
+    sleep 0.5
+    n=$((n - 1))
+    [ $((n % 4)) -eq 0 ] && beat
+  done
+  [ -z "$(group_pids "$1")" ]
+}
+oom_kills() { sed -n 's/^oom_kill \([0-9]*\)$/\1/p' "$EMU_CGROUP/memory.events" 2>/dev/null | head -n 1; }
+# Cause d'un arrêt seul, dans $cause : code du lanceur, et tuerie OOM du
+# conteneur depuis le démarrage (le journal de l'émulateur s'arrête net dans
+# ce cas). Hors sous-shell : seul le superviseur peut attendre son lanceur.
+death_cause() {
+  local rc oom max
+  wait "$grp" 2>/dev/null
+  rc=$?
+  cause=" ; code $rc"
+  oom=$(oom_kills)
+  if [ -n "$oom" ] && [ -n "$oom0" ] && [ "$oom" -gt "$oom0" ]; then
+    max=$(head -c 32 "$EMU_CGROUP/memory.max" 2>/dev/null)
+    [[ "$max" =~ ^[0-9]+$ ]] && max="$((max / 1048576)) Mo"
+    cause="$cause ; tué faute de mémoire (plafond du conteneur : ${max:-?})"
+  fi
+}
+rss_mb() {
+  local kb
+  kb=$(sed -n 's/^VmRSS:[[:space:]]*\([0-9]*\) kB/\1/p' "/proc/$1/status" 2>/dev/null)
+  if [[ "$kb" =~ ^[0-9]+$ ]]; then echo $((kb / 1024)); else echo "?"; fi
+}
+
+# HOME et ANDROID_USER_HOME (= $HOME/.android) cohérents : adb et l'émulateur
+# trouvent la même clé adbkey, quelle que soit la variable que chacun lit.
+android_env=(env -u ADB_SERVER_SOCKET
+  HOME="$UHOME"
+  ANDROID_USER_HOME="$UHOME/.android"
+  ANDROID_EMULATOR_HOME="$UHOME/.android"
+  ANDROID_ADB_SERVER_PORT="$EMU_ADB_PORT")
+adb_local() { "${android_env[@]}" timeout 10 "$EMU_ADB" -P "$EMU_ADB_PORT" "$@"; }
+# Android prêt (DMC-294) : démarrage fini et utilisateur 0 déverrouillé. Juste
+# après sys.boot_completed, l'écran reste noir et com.android.phone redémarre
+# toutes les 30 s jusqu'à ce que sys.user.0.ce_available passe à true.
+getprop_local() { adb_local -s "$EMU_SERIAL" shell getprop "$1" 2>/dev/null | tr -d '\r'; }
+android_ready() { [ "$(getprop_local sys.boot_completed)" = 1 ] && [ "$(getprop_local sys.user.0.ce_available)" = true ]; }
+# Horloge (DMC-299) : chargé depuis le snapshot, l'appareil retarde de l'âge du
+# snapshot jusqu'au recalage automatique (auto_time, jusqu'à 40 s). On la règle
+# sur l'heure du conteneur avant d'annoncer « prêt » (su : image userdebug).
+# Un échec est seulement noté : la session reste bonne.
+set_device_clock() {
+  local d
+  d=$(adb_local -s "$EMU_SERIAL" shell date +%s 2>/dev/null | tr -d '\r')
+  if adb_local -s "$EMU_SERIAL" shell su 0 date -u "@$EPOCHSECONDS" >/dev/null 2>&1; then
+    if [[ "$d" =~ ^[0-9]+$ ]]; then
+      log "session $id : horloge de l'appareil réglée (retard de $((EPOCHSECONDS - d)) s)"
+    else
+      log "session $id : horloge de l'appareil réglée (retard inconnu)"
+    fi
+  else
+    log "session $id : horloge de l'appareil non réglée (su 0 date en échec), recalage automatique attendu"
+  fi
+}
+
+state=idle id="" profile="" agent="" task="" grp="" adb_pid="" t0=0 tb=0 last_prop=0 lease_until=0 oom0="" cause=""
+# t0 : demande de la session (durée maximale, temps affiché) ; tb : lancement
+# de l'émulateur en cours (délais de démarrage, remis à zéro au retour à froid).
+# boot : cold ou snapshot pour la session en cours ; fallback=1 après un
+# chargement en échec ; gstep, gt, save_pid : construction ; gwant : profil à construire.
+boot=cold boot_note="" fallback=0 gstep="" gt=0 save_pid="" last_busy=$EPOCHSECONDS next_golden_check=0 gwant=""
+declare -A golden_failed=()
+
+clean_field() { if [[ "$1" =~ ^[A-Za-z0-9._-]{1,64}$ ]]; then printf '%s' "$1"; else printf '?'; fi; }
+
+ensure_results() {
+  if [ -L "$EMU_RESULTS" ] || { [ -e "$EMU_RESULTS" ] && [ ! -d "$EMU_RESULTS" ]; }; then
+    rm -f -- "$EMU_RESULTS"
+  fi
+  mkdir -p "$EMU_RESULTS" 2>/dev/null
+}
+
+write_status() {
+  emu_session_ok || return 0
+  [ "$(emu_kv "$EMU_SESSION/request" id)" = "$id" ] || return 0
+  {
+    echo "id=$id"
+    echo "state=$1"
+    echo "profile=$profile"
+    echo "serial=$EMU_SERIAL"
+    echo "adb=tcp:$EMU_ADB_HOST:$EMU_ADB_PORT"
+    [ -z "${2:-}" ] || echo "$2"
+  } | emu_write "$EMU_SESSION/status"
+}
+
+# Compte rendu final : results/<id> (lu par emu-start / emu-stop).
+write_result() {
+  local rid=$1 result=$2 code=$3 message=$4 journal=${5:-}
+  emu_valid_id "$rid" || return 0
+  ensure_results
+  {
+    echo "id=$rid"
+    echo "result=$result"
+    echo "code=$code"
+    echo "profile=$profile"
+    echo "agent=$agent"
+    echo "task=$task"
+    echo "finished=$(ts)"
+    echo "message=$message"
+    if [ -n "$journal" ] && [ -f "$journal" ]; then
+      echo "--- journal ---"
+      tail -n 20 "$journal"
+    fi
+  } | emu_write "$EMU_RESULTS/$rid"
+  log "session $rid ($profile, agent $agent, tâche $task) : $result — $message"
+}
+
+drop_session() {
+  if [ -L "$EMU_SESSION" ] || { [ -e "$EMU_SESSION" ] && [ ! -d "$EMU_SESSION" ]; }; then
+    rm -f -- "$EMU_SESSION"
+    return
+  fi
+  [ -d "$EMU_SESSION" ] || return 0
+  # Un agent a pu retirer des droits : on les remet avant de supprimer.
+  chmod -R u+rwx -- "$EMU_SESSION" 2>/dev/null
+  # Un client peut encore écrire son bail pendant la suppression : on réessaie.
+  rm -rf -- "$EMU_SESSION" 2>/dev/null || { sleep 0.2; rm -rf -- "$EMU_SESSION" 2>/dev/null; } ||
+    log "impossible de retirer $EMU_SESSION"
+}
+# Ne retire la session que si c'est encore la nôtre : jamais celle qu'un
+# autre client vient de créer (dossier encore sans demande compris : s'il est
+# abandonné, il part au bout de EMU_ABANDON_S).
+drop_own_session() {
+  emu_session_ok || { drop_session; return; }
+  [ "$(emu_kv "$EMU_SESSION/request" id)" = "$id" ] && drop_session
+}
+reset_vars() {
+  state=idle id="" profile="" agent="" task="" grp="" adb_pid="" lease_until=0
+  boot=cold boot_note="" fallback=0 gstep="" save_pid="" last_busy=$EPOCHSECONDS
+}
+
+# Arrêt des processus : adb emu kill (ou TERM tout de suite si <vite>=1),
+# puis TERM, puis KILL sur tout le groupe de l'émulateur ; serveur adb et
+# restes arrêtés. Rend 1 si un qemu reste.
+kill_emulator() {
+  local fast=${1:-0}
+  if [ -n "$grp" ] && [ -n "$(group_pids "$grp")" ]; then
+    beat
+    if [ "$fast" = 1 ]; then
+      kill -TERM -- "-$grp" 2>/dev/null
+      group_gone "$grp" 5 || { kill -KILL -- "-$grp" 2>/dev/null; group_gone "$grp" 5; }
+    else
+      adb_local -s "$EMU_SERIAL" emu kill >/dev/null 2>&1
+      beat
+      if ! group_gone "$grp" "$EMU_STOP_GRACE"; then
+        log "adb emu kill sans effet en ${EMU_STOP_GRACE} s : TERM puis KILL"
+        kill -TERM -- "-$grp" 2>/dev/null
+        group_gone "$grp" 5 || { kill -KILL -- "-$grp" 2>/dev/null; group_gone "$grp" 5; }
+      fi
+    fi
+  fi
+  # Récolte du lanceur, seulement s'il est bien mort (wait bloquerait sinon).
+  if [ -n "$grp" ] && [ -z "$(group_pids "$grp")" ]; then wait "$grp" 2>/dev/null; fi
+  if [ -n "$save_pid" ]; then
+    kill -KILL "$save_pid" 2>/dev/null
+    wait "$save_pid" 2>/dev/null
+    save_pid=""
+  fi
+  if [ -n "$adb_pid" ]; then
+    kill -TERM "$adb_pid" 2>/dev/null
+    sleep 0.5
+    kill -KILL "$adb_pid" 2>/dev/null
+    wait "$adb_pid" 2>/dev/null
+    adb_pid=""
+  fi
+  kill_strays || log "restes de l'émulateur ou d'adb encore présents : $(stray_pids | paste -sd' ')"
+  beat
+  [ -z "$(qemu_pids)" ]
+}
+
+# Arrêt complet d'une session : processus arrêtés, contrôle qu'aucun qemu ne
+# reste, données jetables supprimées. Puis compte rendu et session libérée.
+stop_emulator() {
+  local result=$1 code=$2 message=$3 journal_wanted=${4:-0} journal=""
+  write_status stopping
+  if ! kill_emulator; then
+    # La session reste prise tant qu'un qemu vit : pas de second émulateur.
+    write_result "$id" stuck 3 "un processus qemu reste après l'arrêt ($(qemu_pids | paste -sd' ')) : session bloquée, à voir avec Sacha."
+    write_status stuck
+    state=stuck
+    # qemu encore vivant sur le snapshot : on ne s'y fie plus.
+    [ "$boot" != snapshot ] || golden_invalidate "$profile" "session $id bloquée (qemu restant)"
+    return
+  fi
+  if [ "$journal_wanted" = 1 ] && [ -f "$RUN/emulator.log" ]; then
+    journal=$EMU_DATA/last-emulator.log
+    cp -f "$RUN/emulator.log" "$journal" 2>/dev/null || journal=""
+  fi
+  rm -rf -- "$RUN"
+  [ "$boot" != snapshot ] || golden_check_intact "$profile"
+  write_result "$id" "$result" "$code" "$message" "$journal"
+  drop_own_session
+  reset_vars
+}
+
+kvm_ok() { [ "${EMU_SKIP_KVM_CHECK:-0}" = 1 ] || { [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; }; }
+
+# Dossier AVD minimal de <profil> dans <dossier> : config.ini du volume SDK.
+make_avd() {
+  mkdir -p "$1/$profile.avd" "$UHOME/.android" &&
+    cp "$EMU_AVD_DIR/$profile.avd/config.ini" "$1/$profile.avd/" &&
+    printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android\n' "$1/$profile.avd" >"$1/$profile.ini"
+}
+
+# AVD de la session chargée depuis le snapshot : l'émulateur écrit dans les
+# images .qcow2 de l'AVD même en -read-only (05/11 : encryptionkey.img.qcow2 et
+# userdata-qemu.img.qcow2 du snapshot modifiés par une session, donc invalidé).
+# La session a ses propres copies des .qcow2 et des petits fichiers hors .img
+# (dates gardées) ; le reste (images brutes .img, dossier snapshots), lu
+# seulement, est un lien vers le snapshot. golden_check_intact vérifie toujours à l'arrêt.
+make_snap_avd() {
+  local src=$GOLDEN/$profile/avd/$profile.avd dst=$RUN/avd f n t
+  mkdir -p "$dst/$profile.avd" "$UHOME/.android" || return 1
+  printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android\n' "$dst/$profile.avd" >"$dst/$profile.ini" || return 1
+  t=$EPOCHSECONDS
+  for f in "$src"/*; do
+    [ -e "$f" ] || continue
+    n=${f##*/}
+    if [[ "$n" == *.qcow2 ]] || { [[ "$n" != *.img ]] && [ -f "$f" ] && [ "$(stat -c %s -- "$f")" -lt 1048576 ]; }; then
+      cp --reflink=auto -p -- "$f" "$dst/$profile.avd/$n" || return 1
+    else
+      ln -s -- "$f" "$dst/$profile.avd/$n" || return 1
+    fi
+  done
+  log "session $id : copies du snapshot prêtes en $((EPOCHSECONDS - t)) s ($(du -smc "$dst/$profile.avd"/*.qcow2 2>/dev/null | tail -n 1 | cut -f1) Mo de .qcow2)"
+}
+
+# Lance le serveur adb et l'émulateur de $profile sur les AVD de <dossier>.
+# <cold> : à froid, données remises à zéro ; <snapshot> : chargement du
+# snapshot propre, en lecture seule (les écritures vont dans des copies
+# temporaires sous $RUN/tmp, supprimées à l'arrêt). <réseau>=0 : serveur adb
+# limité au conteneur (construction du snapshot : aucun agent ne doit s'y connecter).
+launch_emulator() {
+  local avd_home=$1 mode=$2 net=${3:-1} opts listen=(-a)
+  if [ "$mode" = snapshot ]; then
+    opts=(-read-only -snapshot "$SNAP_NAME" -force-snapshot-load -no-snapshot-save)
+  else
+    opts=(-no-snapshot-load -no-snapshot-save -wipe-data)
+  fi
+  [ "$net" = 1 ] || listen=()
+  mkdir -p "$RUN/tmp"
+  # Serveur adb de la session, joignable par les agents sur le réseau Docker
+  # interne (-a). Il vit et meurt avec l'émulateur.
+  "${android_env[@]}" "$EMU_ADB" "${listen[@]}" -P "$EMU_ADB_PORT" nodaemon server >"$RUN/adb.log" 2>&1 &
+  adb_pid=$!
+  last_prop=0
+  oom0=$(oom_kills)
+  # timeout : garde-fou absolu ; il crée son propre groupe de processus, qui
+  # contient tous les processus de l'émulateur.
+  "${android_env[@]}" ANDROID_AVD_HOME="$avd_home" ANDROID_TMP="$RUN/tmp" TMPDIR="$RUN/tmp" \
+    LD_LIBRARY_PATH="$EMU_LIBS${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    timeout -k 10 "$((EMU_MAX_SECONDS + 60))" "$EMU_EMULATOR_DIR/emulator" \
+    -avd "$profile" -port "$EMU_CONSOLE_PORT" \
+    -no-window -no-audio -no-boot-anim \
+    "${opts[@]}" \
+    -gpu swiftshader_indirect -accel on -no-metrics \
+    </dev/null >"$RUN/emulator.log" 2>&1 &
+  grp=$!
+}
+
+# Démarre la session $id, à froid ou depuis le snapshot ($boot). <garder-t0>=1 :
+# retour à froid après un chargement en échec, la durée compte depuis la demande.
+start_emulator() {
+  if ! kvm_ok; then
+    write_result "$id" failed 4 "/dev/kvm absent ou inaccessible dans le conteneur android-emu : sans accélération, l'émulateur est inutilisable."
+    drop_own_session
+    reset_vars
+    return
+  fi
+  kill_strays
+  rm -rf -- "$RUN"
+  if ! { mkdir -p "$RUN" && if [ "$boot" = snapshot ]; then make_snap_avd; else make_avd "$RUN/avd"; fi; }; then
+    write_result "$id" failed 1 "impossible de préparer $RUN (disque plein ?)."
+    rm -rf -- "$RUN"
+    drop_own_session
+    reset_vars
+    return
+  fi
+  [ "${1:-0}" = 1 ] || t0=$EPOCHSECONDS
+  tb=$EPOCHSECONDS
+  if [ "$boot" = snapshot ]; then
+    launch_emulator "$RUN/avd" snapshot
+  else
+    launch_emulator "$RUN/avd" cold
+  fi
+  state=booting
+  write_status booting "pid=$grp
+boot=$boot"
+  log "session $id : démarrage de $profile, $boot$boot_note (agent $agent, tâche $task)"
+}
+
+# --- Snapshot propre (DMC-174) ---------------------------------------------
+
+# Mode de démarrage de la session : <demande> du client (snapshot, cold ou
+# vide) et réglage du profil ; snapshot seulement s'il est prêt et à jour.
+choose_boot() {
+  local asked=$1 mode
+  boot=cold boot_note=""
+  mode=$(snap_mode "$profile")
+  case "$mode" in
+    on) [ "$asked" = cold ] || boot=snapshot ;;
+    opt-in) [ "$asked" = snapshot ] && boot=snapshot ;;
+    off) [ "$asked" != snapshot ] || boot_note=" (snapshot non activé pour $profile)" ;;
+  esac
+  if [ "$boot" = snapshot ] && ! golden_current "$profile"; then
+    boot=cold boot_note=" (snapshot pas encore prêt)"
+  fi
+}
+
+# Chargement du snapshot en échec ou trop long : on l'invalide (il sera
+# reconstruit au repos) et la session repart à froid, sans rien rendre à l'agent.
+snapshot_fallback() {
+  local why="chargement plus long que ${EMU_SNAP_BOOT_TIMEOUT} s"
+  if [ -z "$(group_pids "$grp")" ]; then
+    death_cause
+    why="émulateur arrêté au chargement$cause"
+  fi
+  [ ! -f "$RUN/emulator.log" ] || cp -f "$RUN/emulator.log" "$EMU_DATA/last-snapshot-fail.log" 2>/dev/null
+  if ! kill_emulator 1; then
+    stop_emulator failed 1 "retour à froid impossible après l'échec du snapshot ($why)." 1
+    return
+  fi
+  golden_invalidate "$profile" "$why (session $id)"
+  boot=cold boot_note=" après l'échec du snapshot" fallback=1
+  start_emulator 1
+}
+
+snap_mode() {
+  case "$(emu_kv "$EMU_SNAPSHOT_CONF" "$1")" in
+    opt-in) echo opt-in ;;
+    on) echo on ;;
+    *) echo off ;;
+  esac
+}
+# Empreinte de ce dont dépend le snapshot : définition de l'AVD, version de
+# l'émulateur et de l'image système, clé adb. Une mise à jour du SDK
+# (sdk-sync) ou de l'AVD le rend donc caduc, et il est reconstruit.
+golden_stamp() {
+  local sysdir
+  sysdir=$(sed -n 's/^image\.sysdir\.1=//p' "$EMU_AVD_DIR/$1.avd/config.ini" 2>/dev/null | head -n 1)
+  {
+    echo "format=1 snapshot=$SNAP_NAME"
+    cat "$EMU_AVD_DIR/$1.avd/config.ini"
+    cat "$EMU_EMULATOR_DIR/source.properties"
+    cat "$ANDROID_HOME/${sysdir%/}/source.properties"
+    cat "$UHOME/.android/adbkey.pub"
+  } 2>&1 | sha256sum | cut -c1-16
+}
+golden_current() {
+  local f=$GOLDEN/$1/stamp
+  [ -f "$f" ] && [ "$(head -c 64 "$f")" = "$(golden_stamp "$1")" ]
+}
+# Liste des images et du snapshot (taille, date) : une session ne doit rien y changer.
+golden_files() {
+  (cd "$GOLDEN/$1/avd" 2>/dev/null &&
+    find . -type f \( -name '*.img' -o -name '*.qcow2' -o -path "*/snapshots/*" \) -printf '%P %s %T@\n' | LC_ALL=C sort)
+}
+# État publié pour les agents et pour Sacha (lecture seule pour le superviseur).
+golden_note() { printf 'profile=%s\nstate=%s\nat=%s\n%s\n' "$1" "$2" "$(ts)" "${3:-}" | emu_write "$EMU_CTL/golden.$1"; }
+# Pas de reconstruction avant EMU_GOLDEN_RETRY_S : un snapshot qui ne se charge
+# jamais ne coûte qu'un essai par délai, pas une boucle construction / échec.
+golden_invalidate() {
+  golden_failed[$1]=$EPOCHSECONDS
+  rm -f -- "$GOLDEN/$1/stamp"
+  golden_note "$1" invalid "message=$2"
+  log "snapshot propre de $1 invalidé : $2"
+}
+# Après une session chargée depuis le snapshot : rien ne doit avoir changé,
+# sauf snapshot.pb, la description du snapshot, que l'émulateur peut réécrire
+# au chargement même en -read-only (compteurs de chargements) : elle ne
+# contient aucune donnée de l'appareil. Tout autre changement l'invalide.
+# Les fichiers changés sont publiés dans golden.<profil> (journal du conteneur
+# illisible pour les agents : 05/11, invalidation sans cause visible).
+golden_check_intact() {
+  local now changed other
+  [ -f "$GOLDEN/$1/files" ] || return 0
+  now=$(golden_files "$1")
+  [ "$now" = "$(cat "$GOLDEN/$1/files")" ] && return 0
+  changed=$(diff <(cat "$GOLDEN/$1/files") <(printf '%s\n' "$now") | sed -n 's/^[<>] \(.*\) [^ ]* [^ ]*$/\1/p' | LC_ALL=C sort -u)
+  other=$(grep -v -E '^[^/]+\.avd/snapshots/[^/]+/snapshot\.pb$' <<<"$changed")
+  log "fichiers du snapshot modifiés par la session $id : $(paste -sd' ' <<<"$changed")"
+  # Liste illisible (changed vide alors que files diffère) : invalidé.
+  if [ -n "$changed" ] && [ -z "$other" ]; then
+    printf '%s\n' "$now" >"$GOLDEN/$1/files"
+    golden_note "$1" ready "$(cat "$GOLDEN/$1/info" 2>/dev/null)
+meta_changed=$(paste -sd' ' <<<"$changed") (session $id, sans effet)"
+    return 0
+  fi
+  golden_invalidate "$1" "modifié par la session $id : $(paste -sd' ' <<<"${other:-?}" | head -c 300) (isolation non garantie)"
+}
+
+# Profil dont le snapshot est à (re)construire (dans $gwant), si l'émulateur
+# est au repos depuis EMU_GOLDEN_IDLE_S. Appelée hors sous-shell : sinon
+# next_golden_check serait perdu et l'empreinte recalculée à chaque tour.
+golden_wanted() {
+  local p
+  gwant=""
+  [ "$EPOCHSECONDS" -ge "$next_golden_check" ] || return 1
+  next_golden_check=$((EPOCHSECONDS + EMU_GOLDEN_CHECK_S))
+  [ -f "$EMU_SNAPSHOT_CONF" ] || return 1
+  [ $((EPOCHSECONDS - last_busy)) -ge "$EMU_GOLDEN_IDLE_S" ] || return 1
+  ! emu_maintenance_on || return 1
+  for p in $(emu_profiles); do
+    emu_valid_profile "$p" && [ "$(snap_mode "$p")" != off ] || continue
+    golden_current "$p" && continue
+    [ $((EPOCHSECONDS - ${golden_failed[$p]:-0})) -ge "$EMU_GOLDEN_RETRY_S" ] || continue
+    gwant=$p
+    return 0
+  done
+  return 1
+}
+
+# Construction demandée par emu-start --boot build (DMC-174) : elle a pris son
+# tour dans la file comme une session ; rendue seulement sur emu-stop, session
+# retirée, maintenance ou réglage retiré. Le bail n'est pas suivi : la durée est
+# bornée par EMU_GOLDEN_BOOT_TIMEOUT + EMU_GOLDEN_SETTLE_S + EMU_GOLDEN_SAVE_S.
+# Le délai après un échec (EMU_GOLDEN_RETRY_S) ne s'applique pas à une demande.
+request_golden() {
+  boot=cold boot_note=""
+  if [ "$(snap_mode "$profile")" = off ]; then
+    write_result "$id" failed 2 "snapshot non activé pour $profile ($EMU_SNAPSHOT_CONF) : rien construit."
+  elif golden_current "$profile"; then
+    write_result "$id" built 0 "snapshot propre de $profile déjà prêt et à jour : rien construit."
+  else
+    start_golden "$profile"
+    return
+  fi
+  drop_own_session
+  reset_vars
+}
+# Fin d'une construction demandée ($id non vide) : compte rendu, session libérée
+# (gardée si un qemu reste : on_stuck la libère).
+golden_report() {
+  [ -n "$id" ] || return 0
+  write_result "$id" "$1" "$2" "$3"
+  [ "$state" = stuck ] || drop_own_session
+}
+
+# Construction au repos ($id vide) ou demandée ($id de la session).
+start_golden() {
+  local free
+  profile=$1
+  [ -n "$id" ] || agent=supervisor task=snapshot
+  free=$(df -Pm "$EMU_DATA" 2>/dev/null | { read -r _ && read -r _ _ _ f _ && echo "$f"; })
+  if ! [[ "$free" =~ ^[0-9]+$ ]] || [ "$free" -lt "$EMU_GOLDEN_MIN_FREE_MB" ]; then
+    golden_fail "place insuffisante dans $EMU_DATA (${free:-?} Mo libres, $EMU_GOLDEN_MIN_FREE_MB demandés)"
+    return
+  fi
+  kvm_ok || { golden_fail "/dev/kvm absent"; return; }
+  kill_strays
+  rm -rf -- "$RUN" "${GOLDEN:?}/$profile"
+  if ! { mkdir -p "$RUN" && make_avd "$GOLDEN/$profile/avd"; }; then
+    golden_fail "impossible de préparer $GOLDEN/$profile (disque plein ?)"
+    return
+  fi
+  t0=$EPOCHSECONDS gt=$EPOCHSECONDS gstep=boot
+  launch_emulator "$GOLDEN/$profile/avd" cold 0
+  state=building
+  golden_note "$profile" building
+  if [ -n "$id" ]; then
+    write_status building "pid=$grp
+boot=build"
+    log "snapshot propre de $profile : démarrage à froid (session $id, agent $agent, tâche $task)"
+  else
+    log "snapshot propre de $profile : démarrage à froid"
+  fi
+}
+
+# Fin de construction en échec ou abandonnée : tout est arrêté et retiré.
+golden_stop() {
+  local reason=$1 failed=$2
+  if ! kill_emulator 1; then
+    log "snapshot propre de $profile : un qemu reste après l'arrêt"
+    failed=1
+    state=stuck
+  fi
+  rm -rf -- "$RUN" "${GOLDEN:?}/$profile"
+  if [ "$failed" = 1 ]; then
+    golden_failed[$profile]=$EPOCHSECONDS
+    golden_note "$profile" failed "message=$reason"
+    log "snapshot propre de $profile : échec — $reason"
+    golden_report failed 1 "snapshot propre de $profile : échec — $reason"
+  else
+    golden_note "$profile" missing "message=$reason"
+    log "snapshot propre de $profile : $reason"
+    golden_report aborted 1 "snapshot propre de $profile : $reason"
+  fi
+  [ "$state" = stuck ] || reset_vars
+}
+golden_fail() {
+  golden_failed[$profile]=$EPOCHSECONDS
+  golden_note "$profile" failed "message=$1"
+  log "snapshot propre de $profile : échec — $1"
+  golden_report failed 1 "snapshot propre de $profile : échec — $1"
+  reset_vars
+}
+
+golden_finish() {
+  local gd=$GOLDEN/$profile build_s size
+  build_s=$((EPOCHSECONDS - t0))
+  if ! kill_emulator; then
+    golden_stop "un qemu reste après l'arrêt" 1
+    return
+  fi
+  rm -rf -- "$RUN"
+  if ! [ -d "$gd/avd/$profile.avd/snapshots/$SNAP_NAME" ]; then
+    golden_stop "snapshot absent après la prise" 1
+    return
+  fi
+  golden_files "$profile" >"$gd/files"
+  golden_stamp "$profile" >"$gd/stamp"
+  size=$(du -sm "$gd" 2>/dev/null | cut -f1)
+  printf 'build_s=%s\nsize_mb=%s\n' "$build_s" "${size:-?}" >"$gd/info"
+  golden_note "$profile" ready "$(cat "$gd/info")"
+  log "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque"
+  golden_report built 0 "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque."
+  reset_vars
+}
+
+on_building() {
+  # Au repos : un agent demande l'émulateur, maintenance du SDK, réglage
+  # retiré : on rend la place tout de suite (TERM, sans attendre adb emu kill).
+  # Demandée : seulement sur emu-stop, session retirée, maintenance ou réglage retiré.
+  if [ -n "$id" ]; then
+    if ! emu_session_ok || [ "$(emu_kv "$EMU_SESSION/request" id)" != "$id" ] || stop_asked ||
+      emu_maintenance_on || [ "$(snap_mode "$profile")" = off ]; then
+      golden_stop "construction demandée abandonnée (arrêt demandé, session retirée, maintenance ou réglage retiré)" 0
+      return
+    fi
+  elif [ -e "$EMU_SESSION" ] || [ -L "$EMU_SESSION" ] || emu_maintenance_on || [ "$(snap_mode "$profile")" = off ]; then
+    golden_stop "construction abandonnée (émulateur demandé, maintenance ou réglage retiré)" 0
+    return
+  fi
+  if [ -z "$(group_pids "$grp")" ]; then
+    death_cause
+    golden_stop "l'émulateur s'est arrêté seul (étape $gstep$cause)" 1
+    return
+  fi
+  case "$gstep" in
+    boot)
+      if [ $((EPOCHSECONDS - gt)) -ge "$EMU_GOLDEN_BOOT_TIMEOUT" ]; then
+        golden_stop "Android n'a pas fini de démarrer en ${EMU_GOLDEN_BOOT_TIMEOUT} s" 1
+        return
+      fi
+      [ $((EPOCHSECONDS - last_prop)) -ge 2 ] || return 0
+      last_prop=$EPOCHSECONDS
+      android_ready || return 0
+      log "snapshot propre de $profile : démarré en $((EPOCHSECONDS - gt)) s, prise dans ${EMU_GOLDEN_SETTLE_S} s"
+      gstep=settle gt=$EPOCHSECONDS
+      ;;
+    settle)
+      [ $((EPOCHSECONDS - gt)) -ge "$EMU_GOLDEN_SETTLE_S" ] || return 0
+      # Prise en arrière-plan : le superviseur continue de battre pendant ce temps.
+      rm -f "$RUN/save.rc"
+      (
+        "${android_env[@]}" timeout "$EMU_GOLDEN_SAVE_S" "$EMU_ADB" -P "$EMU_ADB_PORT" -s "$EMU_SERIAL" \
+          emu avd snapshot save "$SNAP_NAME" >"$RUN/save.out" 2>&1
+        echo $? >"$RUN/save.rc"
+      ) &
+      save_pid=$!
+      gstep=saving gt=$EPOCHSECONDS
+      ;;
+    saving)
+      local rc
+      if [ -f "$RUN/save.rc" ]; then
+        wait "$save_pid" 2>/dev/null
+        save_pid=""
+        rc=$(head -c 8 "$RUN/save.rc")
+        if [ "$rc" = 0 ] && grep -q '^OK' "$RUN/save.out"; then
+          log "snapshot propre de $profile : pris en $((EPOCHSECONDS - gt)) s"
+          golden_finish
+        elif [ "$rc" = 124 ]; then
+          golden_stop "prise sans réponse en ${EMU_GOLDEN_SAVE_S} s" 1
+        else
+          golden_stop "prise refusée : $(tr -d '\r' <"$RUN/save.out" | head -n 3 | paste -sd' ')" 1
+        fi
+      elif [ $((EPOCHSECONDS - gt)) -ge "$((EMU_GOLDEN_SAVE_S + 10))" ]; then
+        golden_stop "prise sans réponse en ${EMU_GOLDEN_SAVE_S} s" 1
+      fi
+      ;;
+  esac
+}
+
+# Bail : seul le fichier lease de la session en cours (même id) le prolonge.
+# Un fichier illisible ou d'une autre session est ignoré : on garde le dernier.
+refresh_lease() {
+  local l=$EMU_SESSION/lease u
+  [ "$(emu_kv "$l" id)" = "$id" ] || return 0
+  u=$(emu_kv "$l" "until")
+  [[ "$u" =~ ^[0-9]{1,12}$ ]] && lease_until=$u
+}
+stop_asked() { [ "$(emu_kv "$EMU_SESSION/stop" id)" = "$id" ]; }
+
+# Une session vivante (booting / ready) : arrêt demandé, retirée, bail échu,
+# émulateur mort, trop longue ?
+check_running() {
+  if ! emu_session_ok || [ "$(emu_kv "$EMU_SESSION/request" id)" != "$id" ]; then
+    stop_emulator aborted 1 "session retirée du dossier de contrôle : émulateur arrêté."
+    return 0
+  fi
+  refresh_lease
+  if stop_asked; then
+    if [ "$state" = booting ]; then
+      stop_emulator stopped 1 "arrêt demandé avant la fin du démarrage."
+    else
+      stop_emulator stopped 0 "arrêté, aucun processus qemu restant."
+    fi
+  elif [ "$EPOCHSECONDS" -gt "$lease_until" ]; then
+    stop_emulator expired 1 "bail échu sans renouvellement (client disparu ?) : émulateur arrêté."
+  elif [ -z "$(group_pids "$grp")" ]; then
+    death_cause
+    stop_emulator failed 1 "l'émulateur s'est arrêté seul (état : $state$cause)." 1
+  elif [ $((EPOCHSECONDS - t0)) -ge "$EMU_MAX_SECONDS" ]; then
+    stop_emulator expired 1 "durée maximale de ${EMU_MAX_SECONDS} s atteinte : émulateur arrêté."
+  else
+    return 1
+  fi
+  return 0
+}
+
+on_idle() {
+  # Nouvelle version du script ou de emu-lib.sh (admin-install.sh) : relance au repos.
+  if [ "$(stat -c %i:%Y "$self" "$lib" 2>/dev/null | paste -sd,)" != "$self_stamp" ] && [ -x "$self" ]; then
+    log "nouvelle version de $self ou de emu-lib.sh : relance"
+    exec "$self"
+  fi
+  # Comptes rendus de plus d'un jour.
+  if [ $((EPOCHSECONDS % 600)) -eq 0 ] && [ -d "$EMU_RESULTS" ] && [ ! -L "$EMU_RESULTS" ]; then
+    find "$EMU_RESULTS" -maxdepth 1 -type f -mmin +1440 -delete 2>/dev/null
+  fi
+  if [ -L "$EMU_SESSION" ] || { [ -e "$EMU_SESSION" ] && [ ! -d "$EMU_SESSION" ]; }; then
+    drop_session
+    return
+  fi
+  if ! [ -d "$EMU_SESSION" ]; then
+    golden_wanted && start_golden "$gwant"
+    return 0
+  fi
+  local req=$EMU_SESSION/request rid asked
+  if ! [ -f "$req" ] || [ -L "$req" ]; then
+    local age
+    age=$(stat -c %Y "$EMU_SESSION" 2>/dev/null) || return 0
+    if [ $((EPOCHSECONDS - age)) -ge "$EMU_ABANDON_S" ]; then
+      log "session sans demande depuis ${EMU_ABANDON_S} s : retirée"
+      drop_session
+    fi
+    return
+  fi
+  rid=$(emu_kv "$req" id)
+  if ! emu_valid_id "$rid"; then
+    log "demande illisible (identifiant invalide) : retirée"
+    drop_session
+    return
+  fi
+  id=$rid
+  profile=$(clean_field "$(emu_kv "$req" profile)")
+  agent=$(clean_field "$(emu_kv "$req" agent)")
+  task=$(clean_field "$(emu_kv "$req" task)")
+  asked=$(clean_field "$(emu_kv "$req" boot)")
+  choose_boot "$asked"
+  # Bail initial : celui du client, sinon une minute.
+  lease_until=$((EPOCHSECONDS + 60))
+  refresh_lease
+  if ! emu_valid_profile "$profile"; then
+    write_result "$id" failed 2 "profil inconnu : $profile (profils : $(emu_profiles | paste -sd' '))"
+    drop_own_session
+    reset_vars
+  elif emu_maintenance_on; then
+    write_result "$id" busy 75 "mise à jour du SDK en cours : réessayer dans quelques minutes."
+    drop_own_session
+    reset_vars
+  elif stop_asked || [ "$EPOCHSECONDS" -gt "$lease_until" ]; then
+    write_result "$id" stopped 1 "session arrêtée ou échue avant le démarrage."
+    drop_own_session
+    reset_vars
+  elif [ "$asked" = build ]; then
+    request_golden
+  else
+    start_emulator
+  fi
+}
+
+on_booting() {
+  # Snapshot qui ne se charge pas : retour à froid dans la même session.
+  if [ "$boot" = snapshot ] && emu_session_ok && [ "$(emu_kv "$EMU_SESSION/request" id)" = "$id" ] && ! stop_asked &&
+    { [ -z "$(group_pids "$grp")" ] || [ $((EPOCHSECONDS - tb)) -ge "$EMU_SNAP_BOOT_TIMEOUT" ]; }; then
+    snapshot_fallback
+    return
+  fi
+  check_running && return
+  if [ $((EPOCHSECONDS - tb)) -ge "$EMU_BOOT_TIMEOUT" ]; then
+    stop_emulator failed 1 "Android n'a pas fini de démarrer en ${EMU_BOOT_TIMEOUT} s." 1
+    return
+  fi
+  [ $((EPOCHSECONDS - last_prop)) -ge 2 ] || return 0
+  last_prop=$EPOCHSECONDS
+  local p qemu="" rss boot_s mode=$boot
+  android_ready || return 0
+  [ "$boot" != snapshot ] || set_device_clock
+  boot_s=$((EPOCHSECONDS - t0))
+  for p in $(group_pids "$grp"); do
+    case "$(prog_of "$p" 2>/dev/null)" in */qemu-system-* | qemu-system-*) qemu=$p && break ;; esac
+  done
+  rss=$(rss_mb "${qemu:-0}")
+  # boot_s : attente de l'agent depuis la demande ; après un chargement en
+  # échec, elle compte les deux essais (mode « fallback » dans la métrique).
+  [ "$fallback" = 0 ] || mode=fallback
+  # Mesures gardées côté conteneur, copie publiée dans le dossier de contrôle.
+  printf '%s,%s,%s,%s,%s\n' "$(ts)" "$profile" "$boot_s" "$rss" "$mode" >>"$EMU_DATA/metrics.csv" &&
+    emu_write "$EMU_CTL/metrics.csv" <"$EMU_DATA/metrics.csv"
+  state=ready
+  write_status ready "boot_s=$boot_s
+rss_mb=$rss
+boot=$boot"
+  log "session $id : $profile prêt en ${boot_s} s ($boot), qemu ${rss} Mo"
+}
+
+on_stuck() {
+  local left
+  left=$(qemu_pids | paste -sd' ')
+  # shellcheck disable=SC2086
+  [ -z "$left" ] || kill -KILL $left 2>/dev/null
+  [ -z "$(qemu_pids)" ] || return 0
+  log "qemu enfin arrêté : session ${id:-du snapshot} libérée"
+  rm -rf -- "$RUN"
+  # Blocage pendant une construction au repos : aucune session à nous.
+  [ -z "$id" ] || drop_own_session
+  reset_vars
+}
+
+shutdown() {
+  trap '' TERM INT HUP
+  log "arrêt du conteneur"
+  if [ "$state" = booting ] || [ "$state" = ready ]; then
+    stop_emulator aborted 1 "conteneur android-emu arrêté pendant la session."
+  elif [ "$state" = building ]; then
+    golden_stop "construction interrompue par l'arrêt du conteneur" 0
+  fi
+  rm -f "$EMU_CTL/supervisor.alive"
+  exit 0
+}
+trap shutdown TERM INT HUP
+
+# Démarrage (ou relance) : une session déjà en marche lors d'une vie
+# précédente du conteneur est abandonnée ; une demande pas encore prise en
+# charge (sans status) sera traitée normalement.
+mkdir -p "$EMU_DATA"
+ensure_results
+if emu_session_ok && [ -e "$EMU_SESSION/status" ]; then
+  stale=$(emu_kv "$EMU_SESSION/request" id)
+  if emu_valid_id "$stale"; then
+    id=$stale
+    write_result "$id" aborted 1 "superviseur redémarré pendant la session."
+  fi
+  drop_session
+  reset_vars
+fi
+kill_strays
+rm -rf -- "$RUN"
+beat
+log "prêt (contrôle : $EMU_CTL, adb : port $EMU_ADB_PORT, max ${EMU_MAX_SECONDS} s par session)"
+
+while :; do
+  beat
+  case "$state" in
+    idle) on_idle ;;
+    booting) on_booting ;;
+    ready) check_running ;;
+    building) on_building ;;
+    stuck) on_stuck ;;
+  esac
+  # sleep en arrière-plan + wait : un TERM du conteneur est traité aussitôt.
+  sleep "$EMU_POLL" &
+  wait $! 2>/dev/null
+done

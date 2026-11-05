@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# emu-run <profil> [--wait-lock <s>] [--boot snapshot|cold] -- <commande> [args...]
+# Démarre l'émulateur, lance la commande avec ADB_SERVER_SOCKET et
+# ANDROID_SERIAL réglés sur lui, puis l'arrête toujours (succès, échec ou
+# interruption). Rend le code de la commande.
+#
+# Pendant la commande, le bail de la session est renouvelé toutes les
+# EMU_RUN_RENEW s. Si emu-run est tué sans pouvoir arrêter l'émulateur
+# (SIGKILL, fin du run), le superviseur l'arrête seul à l'échéance du bail.
+#
+#   emu-run phone -- adb install -r app/build/outputs/apk/debug/app-debug.apk
+#   emu-run tv --wait-lock 240 -- bash -c 'adb install -r app.apk && adb shell am start -n <package>/<activity>'
+EMU_CMD=emu-run
+# shellcheck source=emu-lib.sh
+. "$(dirname "$(readlink -f "$0")")/emu-lib.sh"
+here=$(dirname "$(readlink -f "$0")")
+: "${EMU_RUN_LEASE:=90}"
+: "${EMU_RUN_RENEW:=20}"
+
+start_args=()
+while [ $# -gt 0 ] && [ "$1" != "--" ]; do
+  case "$1" in --lease) emu_die 2 "emu-run gère seul le bail de la session." ;; esac
+  [ "$1 ${2:-}" != "--boot build" ] || emu_die 2 "--boot build : avec emu-start seulement (aucune commande ne tourne pendant la construction)."
+  start_args+=("$1")
+  shift
+done
+[ "${1:-}" = "--" ] && [ $# -ge 2 ] && [ ${#start_args[@]} -ge 1 ] ||
+  emu_die 2 "usage : emu-run <profil> [--wait-lock <s>] [--boot snapshot|cold] -- <commande> [args...]"
+shift
+
+# Démarrage : un signal reçu pendant emu-start lui est transmis, et emu-start
+# rend alors lui-même l'émulateur ; s'il a déjà fini, on le rend ici.
+id_file=$(mktemp "${TMPDIR:-/tmp}/emu-run.XXXXXX")
+starter="" id=""
+# shellcheck disable=SC2329 # appelée par trap
+early_stop() {
+  trap '' INT TERM HUP
+  if [ -n "$starter" ]; then
+    kill -TERM "$starter" 2>/dev/null || true
+    wait "$starter" 2>/dev/null || true
+  fi
+  [ -n "$id" ] || id=$(cat "$id_file" 2>/dev/null || true)
+  rm -f "$id_file"
+  if emu_valid_id "$id"; then "$here/emu-stop" --id "$id" || true; fi
+  exit "$1"
+}
+trap 'early_stop 130' INT
+trap 'early_stop 143' TERM
+trap 'early_stop 129' HUP
+"$here/emu-start" "${start_args[@]}" --lease "$EMU_RUN_LEASE" >"$id_file" </dev/null &
+starter=$!
+rc=0
+wait "$starter" 2>/dev/null || rc=$?
+starter=""
+id=$(cat "$id_file" 2>/dev/null || true)
+rm -f "$id_file"
+# emu-start en échec a déjà tout rendu.
+[ "$rc" = 0 ] || { trap - INT TERM HUP; exit "$rc"; }
+emu_valid_id "$id" || { trap - INT TERM HUP; emu_die 1 "identifiant de session illisible : $id"; }
+
+child="" hb="" parent=$$
+# Arrête la commande de test et tous ses descendants (son groupe de processus).
+# shellcheck disable=SC2329 # appelée par stop
+kill_child() {
+  [ -n "$child" ] || return 0
+  kill -TERM -- "-$child" 2>/dev/null || return 0
+  local n=20
+  while [ "$n" -gt 0 ] && kill -0 -- "-$child" 2>/dev/null; do sleep 0.5; n=$((n - 1)); done
+  kill -KILL -- "-$child" 2>/dev/null || true
+}
+# shellcheck disable=SC2329 # appelée par trap
+stop() {
+  local rc=$?
+  trap '' INT TERM HUP
+  trap - EXIT
+  [ -z "$hb" ] || { kill "$hb" 2>/dev/null; wait "$hb" 2>/dev/null; } || true
+  kill_child
+  if ! "$here/emu-stop" --id "$id"; then
+    emu_log "emu-stop a échoué : voir ci-dessus."
+    [ "$rc" != 0 ] || rc=3
+  fi
+  exit "$rc"
+}
+trap stop EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Commande dans son propre groupe (set -m), en arrière-plan + wait : un signal
+# reçu ici déclenche tout de suite le trap. <&0 garde l'entrée standard.
+set +e
+set -m
+ADB_SERVER_SOCKET="tcp:$EMU_ADB_HOST:$EMU_ADB_PORT" ANDROID_SERIAL="$EMU_SERIAL" "$@" <&0 &
+child=$!
+# Renouvellement du bail, dans son propre groupe lui aussi : si emu-run
+# disparaît (même tué avec tout son groupe), il arrête la commande de test et
+# sort ; l'émulateur s'arrête alors à l'échéance du bail. Son sleep meurt avec lui.
+(
+  set +m
+  trap - EXIT INT HUP
+  s=""
+  trap '[ -z "$s" ] || kill "$s" 2>/dev/null; exit 0' TERM
+  while :; do
+    sleep "$EMU_RUN_RENEW" &
+    s=$!
+    wait "$s"
+    s=""
+    if ! kill -0 "$parent" 2>/dev/null; then
+      kill -TERM -- "-$child" 2>/dev/null || true
+      sleep 2
+      kill -KILL -- "-$child" 2>/dev/null || true
+      exit 0
+    fi
+    [ "$(emu_kv "$EMU_SESSION/request" id)" = "$id" ] || exit 0
+    printf 'id=%s\nuntil=%s\n' "$id" $((EPOCHSECONDS + EMU_RUN_LEASE)) | emu_write "$EMU_SESSION/lease" || exit 0
+  done
+) </dev/null >/dev/null 2>&1 &
+hb=$!
+set +m
+wait "$child"
+rc=$?
+set -e
+exit "$rc"
