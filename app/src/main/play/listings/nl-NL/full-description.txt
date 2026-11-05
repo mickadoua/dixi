@@ -1,0 +1,29 @@
+Voxbulle is een zwevende bel die je stem in tekst omzet, in elke Android-app.
+
+ZO WERKT HET
+1. Tik op de bel. Hij zweeft boven je andere apps.
+2. Praat. De golf beweegt mee met je stem, tot 5 minuten per dictaat.
+3. Voxbulle stelt de tekst voor. Tik op een woord om het te verbeteren en bevestig: de tekst wordt gekopieerd (en voor je geplakt als je de optie hieronder aanzet).
+
+WAT VOXBULLE DOET
+• Een bel boven je andere apps, die je met één gebaar verbergt. Een streepje aan de rand of een melding haalt hem terug.
+• De tekst wordt opgeschoond: leestekens, alinea's, stopwoordjes weg. De betekenis blijft gelijk.
+• Dicteren in het Frans of Engels. Automatische herkenning tussen beide, of kies een taal in de instellingen.
+• Geschiedenis van je laatste 20 dictaten, alleen tekst. Je wist hem wanneer je wilt.
+• Geen account nodig.
+
+MISTRAL-TRANSCRIPTIE, MET JE EIGEN API-SLEUTEL
+De transcriptie wordt gedaan door Mistral (model Voxtral). Daarvoor maak je je eigen API-sleutel aan op console.mistral.ai en plak je die in de instellingen van Voxbulle. De sleutel blijft versleuteld op je telefoon. Het API-gebruik wordt door Mistral gefactureerd volgens haar eigen voorwaarden, niet door Voxbulle. Zonder sleutel werkt de app in demomodus: voorbeeldtekst, er wordt niets verzonden.
+
+AUTOMATISCH PLAKKEN (OPTIONEEL)
+Standaard uit. Als je het aanzet, gebruikt Voxbulle de toegankelijkheidsservice van Android voor één ding: de gedicteerde tekst plakken in het veld waarin je typt. De service leest geen schermcontent en verzamelt geen gegevens. Zonder deze optie wordt de tekst gekopieerd en plak je hem zelf.
+
+JE GEGEVENS
+• De audio en de getranscribeerde tekst gaan voor de transcriptie via Mistral. Voxbulle bewaart de audio nooit.
+• De tekst van je laatste dictaten blijft op je telefoon.
+• Je API-sleutel blijft versleuteld op je telefoon.
+
+HANDIG OM TE WETEN
+• De interface van de app is voorlopig in het Frans.
+• Voxbulle heeft de microfoon, een internetverbinding en toestemming nodig om de bel boven andere apps te tonen.
+• Voxbulle is een product van DM Consulting.

@@ -1,0 +1,7 @@
+Primeira versão do Voxbulle.
+• Bolha flutuante para ditar em todos os seus apps.
+• Transcrição da Mistral com sua própria chave de API.
+• Toque em uma palavra para corrigir antes de confirmar.
+• Colagem automática opcional (acessibilidade).
+• Histórico dos últimos 20 ditados.
+Por enquanto, a interface está em francês. Ditado em francês e inglês.
