@@ -2,10 +2,12 @@
 # Emulator proof for auto-paste (DMC-141), fake Voxtral. One short part per session:
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-auto-paste.sh <part> <out-dir>
 # Part s: screen 10 and screen 8 (« Non merci », then « J'accepte et j'active » opens Android's
-#         accessibility settings), switches read again on return (Victor, DMC-166): bubble
-#         without the overlay permission, auto-paste with the service off.
+#         accessibility settings), switch on when back with the service on.
+# Part r: switches read again on return (Victor, DMC-166): bubble without the overlay
+#         permission, auto-paste with the service off.
 # Part p: dictation over Contacts, cursor in « First name »: the text is pasted, no « Texte copié ».
 # Part f: fallbacks: service off, then service on but no editable field: clipboard + notification.
+# (Parts stay short: the emulator is killed for lack of memory after ~4 min.)
 # The service is turned on with `settings put secure` (what the switch in Android's page writes):
 # the system page is shown by the app, but tapping its switch and dialog is too slow here.
 set -u
@@ -91,24 +93,24 @@ dictate() {
   wait_more "panel Suggestion" "$n" 30; sleep 2
   b=$(count "panel buttons"); tap_panel primary
 }
-# Screen 10, auto-paste switch on through screen 8 (DataStore choice), service on.
+# Screen 10, auto-paste switch on through screen 8 (DataStore choice). The service is turned on
+# first, so the app does not open Android's settings (proved in part s): that app alone gets the
+# emulator killed for lack of memory. After `open`: Android turns off the services of a force-stopped app.
 accept_auto_paste() {
   open --es screen Settings; wait_focus "$PKG"
+  service_on; wait_log "auto-paste service connected" 15
   tap_text ui-10.xml "Collage automatique"
   tap_text ui-8.xml "J’accepte et j’active"
-  wait_focus "com.android.settings" 15 && echo "accessibility settings opened"
-  service_on
-  $ADB shell input keyevent KEYCODE_BACK; wait_focus "$PKG"
+  check "Android's settings not opened (service already on)" "focus | grep -q '$PKG'"
 }
-# Contacts in front, the bubble over it; sets XY.
+# From screen 10: « Afficher la bulle » on, then Contacts in front, the bubble over it; sets XY.
+# (The showBubble extra only works on a fresh activity, and a force-stop turns the service off.)
 start_bubble() {
   local n; n=$(count "bubble shown")
-  for _ in 1 2 3; do
-    show_bubble
-    $ADB shell input keyevent KEYCODE_HOME; sleep 2
-    contacts; close_dialogs; sleep 1
-    wait_more "bubble shown" "$n" 15 && break
-  done
+  tap_text ui-10-bubble.xml "Afficher la bulle"
+  wait_more "bubble shown" "$n" 15
+  $ADB shell input keyevent KEYCODE_HOME; sleep 2
+  contacts; close_dialogs; sleep 1
   XY=$(center "bubble shown"); echo "bubble center: $XY"
 }
 # Cursor in « First name », keyboard closed (the field keeps the focus).
@@ -138,7 +140,7 @@ for p in $($ADB shell dumpsys package com.google.android.contacts | sed -n 's/^ 
   $ADB shell pm grant com.google.android.contacts "$p" 2>/dev/null
 done
 # First screenshots after a cold boot come out black: one throwaway pass while it settles.
-sleep 45
+sleep 20
 contacts; shot 0-warmup; $ADB shell input keyevent KEYCODE_HOME
 close_dialogs
 $ADB logcat -c
@@ -170,7 +172,12 @@ if [ "$PART" = s ]; then
   check "auto-paste on after the service is on (read on return)" "[ \"\$(switch_state ui-10e.xml 'Collage automatique')\" = true ]"
   check "service connected" "wait_log 'auto-paste service connected' 10"
   shot 5-settings-auto-paste-on
-  echo "--- s4. Read again on return: service off in Android, overlay permission taken back"
+fi
+
+if [ "$PART" = r ]; then
+  echo "--- r1. Read again on return: service off in Android, overlay permission taken back"
+  accept_auto_paste
+  check "auto-paste on" "[ \"\$(switch_state ui-10.xml 'Collage automatique')\" = true ]"
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
   service_off
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW deny
@@ -178,7 +185,7 @@ if [ "$PART" = s ]; then
   check "auto-paste off after the service was turned off in Android" "[ \"\$(switch_state ui-10f.xml 'Collage automatique')\" = false ]"
   check "bubble off after the overlay permission was taken back" "[ \"\$(switch_state ui-10f.xml 'Afficher la bulle')\" = false ]"
   shot 6-settings-after-return
-  echo "--- s5. Bubble on, permission taken back in Android, back: the switch follows"
+  echo "--- r2. Bubble on, permission taken back in Android, back: the switch follows"
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
   tap_text ui-10g.xml "Afficher la bulle"
   check "bubble on" "[ \"\$(switch_state ui-10h.xml 'Afficher la bulle')\" = true ]"
