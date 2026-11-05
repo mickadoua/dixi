@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Emulator proof for the dictation chain (DMC-139), over Contacts, fake Voxtral.
 # Part a: full dictation, timing, single dictation, notification, paste.
-# Part b: errors (nothing heard, microphone denied), « Voir le texte », « Masquer la bulle ».
+# Part b: errors (nothing heard, microphone denied, never granted), « Voir le texte », « Masquer la bulle ».
+# b5 reinstalls the app without -g: its history is lost.
 # Run each part in its own session:
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-dictation.sh a <out-dir>
 set -u
@@ -32,6 +33,26 @@ tap_bubble() {
   return 1
 }
 focus() { $ADB shell dumpsys window | grep mCurrentFocus; }
+app_pid() { $ADB shell pidof $PKG | tr -d '\r'; }
+# Shows the bubble over Contacts and waits for a new « bubble shown » line, then sets XY and PID.
+start_bubble() {
+  local n; n=$(count "bubble shown")
+  for _ in 1 2 3; do
+    show_bubble
+    $ADB shell input keyevent KEYCODE_HOME; sleep 2
+    contacts; close_dialogs; sleep 1
+    wait_log_count "bubble shown" "$n" 15 && break
+  done
+  XY=$(center "bubble shown"); PID=$(app_pid)
+  echo "bubble center: $XY (pid $PID)"
+}
+# `pm revoke` kills the app process, and the bubble with it: show it again if the process changed.
+ensure_bubble() {
+  sleep 2
+  if [ "$(app_pid)" != "$PID" ]; then echo "app process changed ($PID -> $(app_pid)): bubble shown again"; start_bubble; fi
+}
+wait_log_count() { for _ in $(seq 1 "${3:-10}"); do [ "$(count "$1")" -gt "$2" ] && return 0; sleep 1; done; return 1; }
+no_crash() { ! $ADB logcat -d -s AndroidRuntime:E | grep -q "FATAL"; }
 # The shade opens and closes seconds late on a loaded emulator: wait on the window focus.
 open_shade() {
   for _ in 1 2 3; do
@@ -79,11 +100,7 @@ sleep 20
 contacts; shot 0-warmup; $ADB shell input keyevent KEYCODE_HOME
 close_dialogs
 $ADB logcat -c
-show_bubble
-$ADB shell input keyevent KEYCODE_HOME; sleep 2
-contacts; close_dialogs; sleep 1
-XY=$(center "bubble shown")
-echo "bubble center: $XY"
+start_bubble
 [ -n "$XY" ] || { $ADB logcat -d > "$OUT/logcat-full.txt"; echo "bubble not shown"; exit 2; }
 $ADB shell dumpsys activity activities | grep -m1 topResumedActivity | tee "$OUT/top-activity.txt"
 shot 1-idle-over-contacts
@@ -146,15 +163,16 @@ if [ "$PART" = b ]; then
   sleep 4
   echo "--- b2. Microphone denied"
   $ADB shell pm revoke $PKG android.permission.RECORD_AUDIO
-  sleep 2; XY=$(center "bubble shown"); [ -n "$XY" ] || { show_bubble; contacts; XY=$(center "bubble shown"); }
+  ensure_bubble
   tap_bubble; sleep 0.3
   shot 8-error-mic-denied
   check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "no crash on the tap without mic" "[ \"\$(app_pid)\" = '$PID' ] && no_crash"
   log | grep -E "bubble state|dictation error" | tee "$OUT/errors.txt"
   $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
   sleep 4
   echo "--- b3. « Voir le texte » opens the history"
-  sleep 2; XY=$(center "bubble shown"); [ -n "$XY" ] || { show_bubble; contacts; XY=$(center "bubble shown"); }
+  ensure_bubble
   limits --ei min_amplitude 0
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
   wait_log "copied notification posted" 15
@@ -167,7 +185,7 @@ if [ "$PART" = b ]; then
   node_center ui-history.xml "x" >/dev/null
   check "history opened with the text" "grep -q 'MainActivity' '$OUT/focus-history.txt' && grep -q 'Bonjour ceci est un texte de test voxbulle.' '$OUT/ui-history.xml'"
   echo "--- b4. « Masquer la bulle » hides the bubble"
-  contacts; close_dialogs
+  contacts; close_dialogs; ensure_bubble
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
   sleep 1; wait_log "copied notification posted" 20
   for _ in 1 2 3; do
@@ -179,6 +197,18 @@ if [ "$PART" = b ]; then
   close_shade
   check "bubble hidden from the notification" "wait_log 'bubble hidden' 2"
   shot 11-hidden
+  echo "--- b5. Microphone never granted (fresh install without -g)"
+  $ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat-b1-b4.txt"
+  $ADB uninstall $PKG >/dev/null
+  $ADB install -r "$APK" || exit 1
+  $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
+  $ADB shell dumpsys package $PKG | grep -m1 'RECORD_AUDIO: granted' | tee "$OUT/mic-permission-b5.txt"
+  $ADB logcat -c
+  start_bubble
+  tap_bubble; sleep 0.3
+  shot 12-error-mic-never-granted
+  check "mic error shown (never granted)" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "no crash (never granted)" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
 fi
 
 $ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
