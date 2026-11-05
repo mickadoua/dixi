@@ -74,7 +74,7 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     val entry by navController.currentBackStackEntryAsState()
     val current = Screen.entries.firstOrNull { it.route == entry?.destination?.route } ?: start
     val bubble = rememberBubbleToggle(container.settings)
-    val openOffer = { navController.navigate(Screen.Offer.route) }
+    val openOffer = if (Screen.offerShown) ({ navController.navigate(Screen.Offer.route) }) else null
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         Scaffold(
             containerColor = Neon.Bg,

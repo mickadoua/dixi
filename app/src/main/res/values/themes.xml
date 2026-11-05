@@ -3,4 +3,11 @@
     <style name="Theme.Voxbulle" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/surface</item>
     </style>
+
+    <!-- Nothing but the dialogs: the app in use stays visible behind (DMC-338). -->
+    <style name="Theme.Voxbulle.Translucent" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>
