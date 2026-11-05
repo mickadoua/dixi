@@ -1,0 +1,7 @@
+Prima versione di Voxbulle.
+• Bolla mobile per dettare in tutte le tue app.
+• Trascrizione Mistral con la tua chiave API.
+• Tocca una parola per correggerla prima di confermare.
+• Incolla automatico opzionale (accessibilità).
+• Cronologia delle ultime 20 dettature.
+Per ora l'interfaccia è in francese. Dettatura in francese e inglese.

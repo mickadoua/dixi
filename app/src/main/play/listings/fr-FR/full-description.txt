@@ -1,0 +1,29 @@
+Voxbulle est une bulle flottante qui transforme votre voix en texte, dans n'importe quelle appli Android.
+
+COMMENT ÇA MARCHE
+1. Touchez la bulle : elle flotte au-dessus de vos applis.
+2. Parlez. L'onde bouge avec votre voix, jusqu'à 5 minutes par dictée.
+3. Voxbulle vous propose le texte. Vous touchez un mot pour le corriger, puis vous validez : le texte est copié (et collé pour vous si vous activez l'option ci-dessous).
+
+CE QUE FAIT VOXBULLE
+• Une bulle par-dessus vos autres applis, que vous masquez d'un geste. Un liseré au bord de l'écran ou une notification la ramène.
+• Le texte est mis en forme : ponctuation, paragraphes, hésitations retirées. Le sens ne change pas.
+• Dictée en français ou en anglais. Détection automatique entre les deux, ou langue choisie dans les réglages.
+• Un historique des 20 dernières dictées, texte seulement. Vous l'effacez quand vous voulez.
+• Pas de compte à créer.
+
+TRANSCRIPTION MISTRAL, AVEC VOTRE CLÉ API
+La transcription est faite par Mistral (modèle Voxtral). Pour l'utiliser, vous créez votre propre clé API sur console.mistral.ai et vous la collez dans les réglages de Voxbulle. La clé reste chiffrée sur votre téléphone. L'utilisation de l'API est facturée par Mistral selon ses conditions, pas par Voxbulle. Sans clé, l'appli fonctionne en mode démo : texte d'exemple, rien n'est envoyé.
+
+COLLAGE AUTOMATIQUE (OPTIONNEL)
+Désactivé par défaut. Si vous l'activez, Voxbulle utilise le service d'accessibilité d'Android pour une seule chose : coller le texte dicté dans le champ où vous écrivez. Il ne lit pas le contenu de votre écran et ne collecte aucune donnée. Sans cette option, le texte est copié et vous le collez vous-même.
+
+VOS DONNÉES
+• L'audio est envoyé à Mistral pour la transcription. Voxbulle ne le conserve jamais.
+• Le texte des dernières dictées reste sur votre téléphone.
+• Votre clé API reste sur votre téléphone, chiffrée.
+
+BON À SAVOIR
+• L'interface de l'appli est en français pour le moment.
+• Voxbulle a besoin du micro, d'une connexion Internet et de l'autorisation d'afficher la bulle par-dessus les autres applis.
+• Voxbulle est un produit de DM Consulting.

@@ -1,0 +1,1 @@
+Speak and the text appears in any app. Floating bubble, your Mistral API key.
