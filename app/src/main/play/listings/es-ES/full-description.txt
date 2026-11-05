@@ -1,0 +1,29 @@
+Voxbulle es una burbuja flotante que convierte tu voz en texto, en cualquier app de Android.
+
+CÓMO FUNCIONA
+1. Toca la burbuja: flota sobre tus otras apps.
+2. Habla. La onda se mueve con tu voz, hasta 5 minutos por dictado.
+3. Voxbulle te propone el texto. Toca una palabra para corregirla y confirma: el texto se copia (y se pega por ti si activas la opción de abajo).
+
+QUÉ HACE VOXBULLE
+• Una burbuja sobre tus otras apps, que ocultas con un gesto. Una franja en el borde o una notificación la devuelve.
+• El texto se arregla: puntuación, párrafos, muletillas eliminadas. El sentido no cambia.
+• Dictado en francés o en inglés. Detección automática entre los dos, o idioma elegido en los ajustes.
+• Historial de tus últimos 20 dictados, solo texto. Lo borras cuando quieras.
+• Sin crear una cuenta.
+
+TRANSCRIPCIÓN DE MISTRAL, CON TU PROPIA CLAVE API
+La transcripción la hace Mistral (modelo Voxtral). Para usarla, creas tu propia clave API en console.mistral.ai y la pegas en los ajustes de Voxbulle. La clave queda cifrada en tu teléfono. El uso de la API lo factura Mistral según sus condiciones, no Voxbulle. Sin clave, la app funciona en modo demo: texto de ejemplo, no se envía nada.
+
+PEGADO AUTOMÁTICO (OPCIONAL)
+Desactivado por defecto. Si lo activas, Voxbulle usa el servicio de accesibilidad de Android para una sola cosa: pegar el texto dictado en el campo donde escribes. No lee el contenido de tu pantalla y no recoge ningún dato. Sin esta opción, el texto se copia y lo pegas tú.
+
+TUS DATOS
+• El audio y el texto transcrito pasan por Mistral para la transcripción. Voxbulle nunca conserva el audio.
+• El texto de tus últimos dictados se queda en tu teléfono.
+• Tu clave API se queda en tu teléfono, cifrada.
+
+CONVIENE SABER
+• Por ahora, la interfaz de la app está en francés.
+• Voxbulle necesita el micrófono, conexión a Internet y permiso para mostrar la burbuja sobre otras apps.
+• Voxbulle es un producto de DM Consulting.
