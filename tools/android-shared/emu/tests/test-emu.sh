@@ -53,7 +53,8 @@ fi
 "$(dirname "$0")/qemu/linux-x86_64/qemu-system-x86_64-headless" &
 wait $!
 EOF
-# Faux adb : serveur, getprop (démarré <boot-s> s après le qemu, 1 par défaut), emu kill. Les
+# Faux adb : serveur, getprop (démarré <boot-s> s après le qemu, 1 par défaut ;
+# utilisateur 0 déverrouillé <ce-s> s plus tard, 0 par défaut), emu kill. Les
 # comportements se règlent par des fichiers (le superviseur tourne déjà).
 cat >"$F/platform-tools/adb" <<'EOF'
 #!/usr/bin/env bash
@@ -78,7 +79,12 @@ case "$1" in
     p=$(cat "$FAKE_DIR/qemu.pid" 2>/dev/null); t=$(cat "$FAKE_DIR/qemu.start" 2>/dev/null)
     if [ -n "$p" ] && kill -0 "$p" 2>/dev/null && [ ! -e "$FAKE_DIR/never-boot" ] &&
       { [ ! -e "$FAKE_DIR/snap-hang" ] || [ ! -e "$FAKE_DIR/ro-boot" ]; } &&
-      [ $(( $(date +%s) - t )) -ge "$(cat "$FAKE_DIR/boot-s" 2>/dev/null || echo 1)" ]; then echo 1; else echo ""; fi ;;
+      [ $(( $(date +%s) - t )) -ge "$(cat "$FAKE_DIR/boot-s" 2>/dev/null || echo 1)" ]; then
+      if [ "$2 $3" = "getprop sys.user.0.ce_available" ]; then
+        [ $(( $(date +%s) - t )) -ge $(( $(cat "$FAKE_DIR/boot-s" 2>/dev/null || echo 1) + $(cat "$FAKE_DIR/ce-s" 2>/dev/null || echo 0) )) ] &&
+          echo true || echo false
+      else echo 1; fi
+    else echo ""; fi ;;
   emu)
     if [ "$2 $3 $4" = "avd snapshot save" ]; then
       # Prise du snapshot dans l'AVD du dernier lancement.
@@ -145,7 +151,7 @@ trap 'stop_sup; leftovers' EXIT
 reset() {
   wait_clean >/dev/null
   rm -f "$W/fail" "$W/client-hidden-until" "$W/never-boot" "$W/ignore-kill" "$W/boot-s" "$W/qemu.pid" "$W/qemu.start" \
-    "$W/load-fail" "$W/write-golden" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot"
+    "$W/load-fail" "$W/write-golden" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot" "$W/ce-s"
 }
 # Attend que la commande de test tourne (emu-start a rendu la main).
 wait_cmd() { local _; for _ in $(seq 100); do [ -n "$(procs "$1")" ] && return 0; sleep 0.2; done; return 1; }
@@ -770,6 +776,33 @@ wait "$qa"; ra=$?; wait "$qb"; rb=$?
 check "charge : A finit normalement" '[ $ra = 0 ]'
 check "charge : B refusé à son tour (76), rien démarré pour lui, ticket retiré" '[ $rb = 76 ] && grep -q "charge 25.00 > 12" "$W/err33b" && [ ! -e "$W/ran33b" ] && [ "$(wc -l <"$W/emulator.all")" = "$starts" ] && [ -z "$(queue_tickets)" ] && wait_clean'
 load 0.50
+
+# 34. Utilisateur 0 pas encore déverrouillé (DMC-294) : sys.boot_completed=1
+#     ne suffit pas. La session n'est prête, et la commande ne part, qu'avec
+#     sys.user.0.ce_available=true ; le temps noté compte cette attente.
+reset
+echo 1 >"$W/boot-s"
+echo 4 >"$W/ce-s"
+rm -f "$W/ce34"
+"$here/emu-run" phone -- sh -c '"$0" shell getprop sys.user.0.ce_available >"$1"' "$F/platform-tools/adb" "$W/ce34" 2>/dev/null &
+r34=$!
+for _ in $(seq 50); do [ -f "$W/qemu.start" ] && break; sleep 0.1; done
+sleep 3
+st34=$(emu_kv "$W/ctl/session/status" state)
+check "ce_available : démarré mais verrouillé (3 s) : toujours booting" '[ "$st34" = booting ] && grep -q "sys.user.0.ce_available" "$W/adb.calls"'
+wait "$r34"; rc=$?
+check "ce_available : la commande voit true au premier appel" '[ $rc = 0 ] && [ "$(cat "$W/ce34")" = true ]'
+check "ce_available : temps de démarrage noté ≥ 5 s" '[ "$(tail -n 1 "$W/ctl/metrics.csv" | cut -d, -f3)" -ge 5 ] && wait_clean'
+# Construction du snapshot propre : pas de prise avant le déverrouillage.
+reset
+echo 1 >"$W/boot-s"
+echo 4 >"$W/ce-s"
+echo "phone=opt-in" >"$W/snap.conf"
+rm -f "$G/stamp"
+check "ce_available : snapshot construit" wait_golden
+check "ce_available : snapshot démarré en ≥ 5 s avant la prise" '[ "$(sed -n "s/.*snapshot propre de phone : démarré en \([0-9]*\) s.*/\1/p" "$W/supervisor.log" | tail -n 1)" -ge 5 ]'
+rm -f "$W/snap.conf"
+reset
 
 stop_sup
 echo "---"
