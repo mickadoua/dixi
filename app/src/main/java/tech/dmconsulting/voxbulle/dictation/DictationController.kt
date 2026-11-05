@@ -108,8 +108,9 @@ class DictationController(
         bubble.setState(BubbleState.Idle)
     }
 
-    /** « Valider »: copies [text], the suggestion as the user corrected it. */
+    /** « Valider »: copies [text], the suggestion as the user corrected it. A blank text does nothing. */
     fun validate(text: String) {
+        if (text.isBlank()) return
         val done = pending ?: return
         pending = null
         output.showPanel(DictationPanel.None)

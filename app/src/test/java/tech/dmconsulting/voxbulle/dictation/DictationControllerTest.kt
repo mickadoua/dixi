@@ -284,6 +284,25 @@ class DictationControllerTest {
     }
 
     @Test
+    fun validerIgnoresABlankText() {
+        recorder.nextOutcome = recorded()
+        controller.onTap()
+        controller.onTap()
+        scope.advanceUntilIdle()
+        val suggestion = output.panels.last()
+        controller.validate("  \n ")
+        scope.advanceUntilIdle()
+
+        assertTrue(output.texts.isEmpty())
+        assertTrue(history.entries.value.isEmpty())
+        assertEquals("the suggestion stays open", suggestion, output.panels.last())
+
+        controller.validate("Bonjour.")
+        scope.advanceUntilIdle()
+        assertEquals(listOf("Bonjour."), output.texts)
+    }
+
+    @Test
     fun refaireDropsTheSuggestionAndListensAgain() {
         recorder.nextOutcome = recorded()
         controller.onTap()
