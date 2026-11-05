@@ -1,0 +1,7 @@
+Eerste versie van Voxbulle.
+• Zwevende bel om in al je apps te dicteren.
+• Transcriptie door Mistral met je eigen API-sleutel.
+• Tik op een woord om het te verbeteren voor je bevestigt.
+• Optioneel automatisch plakken (toegankelijkheid).
+• Geschiedenis van je laatste 20 dictaten.
+De interface is voorlopig in het Frans. Dicteren in het Frans en Engels.

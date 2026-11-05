@@ -1,0 +1,7 @@
+Primera versión de Voxbulle.
+• Burbuja flotante para dictar en todas tus apps.
+• Transcripción de Mistral con tu propia clave API.
+• Toca una palabra para corregirla antes de confirmar.
+• Pegado automático opcional (accesibilidad).
+• Historial de los últimos 20 dictados.
+Por ahora, la interfaz está en francés. Dictado en francés y en inglés.
