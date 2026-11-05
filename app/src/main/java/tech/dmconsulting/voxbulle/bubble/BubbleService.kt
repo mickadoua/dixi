@@ -237,7 +237,7 @@ class BubbleService : Service(), DictationOutput {
             .setContentIntent(history)
             .addAction(0, getString(R.string.notif_copied_show_text), history)
             .addAction(0, getString(R.string.bubble_action_hide), hide)
-            .setTimeoutAfter(COPIED_TIMEOUT_MS)
+            .setTimeoutAfter(debugCopiedTimeoutMs ?: COPIED_TIMEOUT_MS)
             .setAutoCancel(true)
             .build()
         try {
@@ -325,6 +325,10 @@ class BubbleService : Service(), DictationOutput {
     }
 
     companion object {
+        /** Set only by the debug build (DebugRecordingReceiver): the emulator opens the shade too slowly for 6 s. */
+        @Volatile
+        var debugCopiedTimeoutMs: Long? = null
+
         /** Shows the bubble again, even if the user hid it. */
         const val ACTION_SHOW = "tech.dmconsulting.voxbulle.action.SHOW_BUBBLE"
         private const val ACTION_HIDE = "tech.dmconsulting.voxbulle.action.HIDE_BUBBLE"
