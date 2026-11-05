@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# emu-start <profil> [--wait-lock <s>] [--lease <s>] [--boot snapshot|cold] : demande l'émulateur
+# emu-start <profil> [--wait-lock <s>] [--lease <s>] [--boot snapshot|cold|build] : demande l'émulateur
 # partagé au conteneur android-emu et rend la main quand Android a démarré.
 #
 # Affiche l'identifiant de la session sur la sortie standard. Toujours suivi
@@ -14,6 +14,11 @@
 # --boot (DMC-174) : snapshot = charger le snapshot propre si le profil le
 #   permet (sinon à froid) ; cold = toujours à froid. Sans l'option : réglage
 #   du profil (/opt/android/emu-snapshot.conf).
+#   build (admin) = construire le snapshot propre du profil maintenant : la
+#   demande prend son tour dans la file, puis emu-start rend la main dès que la
+#   construction a commencé (code 0, identifiant affiché) ; l'émulateur reste
+#   pris jusqu'à la fin. Suivi : golden.<profil> et results/<id> ; abandon :
+#   emu-stop --id <id>. Déjà prêt : code 0 sans rien construire ; réglage off : 2.
 # Charge de l'hôte (DMC-285) : au moment de prendre l'émulateur, si la charge
 #   sur 1 minute dépasse EMU_MAX_LOAD (12 par défaut), refus (76) sans rien
 #   démarrer. Un client en file n'est jugé qu'à son tour, émulateur libre.
@@ -25,13 +30,13 @@ EMU_CMD=emu-start
 # shellcheck source=emu-lib.sh
 . "$(dirname "$(readlink -f "$0")")/emu-lib.sh"
 
-usage() { emu_die 2 "usage : emu-start <$(emu_profiles | paste -sd'|')> [--wait-lock <secondes>] [--lease <secondes>] [--boot snapshot|cold]"; }
+usage() { emu_die 2 "usage : emu-start <$(emu_profiles | paste -sd'|')> [--wait-lock <secondes>] [--lease <secondes>] [--boot snapshot|cold|build]"; }
 
 profile="" wait_lock=0 lease=600 boot=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --boot)
-      [ $# -ge 2 ] && [[ "$2" =~ ^(snapshot|cold)$ ]] || usage
+      [ $# -ge 2 ] && [[ "$2" =~ ^(snapshot|cold|build)$ ]] || usage
       boot=$2
       shift 2
       ;;
@@ -213,6 +218,34 @@ renew
 printf 'id=%s\nprofile=%s\nagent=%s\nrun=%s\ntask=%s\nrequested=%s\nboot=%s\n' \
   "$id" "$profile" "${PAPERCLIP_AGENT_ID:-?}" "${PAPERCLIP_RUN_ID:-?}" "${PAPERCLIP_TASK_ID:-?}" "$EPOCHSECONDS" "$boot" |
   emu_write "$EMU_SESSION/request"
+
+# Construction demandée (DMC-174) : on rend la main dès qu'elle a commencé.
+if [ "$boot" = build ]; then
+  limit=$((EPOCHSECONDS + EMU_CLIENT_WAIT))
+  while :; do
+    # Refusée (réglage off) ou déjà prête : compte rendu immédiat.
+    if [ -f "$EMU_RESULTS/$id" ]; then
+      ready=1
+      emu_report "$id"
+      exit
+    fi
+    if [ "$(emu_kv "$EMU_SESSION/status" id)" = "$id" ]; then
+      st=$(emu_kv "$EMU_SESSION/status" state)
+      [ "$st" = building ] && break
+      # Superviseur d'avant DMC-174 build : il a lancé une session ordinaire.
+      [ -z "$st" ] || { emu_log "le superviseur ne connaît pas --boot build (état $st) : session rendue."; exit 1; }
+    fi
+    emu_supervisor_alive || { emu_log "le conteneur android-emu ne répond plus."; exit 69; }
+    [ "$EPOCHSECONDS" -lt "$limit" ] || { emu_log "construction pas commencée en $EMU_CLIENT_WAIT s."; exit 1; }
+    renew || true
+    sleep 1
+  done
+  ready=1
+  emu_log "construction du snapshot propre de $profile commencée (session $id) : l'émulateur reste pris jusqu'à la fin."
+  emu_log "suivi : $EMU_CTL/golden.$profile et $EMU_RESULTS/$id ; abandon : emu-stop --id $id."
+  echo "$id"
+  exit 0
+fi
 
 # Pire cas : chargement du snapshot en échec, puis démarrage à froid complet.
 boot_wait=$((EMU_BOOT_TIMEOUT + EMU_SNAP_BOOT_TIMEOUT + 30))

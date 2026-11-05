@@ -9,6 +9,8 @@
 # prend au repos un snapshot juste après un démarrage à froid, et les sessions
 # le chargent en lecture seule (-read-only) au lieu de redémarrer à froid.
 # Rien n'est gardé d'une session à l'autre ; chargement en échec : retour à froid.
+# La construction peut aussi être demandée (emu-start --boot build) : elle passe
+# alors par la file comme une session, et une autre demande ne l'interrompt pas.
 #
 # Seul ce conteneur voit /dev/kvm : les agents n'ont aucun privilège en plus.
 # Le dossier de contrôle est écrit par tous les agents : tout ce qui en vient
@@ -47,6 +49,9 @@ set +e +o pipefail
 # Pause entre la fin du démarrage et la prise du snapshot ; durée maximale de la prise.
 : "${EMU_GOLDEN_SETTLE_S:=30}"
 : "${EMU_GOLDEN_SAVE_S:=300}"
+# Démarrage à froid de la construction : plus long que EMU_BOOT_TIMEOUT, car
+# elle ne fait attendre aucun agent (04/11 : échec à 300 s, NAS chargé à 30).
+: "${EMU_GOLDEN_BOOT_TIMEOUT:=480}"
 # Après un échec de construction, pas de nouvel essai avant ce délai.
 : "${EMU_GOLDEN_RETRY_S:=3600}"
 # Chargement d'un snapshot plus long que EMU_SNAP_BOOT_TIMEOUT (emu-lib.sh) : retour à froid.
@@ -483,9 +488,37 @@ golden_wanted() {
   return 1
 }
 
+# Construction demandée par emu-start --boot build (DMC-174) : elle a pris son
+# tour dans la file comme une session ; rendue seulement sur emu-stop, session
+# retirée, maintenance ou réglage retiré. Le bail n'est pas suivi : la durée est
+# bornée par EMU_GOLDEN_BOOT_TIMEOUT + EMU_GOLDEN_SETTLE_S + EMU_GOLDEN_SAVE_S.
+# Le délai après un échec (EMU_GOLDEN_RETRY_S) ne s'applique pas à une demande.
+request_golden() {
+  boot=cold boot_note=""
+  if [ "$(snap_mode "$profile")" = off ]; then
+    write_result "$id" failed 2 "snapshot non activé pour $profile ($EMU_SNAPSHOT_CONF) : rien construit."
+  elif golden_current "$profile"; then
+    write_result "$id" built 0 "snapshot propre de $profile déjà prêt et à jour : rien construit."
+  else
+    start_golden "$profile"
+    return
+  fi
+  drop_own_session
+  reset_vars
+}
+# Fin d'une construction demandée ($id non vide) : compte rendu, session libérée
+# (gardée si un qemu reste : on_stuck la libère).
+golden_report() {
+  [ -n "$id" ] || return 0
+  write_result "$id" "$1" "$2" "$3"
+  [ "$state" = stuck ] || drop_own_session
+}
+
+# Construction au repos ($id vide) ou demandée ($id de la session).
 start_golden() {
   local free
-  profile=$1 id="" agent=supervisor task=snapshot
+  profile=$1
+  [ -n "$id" ] || agent=supervisor task=snapshot
   free=$(df -Pm "$EMU_DATA" 2>/dev/null | { read -r _ && read -r _ _ _ f _ && echo "$f"; })
   if ! [[ "$free" =~ ^[0-9]+$ ]] || [ "$free" -lt "$EMU_GOLDEN_MIN_FREE_MB" ]; then
     golden_fail "place insuffisante dans $EMU_DATA (${free:-?} Mo libres, $EMU_GOLDEN_MIN_FREE_MB demandés)"
@@ -502,7 +535,13 @@ start_golden() {
   launch_emulator "$GOLDEN/$profile/avd" cold 0
   state=building
   golden_note "$profile" building
-  log "snapshot propre de $profile : démarrage à froid"
+  if [ -n "$id" ]; then
+    write_status building "pid=$grp
+boot=build"
+    log "snapshot propre de $profile : démarrage à froid (session $id, agent $agent, tâche $task)"
+  else
+    log "snapshot propre de $profile : démarrage à froid"
+  fi
 }
 
 # Fin de construction en échec ou abandonnée : tout est arrêté et retiré.
@@ -518,13 +557,21 @@ golden_stop() {
     golden_failed[$profile]=$EPOCHSECONDS
     golden_note "$profile" failed "message=$reason"
     log "snapshot propre de $profile : échec — $reason"
+    golden_report failed 1 "snapshot propre de $profile : échec — $reason"
   else
     golden_note "$profile" missing "message=$reason"
     log "snapshot propre de $profile : $reason"
+    golden_report aborted 1 "snapshot propre de $profile : $reason"
   fi
   [ "$state" = stuck ] || reset_vars
 }
-golden_fail() { golden_failed[$profile]=$EPOCHSECONDS; golden_note "$profile" failed "message=$1"; log "snapshot propre de $profile : échec — $1"; reset_vars; }
+golden_fail() {
+  golden_failed[$profile]=$EPOCHSECONDS
+  golden_note "$profile" failed "message=$1"
+  log "snapshot propre de $profile : échec — $1"
+  golden_report failed 1 "snapshot propre de $profile : échec — $1"
+  reset_vars
+}
 
 golden_finish() {
   local gd=$GOLDEN/$profile build_s size
@@ -544,13 +591,21 @@ golden_finish() {
   golden_note "$profile" ready "build_s=$build_s
 size_mb=${size:-?}"
   log "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque"
+  golden_report built 0 "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque."
   reset_vars
 }
 
 on_building() {
-  # Un agent demande l'émulateur, maintenance du SDK, réglage retiré : on
-  # rend la place tout de suite (TERM, sans attendre adb emu kill).
-  if [ -e "$EMU_SESSION" ] || [ -L "$EMU_SESSION" ] || emu_maintenance_on || [ "$(snap_mode "$profile")" = off ]; then
+  # Au repos : un agent demande l'émulateur, maintenance du SDK, réglage
+  # retiré : on rend la place tout de suite (TERM, sans attendre adb emu kill).
+  # Demandée : seulement sur emu-stop, session retirée, maintenance ou réglage retiré.
+  if [ -n "$id" ]; then
+    if ! emu_session_ok || [ "$(emu_kv "$EMU_SESSION/request" id)" != "$id" ] || stop_asked ||
+      emu_maintenance_on || [ "$(snap_mode "$profile")" = off ]; then
+      golden_stop "construction demandée abandonnée (arrêt demandé, session retirée, maintenance ou réglage retiré)" 0
+      return
+    fi
+  elif [ -e "$EMU_SESSION" ] || [ -L "$EMU_SESSION" ] || emu_maintenance_on || [ "$(snap_mode "$profile")" = off ]; then
     golden_stop "construction abandonnée (émulateur demandé, maintenance ou réglage retiré)" 0
     return
   fi
@@ -561,8 +616,8 @@ on_building() {
   fi
   case "$gstep" in
     boot)
-      if [ $((EPOCHSECONDS - gt)) -ge "$EMU_BOOT_TIMEOUT" ]; then
-        golden_stop "Android n'a pas fini de démarrer en ${EMU_BOOT_TIMEOUT} s" 1
+      if [ $((EPOCHSECONDS - gt)) -ge "$EMU_GOLDEN_BOOT_TIMEOUT" ]; then
+        golden_stop "Android n'a pas fini de démarrer en ${EMU_GOLDEN_BOOT_TIMEOUT} s" 1
         return
       fi
       [ $((EPOCHSECONDS - last_prop)) -ge 2 ] || return 0
@@ -659,7 +714,7 @@ on_idle() {
     golden_wanted && start_golden "$gwant"
     return 0
   fi
-  local req=$EMU_SESSION/request rid
+  local req=$EMU_SESSION/request rid asked
   if ! [ -f "$req" ] || [ -L "$req" ]; then
     local age
     age=$(stat -c %Y "$EMU_SESSION" 2>/dev/null) || return 0
@@ -679,7 +734,8 @@ on_idle() {
   profile=$(clean_field "$(emu_kv "$req" profile)")
   agent=$(clean_field "$(emu_kv "$req" agent)")
   task=$(clean_field "$(emu_kv "$req" task)")
-  choose_boot "$(clean_field "$(emu_kv "$req" boot)")"
+  asked=$(clean_field "$(emu_kv "$req" boot)")
+  choose_boot "$asked"
   # Bail initial : celui du client, sinon une minute.
   lease_until=$((EPOCHSECONDS + 60))
   refresh_lease
@@ -695,6 +751,8 @@ on_idle() {
     write_result "$id" stopped 1 "session arrêtée ou échue avant le démarrage."
     drop_own_session
     reset_vars
+  elif [ "$asked" = build ]; then
+    request_golden
   else
     start_emulator
   fi
@@ -743,7 +801,7 @@ on_stuck() {
   [ -z "$(qemu_pids)" ] || return 0
   log "qemu enfin arrêté : session ${id:-du snapshot} libérée"
   rm -rf -- "$RUN"
-  # Blocage pendant la construction du snapshot : aucune session à nous.
+  # Blocage pendant une construction au repos : aucune session à nous.
   [ -z "$id" ] || drop_own_session
   reset_vars
 }

@@ -117,8 +117,8 @@ start_sup() {
   [ "${SUP_TRACE:-0}" = 0 ] || pre=(env BASH_XTRACEFD=7 bash -x)
   exec 7>>"$W/sup.trace"
   EMU_CGROUP="$W/cg" EMU_SKIP_KVM_CHECK=1 EMU_POLL=0.2 EMU_BOOT_TIMEOUT=${SUP_BOOT:-16} EMU_STOP_GRACE=2 EMU_ABANDON_S=2 \
-    EMU_MAX_SECONDS=${SUP_MAX:-1800} EMU_SNAPSHOT_CONF="$W/snap.conf" EMU_GOLDEN_IDLE_S=3 EMU_GOLDEN_CHECK_S=${SUP_GCHECK:-1} \
-    EMU_GOLDEN_SETTLE_S=1 EMU_GOLDEN_SAVE_S=4 EMU_GOLDEN_RETRY_S=${SUP_GRETRY:-3} EMU_GOLDEN_MIN_FREE_MB=1 EMU_SNAP_BOOT_TIMEOUT=6 \
+    EMU_MAX_SECONDS=${SUP_MAX:-1800} EMU_SNAPSHOT_CONF="$W/snap.conf" EMU_GOLDEN_IDLE_S=${SUP_GIDLE:-3} EMU_GOLDEN_CHECK_S=${SUP_GCHECK:-1} \
+    EMU_GOLDEN_SETTLE_S=1 EMU_GOLDEN_SAVE_S=4 EMU_GOLDEN_RETRY_S=${SUP_GRETRY:-3} EMU_GOLDEN_MIN_FREE_MB=1 EMU_GOLDEN_BOOT_TIMEOUT=${SUP_GBOOT:-20} EMU_SNAP_BOOT_TIMEOUT=6 \
     "${pre[@]}" "$here/emu-supervisor" >>"$W/supervisor.log" 2>&1 &
   sup=$!
   exec 7>&-
@@ -658,6 +658,63 @@ for _ in $(seq 75); do [ "$(emu_kv "$W/ctl/golden.phone" state)" = building ] &&
 stop_sup
 check "snapshot : arrêt du conteneur pendant la construction : rien ne reste" '[ -z "$(fakes)" ] && [ ! -e "$G" ] && [ ! -e "$W/data/run" ] && grep -q "construction interrompue par l.arrêt du conteneur" "$W/supervisor.log"'
 rm -f "$W/boot-s"
+start_sup
+# Construction demandée (emu-start --boot build) : par la file, sans attendre
+# le repos, et pas interrompue par un agent qui demande l'émulateur. Ici, pas
+# de construction au repos (SUP_GIDLE), délai de construction 40 s.
+stop_sup
+SUP_GIDLE=1000 SUP_GRETRY=1000 SUP_GBOOT=40 start_sup
+wait_result() { local _; for _ in $(seq 150); do [ -f "$W/ctl/results/$1" ] && return 0; sleep 0.2; done; return 1; }
+reset
+"$here/emu-run" phone --boot build -- true 2>"$W/err34"; rc=$?
+check "build : refusé par emu-run (2)" '[ $rc = 2 ] && grep -q "avec emu-start seulement" "$W/err34" && [ ! -e "$W/ctl/session" ]'
+# Démarrage en 18 s : au-delà d'EMU_BOOT_TIMEOUT (16 s), sous EMU_GOLDEN_BOOT_TIMEOUT.
+echo 18 >"$W/boot-s"
+n0=$(wc -l <"$W/emulator.all")
+gid=$("$here/emu-start" phone --boot build 2>"$W/err34"); rc=$?
+check "build : emu-start rend la main dès le début (code 0, identifiant)" '[ $rc = 0 ] && emu_valid_id "$gid" && grep -q "construction du snapshot propre de phone commencée" "$W/err34"'
+check "build : état building (session et golden.phone)" '[ "$(emu_kv "$W/ctl/session/status" state)" = building ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = building ]'
+check "build : à froid, serveur adb limité au conteneur" 'grep -q -- "-wipe-data" "$W/emulator.args" && [ "$(grep "nodaemon server" "$W/adb.calls" | tail -n 1)" = "-P 5639 nodaemon server" ] && grep -q "démarrage à froid (session $gid, agent agent-A" "$W/supervisor.log"'
+rm -f "$W/ran34"
+PAPERCLIP_AGENT_ID=agent-B "$here/emu-run" phone --wait-lock 90 -- touch "$W/ran34" 2>"$W/err34b" &
+qb=$!
+sleep 3
+check "build : un agent arrive : il attend, la construction continue" 'kill -0 $qb 2>/dev/null && [ "$(emu_kv "$W/ctl/golden.phone" state)" = building ] && ! grep -q "construction demandée abandonnée" "$W/supervisor.log"'
+# Démarrage lent pour la construction seulement : l'agent B démarre ensuite en 1 s.
+for _ in $(seq 150); do grep -q "snapshot propre de phone : démarré en 1[89] s" "$W/supervisor.log" && break; sleep 0.2; done
+rm -f "$W/boot-s"
+wait "$qb"; rb=$?
+check "build : prête au-delà d'EMU_BOOT_TIMEOUT, compte rendu built (0)" 'wait_result "$gid" && [ "$(emu_kv "$W/ctl/results/$gid" result)" = built ] && [ "$(emu_kv "$W/ctl/results/$gid" code)" = 0 ] && [ -f "$G/stamp" ] && grep -q "snapshot propre de phone : démarré en 1[89] s" "$W/supervisor.log"'
+check "build : l'agent passe ensuite, sur le snapshot" '[ $rb = 0 ] && [ -e "$W/ran34" ] && grep -q -- "-read-only" "$W/emulator.args" && wait_clean'
+# Déjà prêt : rien construit.
+reset
+n0=$(wc -l <"$W/emulator.all")
+"$here/emu-start" phone --boot build 2>"$W/err34" >/dev/null; rc=$?
+check "build : déjà prêt : code 0, rien démarré" '[ $rc = 0 ] && grep -q "déjà prêt" "$W/err34" && [ "$(wc -l <"$W/emulator.all")" = "$n0" ] && wait_clean'
+# Abandon par emu-stop : tout est arrêté, la session libérée.
+reset
+rm -f "$G/stamp"
+echo 30 >"$W/boot-s"
+gid=$("$here/emu-start" phone --boot build 2>/dev/null)
+"$here/emu-stop" --id "$gid" 2>"$W/err34"
+check "build : emu-stop l'abandonne, rien ne reste" '[ "$(emu_kv "$W/ctl/results/$gid" result)" = aborted ] && grep -q "construction demandée abandonnée" "$W/err34" && wait_clean && [ ! -e "$G" ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = missing ]'
+rm -f "$W/boot-s"
+# Échec, puis nouvelle demande aussitôt : le délai après échec ne s'applique pas.
+reset
+touch "$W/save-fail"
+gid=$("$here/emu-start" phone --boot build 2>/dev/null)
+check "build : échec : compte rendu failed (1), tout nettoyé" 'wait_result "$gid" && [ "$(emu_kv "$W/ctl/results/$gid" result)" = failed ] && grep -q "prise refusée" "$W/ctl/results/$gid" && wait_clean'
+rm -f "$W/save-fail"
+gid=$("$here/emu-start" phone --boot build 2>/dev/null); rc=$?
+check "build : nouvelle demande juste après l'échec : construit" '[ $rc = 0 ] && wait_result "$gid" && [ "$(emu_kv "$W/ctl/results/$gid" result)" = built ] && [ -f "$G/stamp" ] && wait_clean'
+# Réglage off : refus (2), rien démarré.
+echo "phone=off" >"$W/snap.conf"
+rm -f "$G/stamp"
+n0=$(wc -l <"$W/emulator.all")
+"$here/emu-start" phone --boot build 2>"$W/err34" >/dev/null; rc=$?
+check "build : réglage off : code 2, rien démarré" '[ $rc = 2 ] && grep -q "snapshot non activé pour phone" "$W/err34" && [ "$(wc -l <"$W/emulator.all")" = "$n0" ] && wait_clean'
+echo "phone=on" >"$W/snap.conf"
+stop_sup
 start_sup
 # Réglage retiré : plus de construction ni de chargement.
 rm -f "$W/snap.conf"

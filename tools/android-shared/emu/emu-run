@@ -20,6 +20,7 @@ here=$(dirname "$(readlink -f "$0")")
 start_args=()
 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
   case "$1" in --lease) emu_die 2 "emu-run gère seul le bail de la session." ;; esac
+  [ "$1 ${2:-}" != "--boot build" ] || emu_die 2 "--boot build : avec emu-start seulement (aucune commande ne tourne pendant la construction)."
   start_args+=("$1")
   shift
 done
