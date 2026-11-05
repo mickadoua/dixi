@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Emulator proof for the dictation chain (DMC-139), over Contacts, fake Voxtral.
 # Part a: full dictation, timing, single dictation, notification, paste.
-# Part b: errors (nothing heard, microphone denied, never granted), « Voir le texte », « Masquer la bulle ».
-# b5 reinstalls the app without -g: its history is lost.
+# Part b: errors (nothing heard, microphone denied).
+# Part n: notification action « Voir le texte ». Part h: notification action « Masquer la bulle ».
+# (Parts stay short: the emulator is killed for lack of memory after ~5 min.)
+# Part c: microphone never granted (reinstalls the app without -g: its data is lost).
 # Run each part in its own session:
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-dictation.sh a <out-dir>
 set -u
@@ -70,6 +72,17 @@ close_shade() {
 }
 audio_files() { $ADB shell run-as $PKG ls cache 2>/dev/null | grep -c 'dictation-.*\.m4a'; }
 notif() { $ADB shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | grep -E "NotificationRecord|id=2|timeoutAfter|android.title|android.text|actions|\[[0-9]\] \"|channel=" ; }
+# Opens the shade right after the stop tap and dumps it until the action $2 shows;
+# its center goes to stdout.
+shade_action() {
+  open_shade >/dev/null; $ADB shell log -t VoxbulleProof "script: shade open"
+  for i in 1 2 3 4 5; do
+    local c; c=$(node_center "$1" "$2"); [ -n "$c" ] && { echo "$c"; return 0; }
+    $ADB shell log -t VoxbulleProof "script: $2 not in the shade (dump $i)"
+    [ "$i" = 3 ] && open_shade >/dev/null
+  done
+  return 1
+}
 # Center of the first node whose text is $2, from a fresh dump into $1.
 node_center() {
   $ADB shell rm -f /sdcard/ui.xml
@@ -85,7 +98,14 @@ PY
 }
 
 $ADB shell getprop ro.build.version.sdk
-$ADB install -r -g "$APK" || exit 1
+if [ "$PART" = c ]; then
+  # Microphone never granted: fresh install without -g.
+  $ADB uninstall $PKG >/dev/null 2>&1
+  $ADB install -r "$APK" || exit 1
+  $ADB shell dumpsys package $PKG | grep -m1 'RECORD_AUDIO: granted' | tee "$OUT/mic-permission.txt"
+else
+  $ADB install -r -g "$APK" || exit 1
+fi
 $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
 $ADB shell svc power stayon true
 $ADB shell settings put system screen_off_timeout 1800000
@@ -162,53 +182,54 @@ if [ "$PART" = b ]; then
   check "audio deleted" "[ \$(audio_files) -eq 0 ]"
   sleep 4
   echo "--- b2. Microphone denied"
+  # The revoke kills the app process a few seconds later: stop it now, then show the bubble again.
   $ADB shell pm revoke $PKG android.permission.RECORD_AUDIO
-  ensure_bubble
+  $ADB shell am force-stop $PKG; sleep 2
+  start_bubble
   tap_bubble; sleep 0.3
   shot 8-error-mic-denied
   check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
   check "no crash on the tap without mic" "[ \"\$(app_pid)\" = '$PID' ] && no_crash"
   log | grep -E "bubble state|dictation error" | tee "$OUT/errors.txt"
   $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
-  sleep 4
-  echo "--- b3. « Voir le texte » opens the history"
-  ensure_bubble
-  limits --ei min_amplitude 0
+fi
+
+if [ "$PART" = n ]; then
+  echo "--- n1. « Voir le texte » opens the history"
+  # The shade takes ~8 s to open here: keep the notification 60 s instead of 6 s (also in h).
+  limits --ei min_amplitude 0 --el copied_timeout_ms 60000
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
-  wait_log "copied notification posted" 15
-  open_shade
-  V=$(node_center ui-shade.xml "Voir le texte"); echo "Voir le texte at: $V"
+  V=$(shade_action ui-shade.xml "Voir le texte"); echo "Voir le texte at: $V"
+  [ -n "$V" ] && $ADB shell input tap $V
   shot 9-shade-actions
-  [ -n "$V" ] && $ADB shell input tap $V; sleep 4
+  sleep 4
   $ADB shell dumpsys window | grep mCurrentFocus | tee "$OUT/focus-history.txt"
   shot 10-history
   node_center ui-history.xml "x" >/dev/null
   check "history opened with the text" "grep -q 'MainActivity' '$OUT/focus-history.txt' && grep -q 'Bonjour ceci est un texte de test voxbulle.' '$OUT/ui-history.xml'"
-  echo "--- b4. « Masquer la bulle » hides the bubble"
-  contacts; close_dialogs; ensure_bubble
+fi
+
+if [ "$PART" = h ]; then
+  echo "--- h1. « Masquer la bulle » hides the bubble"
+  limits --ei min_amplitude 0 --el copied_timeout_ms 60000
   tap_bubble; wait_log "recording started" 10; sleep 2; tap_bubble
-  sleep 1; wait_log "copied notification posted" 20
+  # Injected taps get lost on a loaded emulator: tap again while the bubble is not hidden.
   for _ in 1 2 3; do
-    open_shade
-    H=$(node_center ui-shade2.xml "Masquer la bulle"); echo "Masquer la bulle at: $H"
+    H=$(shade_action ui-shade2.xml "Masquer la bulle"); echo "Masquer la bulle at: $H"
     [ -n "$H" ] && $ADB shell input tap $H
-    wait_log "bubble hidden" 4 && break
+    wait_log "bubble hidden" 10 && break
   done
   close_shade
   check "bubble hidden from the notification" "wait_log 'bubble hidden' 2"
   shot 11-hidden
-  echo "--- b5. Microphone never granted (fresh install without -g)"
-  $ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat-b1-b4.txt"
-  $ADB uninstall $PKG >/dev/null
-  $ADB install -r "$APK" || exit 1
-  $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
-  $ADB shell dumpsys package $PKG | grep -m1 'RECORD_AUDIO: granted' | tee "$OUT/mic-permission-b5.txt"
-  $ADB logcat -c
-  start_bubble
+fi
+
+if [ "$PART" = c ]; then
+  echo "--- c1. Microphone never granted: tap gives the error, no crash"
   tap_bubble; sleep 0.3
   shot 12-error-mic-never-granted
-  check "mic error shown (never granted)" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
-  check "no crash (never granted)" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
+  check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "no crash" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
 fi
 
 $ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
