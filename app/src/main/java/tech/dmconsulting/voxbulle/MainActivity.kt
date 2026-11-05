@@ -38,7 +38,9 @@ class MainActivity : ComponentActivity() {
             }
         }
         val demoMode = BuildConfig.DEBUG && container.usesFakeVoxtral
-        val start = debugStartScreen(container, firstCreate = savedInstanceState == null) ?: Screen.start
+        val start = debugStartScreen(container, firstCreate = savedInstanceState == null)
+            ?: Screen.History.takeIf { intent.getStringExtra(EXTRA_SCREEN) == it.name }
+            ?: Screen.start
         setContent {
             VoxbulleTheme {
                 VoxbulleNavHost(container, demoMode, start)
@@ -47,8 +49,9 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Debug builds only, for emulator proofs: `--es screen History` opens a screen
-     * directly, `--ei seedHistory N` adds N sample dictations (fictitious texts).
+     * Debug builds only, for emulator proofs: `--es screen Settings` opens any screen
+     * directly (other builds: History only, from the « Texte copié » notification),
+     * `--ei seedHistory N` adds N sample dictations (fictitious texts).
      */
     private fun debugStartScreen(container: AppContainer, firstCreate: Boolean): Screen? {
         if (!BuildConfig.DEBUG) return null
@@ -63,11 +66,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        return Screen.entries.firstOrNull { it.name == intent.getStringExtra("screen") }
+        return Screen.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_SCREEN) }
     }
 
-    private companion object {
-        val SAMPLE_TEXTS = listOf(
+    companion object {
+        /** Name of the [Screen] to open. */
+        const val EXTRA_SCREEN = "screen"
+
+        private val SAMPLE_TEXTS = listOf(
             "Bonjour Claire, je voulais confirmer le rendez-vous de jeudi à 14 h.",
             "Compte-rendu : le client valide le devis. Prochaine étape, l’envoi du contrat signé " +
                 "et la planification de la réunion de lancement avec toute l’équipe la semaine prochaine.",

@@ -92,6 +92,7 @@
     <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
     <string name="bubble_processing">Voxbulle, transcription en cours</string>
     <string name="bubble_ready">Voxbulle, texte copié</string>
+    <string name="bubble_error">Voxbulle, dictée non aboutie</string>
     <string name="bubble_hide_zone">Masquer la bulle</string>
     <string name="bubble_hide_zone_label">Lâchez ici pour masquer</string>
     <string name="bubble_action_hide">Masquer la bulle</string>
@@ -110,6 +111,7 @@
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
     <string name="notif_copied_body">Appui long dans le champ pour coller.</string>
+    <string name="notif_copied_show_text">Voir le texte</string>
 
     <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
     <string name="error_no_connection">Pas de connexion. Réessayez dans un instant.</string>
@@ -125,4 +127,17 @@
     <string name="trial_raw">Vous avez dit (brut)</string>
     <string name="trial_clean">Texte Voxbulle</string>
     <string name="demo_mode_description">Mode démo : transcription simulée, rien n\'est envoyé.</string>
+    <!-- Panel next to the bubble: mockups 09 and 10, v1 without live text (DMC-234). -->
+    <string name="panel_listening">● Je vous écoute</string>
+    <string name="panel_processing">Je mets en texte…</string>
+    <string name="panel_suggestion">Suggestion</string>
+    <string name="panel_cancel">Annuler</string>
+    <string name="panel_finish">Terminer</string>
+    <string name="panel_redo">Refaire</string>
+    <string name="panel_validate">Valider</string>
+    <string name="panel_correct_hint">Touchez un mot pour le corriger.</string>
+    <string name="panel_validate_hint">« Valider » insère le texte dans le champ (ou le copie).</string>
+    <string name="panel_wave_description">Niveau du micro</string>
+    <string name="panel_elapsed_description">Durée de l\'enregistrement : %1$s</string>
+    <string name="toast_copied">Texte copié</string>
 </resources>
