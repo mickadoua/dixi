@@ -3,6 +3,7 @@ package tech.dmconsulting.voxbulle.dictation
 import androidx.annotation.StringRes
 import java.io.File
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
@@ -14,6 +15,7 @@ import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.recording.RecordingError
 import tech.dmconsulting.voxbulle.recording.RecordingOutcome
 import tech.dmconsulting.voxbulle.transcription.Transcript
+import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 
 /** The microphone side of a dictation; every end comes back to [DictationController.onRecordingFinished]. */
@@ -90,6 +92,11 @@ class DictationController(
         scope.launch {
             val result = try {
                 transcribe(recording.file)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Settings or storage failed (not the network): the bubble must not crash.
+                VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
             } finally {
                 recording.file.delete()
             }
@@ -100,7 +107,13 @@ class DictationController(
                     output.copy(text, stoppedAt)
                     bubble.setState(BubbleState.Ready)
                     output.notifyCopied(recording.durationMs)
-                    history.add(Dictation(text, now()))
+                    try {
+                        history.add(Dictation(text, now()))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // The text is copied; only the history entry is lost.
+                    }
                 }
             }
         }
