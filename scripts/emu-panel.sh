@@ -9,6 +9,8 @@ PKG=tech.dmconsulting.voxbulle
 OUT=${1:-panel-proof-out}
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"
+# Always keep the logs, even when a step stops the script.
+trap '$ADB logcat -d > "$OUT/logcat-full.txt" 2>/dev/null; $ADB logcat -b crash -d > "$OUT/logcat-crash.txt" 2>/dev/null' EXIT
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
 log() { $ADB logcat -d -s VoxbulleProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
@@ -31,31 +33,27 @@ tap_bubble() {
   done
   return 1
 }
-# Bounds "x1 y1 x2 y2" of the first node whose text is $2, from a fresh dump into $1.
-node_bounds() {
-  $ADB shell rm -f /sdcard/ui.xml
-  for _ in 1 2 3 4; do $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break; sleep 2; done
-  $ADB shell cat /sdcard/ui.xml > "$OUT/$1" 2>/dev/null
-  python3 - "$OUT/$1" "$2" <<'PY'
-import re, sys
-for node in re.findall(r'<node [^>]*>', open(sys.argv[1], errors="replace").read()):
-    if f'text="{sys.argv[2]}"' in node or f'content-desc="{sys.argv[2]}"' in node or sys.argv[2] == "EditText" and "EditText" in node:
-        print(*re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups()); break
-PY
-}
-tap_node() {
-  local b; b=$(node_bounds "$1" "$2"); echo "$2 at: $b"
-  [ -n "$b" ] || return 1
-  set -- $b; wake; $ADB shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+# Taps a panel button (secondary, primary, text) at the center the app logged last.
+# uiautomator does not see the overlay windows.
+tap_panel() {
+  local xy; xy=$(log | grep "panel buttons" | tail -1 | sed -n "s/.*$1=\([0-9]*\) \([0-9]*\).*/\1 \2/p")
+  echo "$1 at: $xy"; [ -n "$xy" ] || return 1
+  wake; $ADB shell input tap $xy
 }
 to_suggestion() {
   local n; n=$(count "panel Suggestion")
   tap_bubble; wait_log "recording started" 10; sleep 2
-  tap_node ui-t.xml "Terminer"
+  sleep 2; tap_panel primary
   wait_more "panel Suggestion" "$n" 20
 }
 
 $ADB shell getprop ro.build.version.sdk
+# A cold boot reports ready before the user is unlocked: wait for it, or the screen stays black.
+for _ in $(seq 1 60); do
+  [ "$($ADB shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && [ "$($ADB shell getprop sys.user.0.ce_available | tr -d '\r')" = true ] && break
+  sleep 5
+done
+echo "boot completed: $($ADB shell getprop sys.boot_completed | tr -d '\r'), user unlocked: $($ADB shell getprop sys.user.0.ce_available | tr -d '\r')"
 $ADB install -r -g "$APK" || exit 1
 $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
 $ADB shell svc power stayon true
@@ -67,7 +65,7 @@ for p in $($ADB shell dumpsys package com.google.android.contacts | sed -n 's/^ 
   $ADB shell pm grant com.google.android.contacts "$p" 2>/dev/null
 done
 # First screenshots after a cold boot come out black: one throwaway pass while it settles.
-sleep 20
+sleep 60
 contacts; shot 0-warmup; $ADB shell input keyevent KEYCODE_HOME
 close_dialogs
 $ADB logcat -c
@@ -76,16 +74,18 @@ $ADB shell input keyevent KEYCODE_HOME; sleep 2
 contacts; close_dialogs; sleep 1
 XY=$(center "bubble shown")
 echo "bubble center: $XY"
-[ -n "$XY" ] || { $ADB logcat -d > "$OUT/logcat-full.txt"; echo "bubble not shown"; exit 2; }
+[ -n "$XY" ] || { echo "bubble not shown"; exit 2; }
+# A system restart here would make every later step fail: stop early.
+sleep 3
+$ADB shell service check activity | grep -q found || { echo "system restarted after the bubble showed"; exit 3; }
+shot 0b-bubble-over-contacts
 # The emulator mic is silent: no silence rule.
 limits --ei min_amplitude 0
 
 echo "--- 1. Listening panel, Terminer, suggestion"
 tap_bubble; check "tap opens the listening panel" "wait_log 'panel Listening' 10"
 sleep 3; shot 1-listening-real
-node_bounds ui-listening.xml "Terminer" > "$OUT/terminer-bounds.txt"
-check "Terminer is at least 48 dp high" "awk '{exit !((\$4 - \$2) >= 48 * 2.625)}' '$OUT/terminer-bounds.txt'"
-tap_node ui-t1.xml "Terminer"
+tap_panel primary
 sleep 0.5; shot 2-processing-real
 check "Terminer = bubble stop: processing" "wait_log 'bubble state Processing' 5"
 check "suggestion shown" "wait_log 'panel Suggestion' 20"
@@ -94,24 +94,21 @@ check "nothing copied before Valider" "[ \$(count 'clipboard set') -eq 0 ]"
 check "audio deleted after transcription" "[ \$(audio_files) -eq 0 ]"
 
 echo "--- 2. Tap a word, Valider, toast"
-E=$(node_bounds ui-s.xml "EditText"); echo "text at: $E"
-set -- $E; wake; $ADB shell input tap $(( $1 + 60 )) $(( $2 + 40 )); sleep 2
+sleep 2; tap_panel text; sleep 2
 shot 4-word-tapped
 $ADB shell dumpsys input_method | grep -m1 -E "mInputShown|mIsInputViewShown" | tee "$OUT/ime.txt"
 $ADB shell input keyevent KEYCODE_BACK; sleep 1
-tap_node ui-v.xml "Valider"
+tap_panel primary
 check "Valider copies the text" "wait_log 'clipboard set' 5"
 sleep 0.3; shot 5-copied-toast
 check "bubble shows Texte prêt" "wait_log 'bubble state Ready' 5"
-node_bounds ui-toast.xml "Texte copié" > "$OUT/toast-bounds.txt"
-cat "$OUT/toast-bounds.txt"
 wait_log "bubble state Idle" 5
 
 echo "--- 3. Annuler deletes the audio"
 COPIES=$(count "clipboard set")
 tap_bubble; wait_log "recording started" 10; sleep 3
 BEFORE=$(audio_files); echo "audio files while recording: $BEFORE"
-tap_node ui-a.xml "Annuler"; sleep 2
+sleep 2; tap_panel secondary; sleep 2
 check "an audio file existed while recording" "[ $BEFORE -ge 1 ]"
 check "Annuler deletes the audio" "[ \$(audio_files) -eq 0 ]"
 check "Annuler: back to rest, no transcription" "log | grep 'bubble state' | tail -1 | grep -q Idle && [ \$(count 'clipboard set') -eq $COPIES ]"
@@ -120,10 +117,10 @@ shot 6-after-cancel
 echo "--- 4. Refaire listens again"
 to_suggestion
 STARTS=$(count "recording started")
-tap_node ui-r.xml "Refaire"
+sleep 2; tap_panel secondary
 check "Refaire starts a new recording" "wait_more 'recording started' $STARTS 10"
 check "Refaire: listening panel again" "log | grep 'panel ' | tail -1 | grep -q Listening"
-tap_node ui-a2.xml "Annuler"; sleep 2
+sleep 3; tap_panel secondary; sleep 2
 check "no copy after Refaire then Annuler" "[ \$(count 'clipboard set') -eq $COPIES ]"
 
 echo "--- 5. Captures with the mockup text (debug hook)"

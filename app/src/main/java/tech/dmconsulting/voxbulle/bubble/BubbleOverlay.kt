@@ -80,7 +80,8 @@ class BubbleOverlay(
     private var panelShown = false
     private var listeningSinceMs = 0L
     private val toast = CopiedToastView(context)
-    private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = false, height = WindowManager.LayoutParams.WRAP_CONTENT)
+    // Touchable: Android 12+ draws a non-touchable overlay at 80 % at most, and the toast must be opaque.
+    private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT)
     private var toastShown = false
     private val tracker = TapDragTracker(ViewConfiguration.get(context).scaledTouchSlop.toFloat())
 
@@ -204,6 +205,7 @@ class BubbleOverlay(
             scrim.visibility = View.VISIBLE
         }
         Log.i(TAG, "panel ${newPanel::class.simpleName} at y=${panelParams.y + panelGlow}")
+        panel.post { if (panelShown) Log.i(TAG, "panel buttons ${panel.centers()}") }
     }
 
     /** Debug proof only. */

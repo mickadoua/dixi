@@ -191,6 +191,16 @@ class PanelView(
         invalidate()
     }
 
+    /** Screen centers of the buttons and the text, for the emulator proof log. */
+    fun centers(): String {
+        fun View.center(): String {
+            val xy = IntArray(2)
+            getLocationOnScreen(xy)
+            return "${xy[0] + width / 2} ${xy[1] + height / 2}"
+        }
+        return "secondary=${secondary.center()} primary=${primary.center()} text=${suggestion.center()}"
+    }
+
     fun setElapsed(ms: Long) {
         val text = formatElapsed(ms)
         if (elapsed.text == text) return
