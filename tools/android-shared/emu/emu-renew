@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# emu-renew --id <id> [--lease <s>] : renouvelle le bail d'une session
+# démarrée par emu-start, pour la garder entre deux commandes d'un même run
+# (DMC-174) au lieu de redémarrer l'émulateur à froid (80 à 260 s).
+#
+# Le nouveau bail court à partir de maintenant (300 s par défaut, 600 au plus :
+# une commande d'agent dure moins de 10 minutes). Un bail plus court que le
+# précédent est permis : il rend l'émulateur plus tôt si emu-stop est oublié.
+# Les 30 minutes par session (EMU_MAX_SECONDS) restent la limite absolue.
+#
+# Ne touche qu'à la session <id>, et seulement si elle appartient au même agent
+# et au même run Paperclip. Aucun processus de fond (règle 7).
+# Codes : 0 renouvelé ; 2 usage ; 3 session terminée (redémarrer par
+#         emu-start) ; 69 conteneur android-emu absent ; 75 session d'un autre
+#         agent ou d'un autre run, ou pas encore prête.
+EMU_CMD=emu-renew
+# shellcheck source=emu-lib.sh
+. "$(dirname "$(readlink -f "$0")")/emu-lib.sh"
+: "${EMU_RENEW_MAX:=600}"
+
+usage() { emu_die 2 "usage : emu-renew --id <id> [--lease <secondes, 10 à $EMU_RENEW_MAX>]"; }
+
+id="" lease=300
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --id)
+      [ $# -ge 2 ] && emu_valid_id "$2" || usage
+      id=$2
+      shift 2
+      ;;
+    --lease)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]{1,6}$ ]] || usage
+      lease=$((10#$2))
+      shift 2
+      ;;
+    *) usage ;;
+  esac
+done
+[ -n "$id" ] || usage
+[ "$lease" -ge 10 ] && [ "$lease" -le "$EMU_RENEW_MAX" ] || usage
+[ -d "$EMU_CTL" ] && [ -w "$EMU_CTL" ] || emu_die 69 "$EMU_CTL absent ou en lecture seule (montage manquant)."
+emu_supervisor_alive || emu_die 69 "le conteneur android-emu ne répond pas (superviseur arrêté) : signaler à Sacha."
+
+# Session terminée : on dit pourquoi, à partir de son compte rendu.
+gone() {
+  if [ -f "$EMU_RESULTS/$id" ]; then
+    emu_die 3 "session $id terminée ($(emu_kv "$EMU_RESULTS/$id" result) : $(emu_kv "$EMU_RESULTS/$id" message)) : la redémarrer par emu-start."
+  fi
+  emu_die 3 "session $id introuvable (terminée ?) : la redémarrer par emu-start."
+}
+
+req=$EMU_SESSION/request st=$EMU_SESSION/status
+emu_session_ok && [ "$(emu_kv "$req" id)" = "$id" ] || gone
+
+me=${PAPERCLIP_AGENT_ID:-?} run=${PAPERCLIP_RUN_ID:-?}
+owner=$(emu_kv "$req" agent) orun=$(emu_kv "$req" run)
+if [ "$owner" != "$me" ]; then
+  emu_die 75 "la session $id appartient à un autre agent ($(emu_owner)) : bail non renouvelé."
+fi
+if [ "$orun" != "$run" ]; then
+  emu_die 75 "la session $id a été démarrée par un autre run ($orun) : la rendre par emu-stop --id $id et en redémarrer une."
+fi
+[ "$(emu_kv "$EMU_SESSION/stop" id)" != "$id" ] || emu_die 3 "arrêt de la session $id déjà demandé : la redémarrer par emu-start."
+if [ "$(emu_kv "$st" id)" != "$id" ] || [ "$(emu_kv "$st" state)" != ready ]; then
+  emu_die 75 "la session $id n'est pas prête (état : $(emu_kv "$st" state)) : emu-start la renouvelle seul pendant le démarrage."
+fi
+
+until=$((EPOCHSECONDS + lease))
+printf 'id=%s\nuntil=%s\n' "$id" "$until" | emu_write "$EMU_SESSION/lease" || gone
+# La session a pu s'arrêter pendant l'écriture : on revérifie.
+emu_session_ok && [ "$(emu_kv "$req" id)" = "$id" ] || gone
+
+msg="bail renouvelé : arrêt automatique dans $lease s sans emu-stop ($(TZ=UTC printf '%(%T)T' "$until") UTC)"
+requested=$(emu_kv "$req" requested)
+if [[ "$requested" =~ ^[0-9]{1,12}$ ]] && [ $((requested + EMU_MAX_SECONDS)) -lt "$until" ]; then
+  msg="$msg ; mais la session s'arrête au plus tard à $(TZ=UTC printf '%(%T)T' $((requested + EMU_MAX_SECONDS))) UTC ($EMU_MAX_SECONDS s par session)"
+fi
+# Agents en file (tickets vivants, comme dans emu-start) : simple avertissement.
+waiting=0
+for f in "$EMU_CTL"/queue/*; do
+  [[ "${f##*/}" =~ ^[0-9]{16}-[0-9a-f]{16}$ ]] && [ -f "$f" ] && [ ! -L "$f" ] || continue
+  t=$(stat -c %Y -- "$f" 2>/dev/null) || continue
+  [ $((EPOCHSECONDS - t)) -gt "${EMU_QUEUE_STALE:-15}" ] || waiting=$((waiting + 1))
+done
+[ "$waiting" = 0 ] || msg="$msg ; $waiting agent(s) en file d'attente : emu-stop --id $id dès le dernier test"
+emu_log "$msg."
