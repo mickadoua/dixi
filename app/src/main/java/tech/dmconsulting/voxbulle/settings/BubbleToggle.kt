@@ -10,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
 
@@ -19,8 +21,8 @@ class BubbleToggle(val shown: Boolean?, val set: (Boolean) -> Unit)
 /**
  * Shows or hides the bubble and saves the choice. Turning it on without the
  * « display over other apps » permission opens Android's page first; back from
- * it, the bubble shows only if the user allowed it. [BubbleToggle.shown] is null
- * while the settings load.
+ * it, the bubble shows only if the user allowed it. The permission is read again each
+ * time the screen comes back. [BubbleToggle.shown] is null while the settings load.
  */
 @Composable
 fun rememberBubbleToggle(settingsStore: SettingsStore): BubbleToggle {
@@ -33,6 +35,9 @@ fun rememberBubbleToggle(settingsStore: SettingsStore): BubbleToggle {
         scope.launch { settingsStore.update { it.copy(bubbleEnabled = shown) } }
         if (shown) BubbleSwitch.show(context) else BubbleSwitch.hide(context)
     }
+
+    // The permission can be given or taken back in Android's settings, outside the launcher (Victor, DMC-166).
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canShowBubble = BubbleSwitch.canShow(context) }
 
     val overlayPermission = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         canShowBubble = BubbleSwitch.canShow(context)

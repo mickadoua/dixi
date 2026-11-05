@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto-paste (DMC-141), kept to the strict minimum:
+    - no accessibilityEventTypes: the service receives no event at all, so it reads no screen content;
+    - canRetrieveWindowContent: needed to find the focused field and paste into it, right after a dictation only;
+    - no flagRetrieveInteractiveWindows: the active window only;
+    - no gesture, key or touch capability.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/auto_paste_service_description"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="0"
+    android:isAccessibilityTool="false" />
