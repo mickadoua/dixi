@@ -12,7 +12,9 @@ import org.junit.rules.TemporaryFolder
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleController
 import tech.dmconsulting.voxbulle.bubble.BubbleState
+import java.io.IOException
 import tech.dmconsulting.voxbulle.history.Dictation
+import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.history.InMemoryDictationHistory
 import tech.dmconsulting.voxbulle.recording.RecordingError
 import tech.dmconsulting.voxbulle.recording.RecordingOutcome
@@ -84,12 +86,22 @@ class DictationControllerTest {
     private val history = InMemoryDictationHistory()
     private val output = FakeOutput()
     private var transcriber = FakeTranscriber()
+    private var transcribeThrows: Exception? = null
+    private var historyThrows: Exception? = null
     private val at = Instant.ofEpochSecond(1_000)
     private val controller = DictationController(
         bubble = bubble,
         recorder = recorder,
-        transcribe = { TranscriptionPipeline(transcriber, FakeTextCleaner(), InMemorySettingsStore()).run(it) },
-        history = history,
+        transcribe = {
+            transcribeThrows?.let { e -> throw e }
+            TranscriptionPipeline(transcriber, FakeTextCleaner(), InMemorySettingsStore()).run(it)
+        },
+        history = object : DictationHistory by history {
+            override suspend fun add(dictation: Dictation) {
+                historyThrows?.let { e -> throw e }
+                history.add(dictation)
+            }
+        },
         output = output,
         scope = scope,
         elapsedMs = { scope.testScheduler.currentTime },
@@ -336,6 +348,43 @@ class DictationControllerTest {
         controller.onTap()
 
         assertEquals(DictationPanel.None, output.panels.last())
+    }
+
+    @Test
+    fun aTranscriptionThatThrowsShowsAnErrorDeletesTheAudioAndGoesBackToRest() {
+        transcribeThrows = IOException("settings unreadable")
+        val outcome = recorded()
+        recorder.nextOutcome = outcome
+        controller.onTap()
+        controller.onTap()
+        scope.advanceUntilIdle()
+
+        assertEquals(listOf(BubbleState.Listening, BubbleState.Processing, BubbleState.Error), states)
+        assertEquals(listOf(R.string.error_service_unavailable), output.errors)
+        assertEquals(DictationPanel.None, output.panels.last())
+        assertTrue(output.texts.isEmpty())
+        assertFalse(outcome.result.file.exists())
+
+        // The error goes back to rest on its own; a tap starts a new dictation.
+        recorder.nextOutcome = RecordingOutcome.Cancelled
+        controller.onTap()
+        assertEquals(BubbleState.Listening, bubble.state)
+    }
+
+    @Test
+    fun aHistoryThatThrowsKeepsTheCopiedText() {
+        historyThrows = IOException("disk full")
+        recorder.nextOutcome = recorded()
+        controller.onTap()
+        controller.onTap()
+        scope.advanceUntilIdle()
+        controller.validate("Bonjour")
+        scope.advanceUntilIdle()
+
+        assertEquals(BubbleState.Ready, bubble.state)
+        assertEquals(listOf("Bonjour"), output.texts)
+        assertEquals(1, output.notified.size)
+        assertTrue(output.errors.isEmpty())
     }
 
     @Test
