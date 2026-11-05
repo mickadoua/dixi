@@ -20,7 +20,7 @@ for i in $(seq 1 30); do
   grep -q "$RUN PROBE \(PASS\|FAIL\)" "$OUT/probe.txt" && break
   sleep 1
 done
-$ADB logcat -d | grep -E "FATAL|AndroidRuntime" > "$OUT/crash.txt"
+$ADB logcat -d | grep -E "FATAL EXCEPTION| E AndroidRuntime:" > "$OUT/crash.txt"
 $ADB shell dumpsys package $PKG | grep -m1 -o "flags=\[[^]]*\]" > "$OUT/package-flags.txt"
 cat "$OUT/probe.txt"; echo "crash lines: $(wc -l < "$OUT/crash.txt")"; cat "$OUT/package-flags.txt"
 grep -q "$RUN PROBE PASS" "$OUT/probe.txt"
