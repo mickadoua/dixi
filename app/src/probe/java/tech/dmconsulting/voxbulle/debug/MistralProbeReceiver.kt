@@ -7,16 +7,21 @@ import android.util.Log
 import kotlin.concurrent.thread
 import kotlinx.coroutines.runBlocking
 
-/** Runs [MistralProbe] in the installed APK and logs its report under [TAG]. Debug builds only. */
+/**
+ * Runs [MistralProbe] in the installed APK and logs its report under [TAG]. Debug and probe
+ * builds only. Each line starts with the `run` extra, so scripts/mistral-probe.sh reads only
+ * the lines of its own run (the emulator clock is not reliable enough to filter by time).
+ */
 class MistralProbeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
         val workDir = context.cacheDir
+        val run = intent.getStringExtra("run")?.let { "$it " }.orEmpty()
         thread(name = "mistral-probe") {
             try {
-                runBlocking { MistralProbe.run(workDir) }.forEach { Log.i(TAG, it) }
+                runBlocking { MistralProbe.run(workDir) }.forEach { Log.i(TAG, run + it) }
             } catch (e: Throwable) {
-                Log.e(TAG, "${MistralProbe.FAIL}: crash", e)
+                Log.e(TAG, "$run${MistralProbe.FAIL}: crash", e)
             } finally {
                 pending.finish()
             }
