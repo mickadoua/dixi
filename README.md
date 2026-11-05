@@ -9,11 +9,15 @@ Dependencies are wired by hand in `AppContainer`.
 
     ./gradlew --no-daemon clean testDebugUnitTest assembleDebug
 
-## Mistral key (debug builds only)
+## Mistral key
 
-Read at build time from the `MISTRAL_API_KEY` environment variable, else from
-`local.properties` (ignored by git). Without a key, the app uses the fake
-Voxtral services and nothing leaves the phone. Never commit a key.
+The app ships without any key: not in the repo, the APK, `BuildConfig` or the
+resources (DMC-227). Each user pastes their own key in Settings (screen 10). It is
+encrypted with an Android Keystore key (`settings/KeystoreKeyCipher`), stored in
+`noBackupFilesDir/mistral_key.bin` and excluded from backups and device transfer
+(`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). Without a key, the app
+uses the fake Voxtral services (« Mode démo ») and nothing leaves the phone.
+Never commit, log or paste a key in a task.
 
 ## Emulator check (NAS)
 

@@ -1,14 +1,21 @@
 package tech.dmconsulting.voxbulle
 
+import okhttp3.HttpUrl
 import tech.dmconsulting.voxbulle.dictation.UnlimitedQuota
 import tech.dmconsulting.voxbulle.dictation.UsageQuota
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.history.InMemoryDictationHistory
+import tech.dmconsulting.voxbulle.settings.InMemoryMistralKeyStore
 import tech.dmconsulting.voxbulle.settings.InMemorySettingsStore
+import tech.dmconsulting.voxbulle.settings.KeyStatus
+import tech.dmconsulting.voxbulle.settings.MistralKeyStore
 import tech.dmconsulting.voxbulle.settings.SettingsStore
 import tech.dmconsulting.voxbulle.transcription.FakeTextCleaner
 import tech.dmconsulting.voxbulle.transcription.FakeTranscriber
+import tech.dmconsulting.voxbulle.transcription.KeyedTextCleaner
+import tech.dmconsulting.voxbulle.transcription.KeyedTranscriber
 import tech.dmconsulting.voxbulle.transcription.MistralHttp
+import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
 import tech.dmconsulting.voxbulle.transcription.TextCleaner
 import tech.dmconsulting.voxbulle.transcription.Transcriber
 import tech.dmconsulting.voxbulle.transcription.TranscriptionPipeline
@@ -17,35 +24,36 @@ import tech.dmconsulting.voxbulle.transcription.VoxtralTranscriber
 
 /**
  * Manual dependency injection: one instance per process, held by [VoxbulleApp].
- * The app passes the DataStore-backed [history] and [settings]; tests keep the in-memory ones.
- * Without a Mistral key (the default), Voxtral is faked and nothing leaves the phone.
- * Only when [fakesAllowed] (debug builds): elsewhere a missing key is an error, so a
- * release never runs on the fakes without saying so.
+ * The app passes the DataStore-backed [history] and [settings] and the encrypted
+ * [mistralKey]; tests keep the in-memory ones.
+ * The app ships without any Mistral key (DMC-227): each user pastes their own in
+ * screen 10. Without one, Voxtral is faked (« Mode démo ») and nothing leaves the phone.
  */
 class AppContainer(
-    mistralApiKey: String,
-    fakesAllowed: Boolean,
+    val mistralKey: MistralKeyStore = InMemoryMistralKeyStore(),
     val history: DictationHistory = InMemoryDictationHistory(),
     val settings: SettingsStore = InMemorySettingsStore(),
+    mistralBaseUrl: HttpUrl = MistralHttp.defaultBaseUrl,
 ) {
 
-    /** True without a key: the app shows « Mode démo » in debug builds. */
-    val usesFakeVoxtral: Boolean = mistralApiKey.isBlank()
-
-    init {
-        check(fakesAllowed || !usesFakeVoxtral) { "No Mistral key: the fake Voxtral is for debug builds only." }
-    }
+    /** True without a saved key: dictations use the fakes and screens show « Mode démo ». */
+    val usesFakeVoxtral: Boolean get() = mistralKey.status.value == KeyStatus.None
 
     private val httpClient by lazy { MistralHttp.newClient() }
 
-    val transcriber: Transcriber =
-        if (usesFakeVoxtral) FakeTranscriber() else VoxtralTranscriber(mistralApiKey, httpClient)
+    val transcriber: Transcriber = KeyedTranscriber(mistralKey, FakeTranscriber()) { key ->
+        VoxtralTranscriber(key, httpClient, mistralBaseUrl)
+    }
 
-    val textCleaner: TextCleaner =
-        if (usesFakeVoxtral) FakeTextCleaner() else VoxtralTextCleaner(mistralApiKey, httpClient)
+    val textCleaner: TextCleaner = KeyedTextCleaner(mistralKey, FakeTextCleaner()) { key ->
+        VoxtralTextCleaner(key, httpClient, mistralBaseUrl)
+    }
 
     /** Audio to raw and clean text, in the language from [settings]. */
     val transcription = TranscriptionPipeline(transcriber, textCleaner, settings)
+
+    /** « Tester la clé » in screen 10. */
+    val keyCheck by lazy { MistralKeyCheck(httpClient, mistralBaseUrl) }
 
     val quota: UsageQuota = UnlimitedQuota
 }
