@@ -18,14 +18,31 @@ android {
 
     buildTypes {
         // Shrunk so the debug APK fits the 10 MB task attachment limit. The real Mistral
-        // path under R8 is checked on a device with the debug probe (scripts/mistral-probe.sh).
+        // path under R8 is checked on a device with the probe (scripts/mistral-probe.sh),
+        // in this build and in the non-debuggable probe build below.
         debug {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        // Release as built by R8 (not debuggable, full optimisation) plus the Mistral probe,
+        // signed with the debug key so it installs on the emulator. Never distributed.
+        create("probe") {
+            initWith(getByName("release"))
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+        }
+    }
+
+    // The probe (src/probe) also runs in debug builds and in its JVM test (testDebug).
+    sourceSets.getByName("debug") {
+        java.srcDir("src/probe/java")
+        res.srcDir("src/probe/res")
     }
 
     buildFeatures {
