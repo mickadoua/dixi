@@ -39,6 +39,7 @@ import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubblePositionStore
 import tech.dmconsulting.voxbulle.history.ClearHistoryDialog
 import tech.dmconsulting.voxbulle.history.DictationHistory
+import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -64,13 +65,15 @@ val DictationLanguage.label: Int
 
 /**
  * Screen 10 (neon mockup 06, DMC-213): offer card, bubble, auto-paste (wired by
- * DMC-141), language, history, privacy, about. A tab: no back arrow.
+ * DMC-141), language, Mistral key (DMC-227), history, privacy, about. A tab: no back arrow.
  */
 @Composable
 fun SettingsScreen(
     settingsStore: SettingsStore,
     history: DictationHistory,
     bubble: BubbleToggle,
+    mistralKey: MistralKeyStore,
+    keyCheck: MistralKeyCheck,
     onOpenOffer: () -> Unit,
 ) {
     val settings by settingsStore.settings.collectAsState(initial = null)
@@ -121,6 +124,9 @@ fun SettingsScreen(
             summary = stringResource(current.language.label),
             onClick = { chooseLanguage = true },
         )
+
+        Section(R.string.key_section)
+        MistralKeySection(mistralKey, keyCheck)
 
         Section(R.string.settings_section_other)
         SettingRow(
