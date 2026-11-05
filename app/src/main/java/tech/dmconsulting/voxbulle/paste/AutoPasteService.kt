@@ -16,7 +16,7 @@ import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
  * dictation, paste the clipboard into the editable field that has the input focus.
  * It subscribes to no event (see `res/xml/auto_paste_service.xml`): it never reads,
  * stores nor logs any screen content, and does nothing between dictations.
- * Every miss (service off, no editable field, paste refused) ends in the clipboard and
+ * Every miss (service off, no editable field, password field, paste refused) ends in the clipboard and
  * the « Texte copié » notification, as without the option.
  */
 class AutoPasteService : AccessibilityService() {
@@ -41,13 +41,12 @@ class AutoPasteService : AccessibilityService() {
         super.onDestroy()
     }
 
-    /** One try on the focused field. Reads its state only (editable, focused, app), never its text. */
+    /** One try on the focused field. Reads its state only (editable, focused, password, app), never its text. */
     private fun pasteOnce(): PasteTry {
         // Without events the node cache is never refreshed: ask the app itself.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) clearCache()
         val node = findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return PasteTry.NoField
-        // Voxbulle's own fields (the suggestion panel) are not a target.
-        if (!node.refresh() || !node.isEditable || !node.isFocused || node.packageName == packageName) {
+        if (!node.refresh() || !isPasteTarget(node.isEditable, node.isFocused, node.isPassword, node.packageName, packageName)) {
             return PasteTry.NoField
         }
         return if (node.performAction(AccessibilityNodeInfo.ACTION_PASTE)) PasteTry.Pasted else PasteTry.Refused
