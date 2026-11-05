@@ -19,9 +19,30 @@ Package `tech.dmconsulting.voxbulle`, un seul module Gradle (`app`), un package 
 
 Les commits du repo sont faits par l'API GitHub (seule façon d'avoir des commits signés sans clé) : les fichiers n'ont pas le bit exécutable. D'où `sh ./gradlew` et `bash scripts/…`.
 
-## Clé Mistral (transitoire)
+## Publier une version
 
-Tant que DMC-227 n'est pas fusionné, le build debug lit la clé au build, dans la variable d'environnement `MISTRAL_API_KEY`, sinon dans `local.properties` (ignoré par git). Sans clé, l'app utilise les faux services Voxtral et rien ne sort du téléphone. DMC-227 retire ce chemin : la clé sera saisie dans l'écran Réglages et stockée chiffrée sur le téléphone. Ne jamais committer de clé.
+Play prend un Android App Bundle (`.aab`) signé avec la clé d'envoi.
+
+1. Tagger le commit : `git tag v1.2.0` (donne `versionName` 1.2.0). `versionCode` est le nombre de commits de `HEAD` : il augmente à chaque fusion sur la branche de publication.
+2. Exporter la clé d'envoi, puis construire :
+
+       export UPLOAD_KEYSTORE_PATH=/chemin/vers/upload.jks
+       export UPLOAD_KEYSTORE_PASSWORD=...
+       export UPLOAD_KEY_ALIAS=...
+       export UPLOAD_KEY_PASSWORD=...
+       sh ./gradlew --no-daemon bundleRelease
+
+   Sortie : `app/build/outputs/bundle/release/app-release.aab`.
+
+En option, `VERSION_CODE` et `VERSION_NAME` remplacent les valeurs calculées (par exemple pour renvoyer le même commit avec un code plus haut).
+
+Sans les quatre variables `UPLOAD_*`, le build release se fait quand même, non signé. Avec une partie seulement, le build échoue. La clé d'envoi vit hors du repo, chez le CTO ; Play garde la clé de signature de l'app (Play App Signing). Ne jamais committer de keystore (`*.jks` et `*.keystore` sont ignorés), ni coller un mot de passe dans une tâche ou un journal.
+
+L'envoi sur les pistes interne et fermée se fait depuis le NAS avec `bash scripts/play-publish.sh` (Gradle Play Publisher, DMC-330 ; usage en tête du script).
+
+## Clé Mistral
+
+L'app ne contient aucune clé : ni dans le repo, ni dans l'APK, ni dans `BuildConfig`, ni dans les ressources (DMC-227). Chaque utilisateur colle sa propre clé dans Réglages (écran 10). Elle est chiffrée par une clé Android Keystore (`settings/KeystoreKeyCipher`), stockée dans `noBackupFilesDir/mistral_key.bin` et exclue des sauvegardes et du transfert d'appareil (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). Sans clé, l'app utilise les faux services Voxtral (« Mode démo ») et rien ne sort du téléphone. Ne jamais committer, journaliser ni coller une clé dans une tâche.
 
 ## Vérification sur l'émulateur (NAS)
 
