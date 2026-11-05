@@ -108,6 +108,14 @@
     <string name="notif_recording_stop">Arrêter</string>
     <string name="error_nothing_heard">Je n\'ai rien entendu. Réessayez.</string>
     <string name="error_mic_denied">Voxbulle a besoin du micro. Autorisez-le dans les réglages.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">Autoriser le micro</string>
+    <string name="mic_ask_body">Voxbulle écoute seulement quand vous touchez la bulle, pour écrire ce que vous dites. Les notifications montrent l\'enregistrement en cours et « Texte copié ».</string>
+    <string name="mic_ask_continue">Continuer</string>
+    <string name="action_later">Plus tard</string>
+    <string name="mic_settings_title">Micro refusé</string>
+    <string name="mic_settings_body">Pour dicter, ouvrez les réglages de Voxbulle, puis Autorisations, Micro, Autoriser.</string>
+    <string name="mic_settings_open">Ouvrir les réglages</string>
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
     <string name="notif_copied_body">Appui long dans le champ pour coller.</string>

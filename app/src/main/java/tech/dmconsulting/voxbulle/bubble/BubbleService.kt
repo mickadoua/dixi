@@ -32,6 +32,7 @@ import tech.dmconsulting.voxbulle.dictation.DictationOutput
 import tech.dmconsulting.voxbulle.dictation.DictationPanel
 import tech.dmconsulting.voxbulle.dictation.DictationRecorder
 import tech.dmconsulting.voxbulle.history.copyToClipboard
+import tech.dmconsulting.voxbulle.permissions.MicPermissionActivity
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.recording.Recorder
 import tech.dmconsulting.voxbulle.recording.RecorderState
@@ -225,6 +226,11 @@ class BubbleService : Service(), DictationOutput {
     override fun showError(message: Int) {
         Log.i(TAG, "dictation error: ${getString(message)}")
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun askMicrophone() {
+        Log.i(TAG, "microphone permission missing: asking")
+        MicPermissionActivity.start(this)
     }
 
     /**

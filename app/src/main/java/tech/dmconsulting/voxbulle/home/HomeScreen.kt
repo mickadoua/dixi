@@ -57,9 +57,10 @@ import tech.dmconsulting.voxbulle.ui.theme.Neon
 /**
  * Main screen (neon mockup 05, DMC-213): bubble switch, the big « Touchez, parlez »
  * button and the last dictation. [bubble]: shared with the settings.
+ * [onOpenOffer]: null while the offer screen is hidden.
  */
 @Composable
-fun HomeScreen(bubble: BubbleToggle, history: DictationHistory, onOpenOffer: () -> Unit) {
+fun HomeScreen(bubble: BubbleToggle, history: DictationHistory, onOpenOffer: (() -> Unit)?) {
     val context = LocalContext.current
     val entries by history.entries.collectAsState(initial = null)
     Column(
@@ -75,12 +76,14 @@ fun HomeScreen(bubble: BubbleToggle, history: DictationHistory, onOpenOffer: () 
                 modifier = Modifier.weight(1f),
             )
             if (LocalDemoMode.current) DemoModeLabel(Modifier.padding(end = 8.dp))
-            NeonChip(
-                stringResource(R.string.offer_free),
-                color = Neon.Orange,
-                textColor = Neon.OrangeText,
-                onClick = onOpenOffer,
-            )
+            if (onOpenOffer != null) {
+                NeonChip(
+                    stringResource(R.string.offer_free),
+                    color = Neon.Orange,
+                    textColor = Neon.OrangeText,
+                    onClick = onOpenOffer,
+                )
+            }
         }
         Spacer(Modifier.height(24.dp))
         BubbleCard(bubble)
