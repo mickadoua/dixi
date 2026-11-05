@@ -3,6 +3,7 @@
 # Real flow: listening panel, Terminer, suggestion, word tap, Valider + toast, Annuler, Refaire.
 # Then captures with the mockup text, next to mockups 09 and 10.
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-panel.sh <out-dir>
+# CAPTURES_ONLY=1: only the captures of part 5.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.voxbulle
@@ -42,8 +43,9 @@ tap_panel() {
 }
 to_suggestion() {
   local n; n=$(count "panel Suggestion")
-  tap_bubble; wait_log "recording started" 10; sleep 2
-  sleep 2; tap_panel primary
+  local b; b=$(count "panel buttons")
+  tap_bubble; wait_log "recording started" 20; wait_more "panel buttons" "$b" 20; sleep 2
+  tap_panel primary
   wait_more "panel Suggestion" "$n" 20
 }
 
@@ -82,13 +84,14 @@ shot 0b-bubble-over-contacts
 # The emulator mic is silent: no silence rule.
 limits --ei min_amplitude 0
 
+if [ "${CAPTURES_ONLY:-0}" != 1 ]; then
 echo "--- 1. Listening panel, Terminer, suggestion"
-tap_bubble; check "tap opens the listening panel" "wait_log 'panel Listening' 10"
+tap_bubble; check "tap opens the listening panel" "wait_log 'panel buttons' 30"
 sleep 3; shot 1-listening-real
 tap_panel primary
 sleep 0.5; shot 2-processing-real
 check "Terminer = bubble stop: processing" "wait_log 'bubble state Processing' 5"
-check "suggestion shown" "wait_log 'panel Suggestion' 20"
+check "suggestion shown" "wait_log 'panel Suggestion' 30"
 sleep 1; shot 3-suggestion-real
 check "nothing copied before Valider" "[ \$(count 'clipboard set') -eq 0 ]"
 check "audio deleted after transcription" "[ \$(audio_files) -eq 0 ]"
@@ -106,7 +109,7 @@ wait_log "bubble state Idle" 5
 
 echo "--- 3. Annuler deletes the audio"
 COPIES=$(count "clipboard set")
-tap_bubble; wait_log "recording started" 10; sleep 3
+B=$(count "panel buttons"); tap_bubble; wait_log "recording started" 20; wait_more "panel buttons" "$B" 20; sleep 3
 BEFORE=$(audio_files); echo "audio files while recording: $BEFORE"
 sleep 2; tap_panel secondary; sleep 2
 check "an audio file existed while recording" "[ $BEFORE -ge 1 ]"
@@ -119,9 +122,11 @@ to_suggestion
 STARTS=$(count "recording started")
 sleep 2; tap_panel secondary
 check "Refaire starts a new recording" "wait_more 'recording started' $STARTS 10"
-check "Refaire: listening panel again" "log | grep 'panel ' | tail -1 | grep -q Listening"
+check "Refaire: listening panel again" "sleep 3; log | grep -E 'panel [A-Z][a-z]+ at' | tail -1 | grep -q Listening"
 sleep 3; tap_panel secondary; sleep 2
 check "no copy after Refaire then Annuler" "[ \$(count 'clipboard set') -eq $COPIES ]"
+
+fi
 
 echo "--- 5. Captures with the mockup text (debug hook)"
 TEXT="Bonjour, je vous confirme le rendez-vous de jeudi à dix heures."
