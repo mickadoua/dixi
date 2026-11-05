@@ -6,8 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -17,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -25,25 +24,27 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import tech.dmconsulting.voxbulle.MainActivity
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.VoxbulleApp
-import tech.dmconsulting.voxbulle.dictation.transcribeThenDelete
+import tech.dmconsulting.voxbulle.dictation.DictationController
+import tech.dmconsulting.voxbulle.dictation.DictationOutput
+import tech.dmconsulting.voxbulle.dictation.DictationPanel
+import tech.dmconsulting.voxbulle.dictation.DictationRecorder
+import tech.dmconsulting.voxbulle.history.copyToClipboard
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.recording.Recorder
+import tech.dmconsulting.voxbulle.recording.RecorderState
 import tech.dmconsulting.voxbulle.recording.RecordingError
-import tech.dmconsulting.voxbulle.recording.RecordingOutcome
-import tech.dmconsulting.voxbulle.recording.RecordingResult
 import tech.dmconsulting.voxbulle.recording.formatDuration
-import tech.dmconsulting.voxbulle.settings.DictationLanguage
-import tech.dmconsulting.voxbulle.transcription.VoxtralResult
+import tech.dmconsulting.voxbulle.ui.navigation.Screen
 
 /**
  * Shows the floating bubble. A tap starts a dictation, a second tap stops it
- * (5 min max, see [Recorder]); the text is copied and notified. Dropped on the
- * hide zone, the bubble hides until its notification (or [show]) brings it back.
+ * (5 min max, see [Recorder]); the text is copied and notified (see [DictationController]).
+ * Dropped on the hide zone, the bubble hides until its notification (or [show]) brings it back.
  */
-class BubbleService : Service() {
+class BubbleService : Service(), DictationOutput {
 
     private val handler = Handler(Looper.getMainLooper())
     private val scope = MainScope()
@@ -53,12 +54,32 @@ class BubbleService : Service() {
         handler.postDelayed(runnable, delayMs)
         return@BubbleController { handler.removeCallbacks(runnable) }
     }
+    private val dictation by lazy {
+        val app = application as VoxbulleApp
+        DictationController(
+            bubble = controller,
+            recorder = object : DictationRecorder {
+                override fun start(): RecordingError? = recorder.start()
+                override fun stop() {
+                    recorder.stop()
+                }
+
+                override fun cancel() = recorder.cancel()
+            },
+            transcribe = app.container.transcription::run,
+            history = app.container.history,
+            output = this,
+            scope = scope,
+            elapsedMs = SystemClock::elapsedRealtime,
+        )
+    }
     private lateinit var store: BubblePositionStore
     private lateinit var overlay: BubbleOverlay
     private var debugReceiver: BroadcastReceiver? = null
     private val levelRunnable = object : Runnable {
         override fun run() {
-            controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
+            // Only a real recording moves the wave: the debug proof sets its own levels.
+            if (recorder.state.value != RecorderState.Idle) controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
             handler.postDelayed(this, LEVEL_MS)
         }
     }
@@ -68,11 +89,17 @@ class BubbleService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannels()
-        recorder.onFinished = ::onRecordingFinished
+        recorder.onFinished = dictation::onRecordingFinished
         store = BubblePositionStore(this)
-        overlay = BubbleOverlay(this, controller, store, onTap = ::onBubbleTap, onHide = ::hide)
-        controller.onStateChanged = overlay::render
-        controller.onVoiceLevel = overlay::setVoiceLevel
+        overlay = BubbleOverlay(
+            this, controller, store, onTap = ::onBubbleTap, onHide = ::hide,
+            onCancel = { dictation.cancel() },
+            onFinish = { dictation.finish() },
+            onRedo = { dictation.redo() },
+            onValidate = { dictation.validate(it) },
+        )
+        controller.onStateChanged = ::onStateChanged
+        controller.onVoiceLevel = { overlay.setVoiceLevel(it, SystemClock.elapsedRealtime()) }
         registerDebugReceiver()
     }
 
@@ -81,6 +108,12 @@ class BubbleService : Service() {
         if (!Settings.canDrawOverlays(this)) {
             Log.w(TAG, "overlay permission missing: bubble not shown")
             stopSelf()
+            return START_NOT_STICKY
+        }
+        if (intent?.action == ACTION_HIDE) {
+            // « Masquer la bulle » in the « Texte copié » notification.
+            NotificationManagerCompat.from(this).cancel(NOTIF_COPIED)
+            if (!controller.hideIfAllowed(::hide)) Log.i(TAG, "hide refused: dictation running")
             return START_NOT_STICKY
         }
         if (intent?.action == ACTION_SHOW) {
@@ -155,74 +188,56 @@ class BubbleService : Service() {
 
     private fun onBubbleTap() {
         Log.i(TAG, "bubble tapped in state ${controller.state}")
-        when (controller.tapAction()) {
-            TapAction.Start -> startRecording()
-            TapAction.Stop -> recorder.stop()
-            TapAction.None -> Unit
-        }
+        dictation.onTap()
     }
 
-    private fun startRecording() {
-        val error = recorder.start()
-        if (error != null) {
-            showError(error)
-            return
-        }
-        controller.setState(BubbleState.Listening)
-        handler.post(levelRunnable)
-    }
-
-    /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
-    private fun onRecordingFinished(outcome: RecordingOutcome) {
+    private fun onStateChanged(state: BubbleState) {
+        Log.i(TAG, "bubble state $state")
+        overlay.render(state)
         handler.removeCallbacks(levelRunnable)
-        controller.setVoiceLevel(0f)
-        when (outcome) {
-            is RecordingOutcome.Failure -> {
-                showError(outcome.error)
-                controller.setState(BubbleState.Idle)
-            }
-            is RecordingOutcome.Success -> transcribe(outcome.result)
-            RecordingOutcome.Cancelled -> controller.setState(BubbleState.Idle)
+        if (state == BubbleState.Listening) {
+            handler.post(levelRunnable)
+        } else {
+            controller.setVoiceLevel(0f)
         }
     }
 
-    private fun transcribe(result: RecordingResult) {
-        controller.setState(BubbleState.Processing)
-        Log.i(TAG, "recorded file duration=${formatDuration(result.durationMs)} (${result.durationMs} ms) maxAmplitude=${result.maxAmplitude}")
-        scope.launch {
-            val container = (application as VoxbulleApp).container
-            val text = container.transcriber.transcribeThenDelete(result.file, DictationLanguage.Auto)
-            Log.i(TAG, "audio deleted=${!result.file.exists()}")
-            if (text !is VoxtralResult.Success) {
-                Log.w(TAG, "transcription FAILED: $text")
-                controller.setState(BubbleState.Idle)
-                return@launch
-            }
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", text.value))
-            Log.i(TAG, "clipboard set")
-            notifyCopied(result.durationMs)
-            controller.setState(BubbleState.Ready)
-        }
+    override fun copy(text: String, stoppedAtMs: Long) {
+        copyToClipboard(this, text)
+        Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop")
     }
 
-    private fun showError(error: RecordingError) {
-        val message = when (error) {
-            RecordingError.NothingHeard -> R.string.error_nothing_heard
-            RecordingError.MicrophoneDenied -> R.string.error_mic_denied
-            RecordingError.StartFailed -> R.string.error_recording_failed
-        }
-        Log.i(TAG, "recording error $error")
+    override fun showPanel(panel: DictationPanel) {
+        overlay.showPanel(panel, SystemClock.elapsedRealtime())
+    }
+
+    override fun showError(message: Int) {
+        Log.i(TAG, "dictation error: ${getString(message)}")
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
-    private fun notifyCopied(durationMs: Long) {
+    /** « Texte copié », gone after 6 s. A tap or « Voir le texte » opens the history (screen 7). */
+    override fun notifyCopied(recordingMs: Long) {
+        val history = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java)
+                .putExtra(MainActivity.EXTRA_SCREEN, Screen.History.name)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val hide = PendingIntent.getService(
+            this, 1, Intent(this, BubbleService::class.java).setAction(ACTION_HIDE),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
             .setContentText(getString(R.string.notif_copied_body))
-            .setSubText(formatDuration(durationMs))
-            .setTimeoutAfter(6_000)
+            .setSubText(formatDuration(recordingMs))
+            .setContentIntent(history)
+            .addAction(0, getString(R.string.notif_copied_show_text), history)
+            .addAction(0, getString(R.string.bubble_action_hide), hide)
+            .setTimeoutAfter(debugCopiedTimeoutMs ?: COPIED_TIMEOUT_MS)
             .setAutoCancel(true)
             .build()
         try {
@@ -261,16 +276,41 @@ class BubbleService : Service() {
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                if (intent.hasExtra("panel")) {
+                    showDebugPanel(intent)
+                    return
+                }
                 val state = intent.getStringExtra("state")?.let { name -> BubbleState.entries.find { it.name == name } }
                     ?: return
                 Log.i(TAG, "debug state $state")
                 // A screenshot takes more than 1.5 s on the NAS emulator.
                 controller.readyToIdleMs = intent.getLongExtra("readyMs", BubbleController.READY_TO_IDLE_MS)
+                controller.errorToIdleMs = intent.getLongExtra("readyMs", BubbleController.ERROR_TO_IDLE_MS)
                 controller.setState(state)
             }
         }
         ContextCompat.registerReceiver(this, receiver, IntentFilter(ACTION_DEBUG_STATE), ContextCompat.RECEIVER_EXPORTED)
         debugReceiver = receiver
+    }
+
+    /**
+     * Debug proof: « panel » = Listening, Processing, Suggestion or None; « text » for the
+     * suggestion, « mark » to mark the word at that offset; « levels » (floats, 0 to 1) fill the wave.
+     */
+    private fun showDebugPanel(intent: Intent) {
+        val now = SystemClock.elapsedRealtime()
+        val panel = when (intent.getStringExtra("panel")) {
+            "Listening" -> DictationPanel.Listening(now - intent.getLongExtra("elapsedMs", 0))
+            "Processing" -> DictationPanel.Processing
+            "Suggestion" -> DictationPanel.Suggestion(intent.getStringExtra("text").orEmpty())
+            else -> DictationPanel.None
+        }
+        Log.i(TAG, "debug panel $panel")
+        if (panel is DictationPanel.Listening) controller.setState(BubbleState.Listening)
+        overlay.showPanel(panel, now)
+        intent.getFloatArrayExtra("levels")?.forEach { overlay.setVoiceLevel(it, now) }
+        val mark = intent.getIntExtra("mark", -1)
+        if (mark >= 0) overlay.markSuggestionWord(mark)
     }
 
     private fun createChannels() {
@@ -285,8 +325,13 @@ class BubbleService : Service() {
     }
 
     companion object {
+        /** Set only by the debug build (DebugRecordingReceiver): the emulator opens the shade too slowly for 6 s. */
+        @Volatile
+        var debugCopiedTimeoutMs: Long? = null
+
         /** Shows the bubble again, even if the user hid it. */
         const val ACTION_SHOW = "tech.dmconsulting.voxbulle.action.SHOW_BUBBLE"
+        private const val ACTION_HIDE = "tech.dmconsulting.voxbulle.action.HIDE_BUBBLE"
 
         fun show(context: Context) {
             context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_SHOW))
@@ -309,5 +354,6 @@ class BubbleService : Service() {
         private const val LEVEL_MS = 100L
         private const val CHANNEL_COPIED = "copied"
         private const val NOTIF_COPIED = 2
+        private const val COPIED_TIMEOUT_MS = 6_000L
     }
 }

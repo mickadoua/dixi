@@ -9,19 +9,22 @@ class BubbleStateTest {
     @Test
     fun colorsFollowTheNeonCharter() {
         assertEquals(
-            listOf(R.color.bubble_disc, R.color.bubble_orange, R.color.bubble_disc, R.color.bubble_disc),
+            listOf(R.color.bubble_disc, R.color.bubble_orange, R.color.bubble_disc, R.color.bubble_disc, R.color.bubble_disc),
             BubbleState.entries.map { it.fill },
         )
         assertEquals(
-            listOf(R.color.bubble_orange, R.color.bubble_orange, R.color.bubble_processing_outline, R.color.bubble_cyan),
+            listOf(R.color.bubble_orange, R.color.bubble_orange, R.color.bubble_processing_outline, R.color.bubble_cyan,
+                R.color.bubble_magenta),
             BubbleState.entries.map { it.outline },
         )
         assertEquals(
-            listOf(R.color.bubble_orange, R.color.bubble_on_orange, R.color.bubble_cyan, R.color.bubble_cyan),
+            listOf(R.color.bubble_orange, R.color.bubble_on_orange, R.color.bubble_cyan, R.color.bubble_cyan,
+                R.color.bubble_magenta),
             BubbleState.entries.map { it.content },
         )
         assertEquals(
-            listOf(R.color.bubble_orange, R.color.bubble_orange, R.color.bubble_cyan, R.color.bubble_cyan),
+            listOf(R.color.bubble_orange, R.color.bubble_orange, R.color.bubble_cyan, R.color.bubble_cyan,
+                R.color.bubble_magenta),
             BubbleState.entries.map { it.glowColor },
         )
     }
@@ -37,7 +40,10 @@ class BubbleStateTest {
     @Test
     fun eachStateHasItsOwnDescription() {
         assertEquals(
-            listOf(R.string.bubble_idle, R.string.bubble_listening, R.string.bubble_processing, R.string.bubble_ready),
+            listOf(
+                R.string.bubble_idle, R.string.bubble_listening, R.string.bubble_processing, R.string.bubble_ready,
+                R.string.bubble_error,
+            ),
             BubbleState.entries.map { it.description },
         )
     }
