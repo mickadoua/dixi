@@ -1,15 +1,14 @@
 <resources>
-    <color name="surface">#FBF8FF</color>
+    <color name="surface">#050507</color>
 
-    <!-- Bubble, charter § 2 and § 6. -->
-    <color name="bubble_primary">#3A47C8</color>
-    <color name="bubble_on_primary">#FFFFFF</color>
-    <color name="bubble_tertiary">#B3402A</color>
-    <color name="bubble_on_tertiary">#FFFFFF</color>
-    <color name="bubble_secondary">#00696B</color>
-    <color name="bubble_on_secondary">#FFFFFF</color>
-    <color name="bubble_hide_zone">#1B1B21</color>
-    <color name="bubble_hide_zone_active">#BA1A1A</color>
-    <color name="bubble_on_hide_zone">#FFFFFF</color>
-    <color name="bubble_on_hide_zone_active">#FFFFFF</color>
+    <!-- Bubble, neon charter § Bulle (DMC-213). Dark only. -->
+    <color name="bubble_disc">#0A0A0E</color>
+    <color name="bubble_orange">#FF7A1A</color>
+    <color name="bubble_on_orange">#0A0A0C</color>
+    <color name="bubble_cyan">#2BE4FF</color>
+    <color name="bubble_processing_outline">#2A3A40</color>
+    <color name="bubble_magenta">#FF3D9A</color>
+    <!-- Opaque: the app behind must not show through the disc (DMC-217). -->
+    <color name="bubble_hide_zone">#050507</color>
+    <color name="bubble_hide_zone_label">#F5F5F7</color>
 </resources>
