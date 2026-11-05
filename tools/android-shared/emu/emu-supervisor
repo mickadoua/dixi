@@ -457,14 +457,27 @@ golden_invalidate() {
   golden_note "$1" invalid "message=$2"
   log "snapshot propre de $1 invalidé : $2"
 }
-# Après une session chargée depuis le snapshot : rien ne doit avoir changé.
+# Après une session chargée depuis le snapshot : rien ne doit avoir changé,
+# sauf snapshot.pb, la description du snapshot, que l'émulateur peut réécrire
+# au chargement même en -read-only (compteurs de chargements) : elle ne
+# contient aucune donnée de l'appareil. Tout autre changement l'invalide.
+# Les fichiers changés sont publiés dans golden.<profil> (journal du conteneur
+# illisible pour les agents : 05/11, invalidation sans cause visible).
 golden_check_intact() {
-  local now
+  local now changed other
   [ -f "$GOLDEN/$1/files" ] || return 0
   now=$(golden_files "$1")
   [ "$now" = "$(cat "$GOLDEN/$1/files")" ] && return 0
-  log "fichiers du snapshot modifiés : $(diff <(cat "$GOLDEN/$1/files") <(printf '%s\n' "$now") | grep '^[<>]' | head -n 4 | paste -sd' ')"
-  golden_invalidate "$1" "modifié par la session $id (isolation non garantie)"
+  changed=$(diff <(cat "$GOLDEN/$1/files") <(printf '%s\n' "$now") | sed -n 's/^[<>] \(.*\) [^ ]* [^ ]*$/\1/p' | LC_ALL=C sort -u)
+  other=$(grep -v -E '^[^/]+\.avd/snapshots/[^/]+/snapshot\.pb$' <<<"$changed")
+  log "fichiers du snapshot modifiés par la session $id : $(paste -sd' ' <<<"$changed")"
+  if [ -z "$other" ]; then
+    printf '%s\n' "$now" >"$GOLDEN/$1/files"
+    golden_note "$1" ready "$(cat "$GOLDEN/$1/info" 2>/dev/null)
+meta_changed=$(paste -sd' ' <<<"$changed") (session $id, sans effet)"
+    return 0
+  fi
+  golden_invalidate "$1" "modifié par la session $id : $(paste -sd' ' <<<"$other" | head -c 300) (isolation non garantie)"
 }
 
 # Profil dont le snapshot est à (re)construire (dans $gwant), si l'émulateur
@@ -588,8 +601,8 @@ golden_finish() {
   golden_files "$profile" >"$gd/files"
   golden_stamp "$profile" >"$gd/stamp"
   size=$(du -sm "$gd" 2>/dev/null | cut -f1)
-  golden_note "$profile" ready "build_s=$build_s
-size_mb=${size:-?}"
+  printf 'build_s=%s\nsize_mb=%s\n' "$build_s" "${size:-?}" >"$gd/info"
+  golden_note "$profile" ready "$(cat "$gd/info")"
   log "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque"
   golden_report built 0 "snapshot propre de $profile prêt en ${build_s} s, ${size:-?} Mo sur disque."
   reset_vars

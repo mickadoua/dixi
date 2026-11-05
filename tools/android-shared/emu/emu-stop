@@ -53,6 +53,7 @@ fi
 
 rc=0
 emu_stop_session "$id" $((EMU_BOOT_TIMEOUT + 60)) || rc=$?
-# Un démarrage interrompu par l'arrêt n'est pas une erreur d'emu-stop.
-[ "$rc" != 1 ] || [ "$(emu_kv "$EMU_RESULTS/$id" result)" != stopped ] || rc=0
+# Un démarrage interrompu par l'arrêt, ou une construction demandée
+# abandonnée (DMC-174), n'est pas une erreur d'emu-stop.
+[ "$rc" != 1 ] || [[ ! "$(emu_kv "$EMU_RESULTS/$id" result)" =~ ^(stopped|aborted)$ ]] || rc=0
 exit "$rc"

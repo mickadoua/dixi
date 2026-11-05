@@ -49,6 +49,8 @@ if [ "$ro" = 1 ]; then touch "$FAKE_DIR/ro-boot"; else rm -f "$FAKE_DIR/ro-boot"
 if [ "$ro" = 1 ]; then
   echo overlay > "$TMPDIR/userdata-qemu.img.qcow2"
   [ ! -e "$FAKE_DIR/write-golden" ] || echo dirty >> "$d/userdata-qemu.img"
+  # Comme le vrai émulateur (05/11) : description du snapshot réécrite au chargement.
+  [ ! -e "$FAKE_DIR/touch-pb" ] || echo load >> "$d/snapshots/$snap/snapshot.pb"
 fi
 "$(dirname "$0")/qemu/linux-x86_64/qemu-system-x86_64-headless" &
 wait $!
@@ -86,7 +88,7 @@ case "$1" in
       [ ! -e "$FAKE_DIR/save-s" ] || sleep "$(cat "$FAKE_DIR/save-s")"
       home=$(sed -n 's/^ANDROID_AVD_HOME=//p' "$FAKE_DIR/emulator.env")
       avd=$(sed -n 's/.*-avd \([^ ]*\).*/\1/p' "$FAKE_DIR/emulator.args")
-      mkdir -p "$home/$avd.avd/snapshots/$5" && echo ram > "$home/$avd.avd/snapshots/$5/ram.bin" && echo OK
+      mkdir -p "$home/$avd.avd/snapshots/$5" && echo ram > "$home/$avd.avd/snapshots/$5/ram.bin" && echo pb > "$home/$avd.avd/snapshots/$5/snapshot.pb" && echo OK
     else
       [ -e "$FAKE_DIR/ignore-kill" ] || kill "$(cat "$FAKE_DIR/qemu.pid")" 2>/dev/null
     fi ;;
@@ -145,7 +147,7 @@ trap 'stop_sup; leftovers' EXIT
 reset() {
   wait_clean >/dev/null
   rm -f "$W/fail" "$W/client-hidden-until" "$W/never-boot" "$W/ignore-kill" "$W/boot-s" "$W/qemu.pid" "$W/qemu.start" \
-    "$W/load-fail" "$W/write-golden" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot"
+    "$W/load-fail" "$W/write-golden" "$W/touch-pb" "$W/save-fail" "$W/save-s" "$W/snap-hang" "$W/ro-boot"
 }
 # Attend que la commande de test tourne (emu-start a rendu la main).
 wait_cmd() { local _; for _ in $(seq 100); do [ -n "$(procs "$1")" ] && return 0; sleep 0.2; done; return 1; }
@@ -616,9 +618,23 @@ check "snapshot : reconstruit après le chargement trop long" wait_golden
 reset
 touch "$W/write-golden"
 "$here/emu-run" phone -- true 2>/dev/null
-check "snapshot : modifié par une session : invalidé à l'arrêt" 'grep -q "modifié par la session" "$W/supervisor.log" && grep -q "fichiers du snapshot modifiés : .*userdata-qemu.img" "$W/supervisor.log"'
+check "snapshot : modifié par une session : invalidé à l'arrêt" 'grep -q "modifié par la session" "$W/supervisor.log" && grep -q "fichiers du snapshot modifiés par la session .*userdata-qemu.img" "$W/supervisor.log"'
+check "snapshot : fichier modifié publié dans golden.phone" '[ "$(emu_kv "$W/ctl/golden.phone" state)" = invalid ] && grep -q "^message=modifié par la session [0-9a-f]* : phone.avd/userdata-qemu.img (isolation" "$W/ctl/golden.phone"'
 rm -f "$W/write-golden"
 check "snapshot : reconstruit propre, sans les données de la session" 'wait_golden && ! grep -q dirty "$G/avd/phone.avd/userdata-qemu.img"'
+# snapshot.pb réécrit au chargement : sans effet, publié, snapshot gardé.
+reset
+touch "$W/touch-pb"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "snapshot : snapshot.pb réécrit au chargement : gardé, signalé" '[ $rc = 0 ] && wait_clean && [ -f "$G/stamp" ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = ready ] && grep -q "^meta_changed=phone.avd/snapshots/clean/snapshot.pb (session" "$W/ctl/golden.phone" && grep -q "^build_s=" "$W/ctl/golden.phone"'
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "snapshot : session suivante encore sur le snapshot, toujours valide" '[ $rc = 0 ] && grep -q -- "-read-only" "$W/emulator.args" && wait_clean && [ -f "$G/stamp" ]'
+# snapshot.pb et une image changés : invalidé, seule l'image est citée.
+touch "$W/write-golden"
+"$here/emu-run" phone -- true 2>/dev/null
+check "snapshot : snapshot.pb + image : invalidé, image citée" 'wait_clean && [ ! -f "$G/stamp" ] && grep -q "^message=modifié par la session [0-9a-f]* : phone.avd/userdata-qemu.img (isolation" "$W/ctl/golden.phone"'
+rm -f "$W/write-golden" "$W/touch-pb"
+check "snapshot : reconstruit après l'invalidation" wait_golden
 # Définition de l'AVD modifiée : snapshot caduc, session à froid.
 reset
 echo "hw.test=1" >>"$W/avd/phone.avd/config.ini"
@@ -696,8 +712,8 @@ reset
 rm -f "$G/stamp"
 echo 30 >"$W/boot-s"
 gid=$("$here/emu-start" phone --boot build 2>/dev/null)
-"$here/emu-stop" --id "$gid" 2>"$W/err34"
-check "build : emu-stop l'abandonne, rien ne reste" '[ "$(emu_kv "$W/ctl/results/$gid" result)" = aborted ] && grep -q "construction demandée abandonnée" "$W/err34" && wait_clean && [ ! -e "$G" ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = missing ]'
+"$here/emu-stop" --id "$gid" 2>"$W/err34"; rc=$?
+check "build : emu-stop l'abandonne (code 0), rien ne reste" '[ $rc = 0 ] && [ "$(emu_kv "$W/ctl/results/$gid" result)" = aborted ] && grep -q "construction demandée abandonnée" "$W/err34" && wait_clean && [ ! -e "$G" ] && [ "$(emu_kv "$W/ctl/golden.phone" state)" = missing ]'
 rm -f "$W/boot-s"
 # Échec, puis nouvelle demande aussitôt : le délai après échec ne s'applique pas.
 reset
