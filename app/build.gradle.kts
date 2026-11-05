@@ -41,7 +41,7 @@ android {
 
     // The probe (src/probe) also runs in debug builds and in its JVM test (testDebug).
     sourceSets.getByName("debug") {
-        java.srcDir("src/probe/java")
+        kotlin.srcDir("src/probe/java")
         res.srcDir("src/probe/res")
     }
 
