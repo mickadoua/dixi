@@ -6,6 +6,7 @@ import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Build
 import android.os.SystemClock
@@ -242,9 +243,12 @@ class HideZoneView(context: Context) : View(context) {
         textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f, resources.displayMetrics)
         typeface = ResourcesCompat.getFont(context, R.font.inter_semibold)
         color = ContextCompat.getColor(context, R.color.bubble_hide_zone_label)
-        // Readable on a light or a dark app behind.
-        setShadowLayer(dp(4f), 0f, dp(1f), 0xCC000000.toInt())
     }
+    // Dark pill behind the label: readable on a light or a dark app behind.
+    private val labelPill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.bubble_hide_zone), 235)
+    }
+    private val labelBounds = Rect()
 
     init {
         contentDescription = context.getString(R.string.bubble_hide_zone)
@@ -267,7 +271,16 @@ class HideZoneView(context: Context) : View(context) {
         val arm = dp(9f)
         canvas.drawLine(cx - arm, cy - arm, cx + arm, cy + arm, cross)
         canvas.drawLine(cx - arm, cy + arm, cx + arm, cy - arm, cross)
-        canvas.drawText(label, cx, cy - radius - dp(18f), text)
+        val baseline = cy - radius - dp(18f)
+        text.getTextBounds(label, 0, label.length, labelBounds)
+        val padX = dp(12f)
+        val padY = dp(6f)
+        canvas.drawRoundRect(
+            cx - labelBounds.width() / 2f - padX, baseline + labelBounds.top - padY,
+            cx + labelBounds.width() / 2f + padX, baseline + labelBounds.bottom + padY,
+            dp(16f), dp(16f), labelPill,
+        )
+        canvas.drawText(label, cx, baseline, text)
     }
 
     companion object {

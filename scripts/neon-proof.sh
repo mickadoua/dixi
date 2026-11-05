@@ -65,7 +65,11 @@ screen Offer; shot 07-ecran-offre
 $ADB logcat -c
 screen Home "--ei seedHistory 1"; shot 05-ecran-principal-off
 # The bubble card is the switch: turn the bubble on (overlay allowed by appops).
-$ADB shell input tap $((W / 2)) $((H * 18 / 100)); sleep 3
+$ADB shell input tap $((W / 2)) $((H * 18 / 100))
+# A loaded emulator redraws late: wait for the bubble, then for the card.
+for _ in 1 2 3 4 5 6 7 8 9 10; do log | grep -q 'bubble shown' && break; sleep 1; done
+# Shot too early, the card still shows « Bulle désactivée » and the press ripple.
+sleep 10
 shot 05-ecran-principal
 check "bubble shown from the main screen card" "log | grep -q 'bubble shown'"
 }
