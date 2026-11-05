@@ -19,7 +19,7 @@ AUTOMATISCH PLAKKEN (OPTIONEEL)
 Standaard uit. Als je het aanzet, gebruikt Voxbulle de toegankelijkheidsservice van Android voor één ding: de gedicteerde tekst plakken in het veld waarin je typt. De service leest geen schermcontent en verzamelt geen gegevens. Zonder deze optie wordt de tekst gekopieerd en plak je hem zelf.
 
 JE GEGEVENS
-• De audio wordt voor de transcriptie naar Mistral gestuurd. Voxbulle bewaart hem nooit.
+• De audio en de getranscribeerde tekst gaan voor de transcriptie via Mistral. Voxbulle bewaart de audio nooit.
 • De tekst van je laatste dictaten blijft op je telefoon.
 • Je API-sleutel blijft versleuteld op je telefoon.
 

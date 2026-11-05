@@ -19,7 +19,7 @@ INCOLLA AUTOMATICO (OPZIONALE)
 Disattivato per impostazione predefinita. Se lo attivi, Voxbulle usa il servizio di accessibilità di Android per una sola cosa: incollare il testo dettato nel campo in cui scrivi. Non legge il contenuto dello schermo e non raccoglie dati. Senza questa opzione, il testo viene copiato e lo incolli tu.
 
 I TUOI DATI
-• L'audio viene inviato a Mistral per la trascrizione. Voxbulle non lo conserva mai.
+• L'audio e il testo trascritto passano da Mistral per la trascrizione. Voxbulle non conserva mai l'audio.
 • Il testo delle ultime dettature resta sul telefono.
 • La tua chiave API resta sul telefono, cifrata.
 
