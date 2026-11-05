@@ -1,8 +1,10 @@
 package tech.dmconsulting.voxbulle
 
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
@@ -20,7 +22,8 @@ import tech.dmconsulting.voxbulle.ui.theme.VoxbulleTheme
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // Dark only: light system bar icons whatever the system setting.
+        enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         super.onCreate(savedInstanceState)
         val container = (application as VoxbulleApp).container
         // Test hook kept from the PoC (scripts/emu-proof.sh): start the bubble

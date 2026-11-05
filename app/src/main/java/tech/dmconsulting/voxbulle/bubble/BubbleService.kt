@@ -85,14 +85,16 @@ class BubbleService : Service() {
         }
         if (intent?.action == ACTION_SHOW) {
             store.hidden = false
+            overlay.removeEdge()
             NotificationManagerCompat.from(this).cancel(NOTIF_HIDDEN)
         }
         if (store.hidden) {
             Log.i(TAG, "bubble is hidden: not shown")
-            stopSelf()
+            if (store.hideToEdge) showEdge() else stopSelf()
         } else {
             try {
                 overlay.show()
+                if (intent?.action == ACTION_DICTATE) onBubbleTap()
             } catch (e: RuntimeException) {
                 Log.e(TAG, "bubble show FAILED", e)
                 stopSelf()
@@ -120,8 +122,35 @@ class BubbleService : Service() {
         Log.i(TAG, "bubble hidden")
         overlay.remove()
         store.hidden = true
-        notifyHidden()
-        stopSelf()
+        if (store.hideToEdge) {
+            showEdge()
+        } else {
+            notifyHidden()
+            stopSelf()
+        }
+    }
+
+    /** Edge mode: the tab stays at the side; a tap on it shows the bubble again. */
+    private fun showEdge() {
+        try {
+            overlay.showEdge(onShowBubble = ::unhide)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "bubble edge FAILED: notification instead", e)
+            notifyHidden()
+            stopSelf()
+        }
+    }
+
+    private fun unhide() {
+        Log.i(TAG, "bubble shown from the edge")
+        store.hidden = false
+        overlay.removeEdge()
+        try {
+            overlay.show()
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "bubble show FAILED", e)
+            stopSelf()
+        }
     }
 
     private fun onBubbleTap() {
@@ -261,6 +290,16 @@ class BubbleService : Service() {
 
         fun show(context: Context) {
             context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_SHOW))
+        }
+
+        /**
+         * The main screen's « Touchez, parlez » button: same as a tap on the bubble
+         * (start or stop). Needs the overlay permission, like the bubble itself.
+         */
+        const val ACTION_DICTATE = "tech.dmconsulting.voxbulle.action.DICTATE"
+
+        fun dictate(context: Context) {
+            context.startService(Intent(context, BubbleService::class.java).setAction(ACTION_DICTATE))
         }
 
         private const val ACTION_DEBUG_STATE = "tech.dmconsulting.voxbulle.debug.SET_BUBBLE_STATE"

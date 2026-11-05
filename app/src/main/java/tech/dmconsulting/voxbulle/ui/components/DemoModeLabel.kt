@@ -25,8 +25,9 @@ val LocalDemoMode = staticCompositionLocalOf { false }
 fun DemoModeLabel(modifier: Modifier = Modifier) {
     val description = stringResource(R.string.demo_mode_description)
     Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        // Cyan: a system state (neon charter); magenta is kept for the offer and hiding.
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         shape = MaterialTheme.shapes.small,
         modifier = modifier.clearAndSetSemantics { contentDescription = description },
     ) {

@@ -2,38 +2,51 @@ package tech.dmconsulting.voxbulle.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import tech.dmconsulting.voxbulle.R
 
-// Charter § 3: Roboto (the system font, FontFamily.Default), sizes in sp,
-// nothing below 14 sp.
+// Neon charter § Typographie: Space Grotesk 700 for titles, figures and the
+// brand name; Inter 400/500/600 for text. Both OFL, embedded (res/font).
+val SpaceGrotesk = FontFamily(Font(R.font.space_grotesk_bold, FontWeight.Bold))
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+)
+
 private val Base = Typography()
 
-private fun style(size: Int, lineHeight: Int, weight: FontWeight = FontWeight.Normal) =
-    TextStyle(fontFamily = FontFamily.Default, fontSize = size.sp, lineHeight = lineHeight.sp, fontWeight = weight)
+private fun title(size: Int, lineHeight: Int) =
+    TextStyle(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold, fontSize = size.sp, lineHeight = lineHeight.sp)
+
+private fun text(size: Int, lineHeight: Int, weight: FontWeight = FontWeight.Normal) =
+    TextStyle(fontFamily = Inter, fontWeight = weight, fontSize = size.sp, lineHeight = lineHeight.sp)
 
 val VoxbulleTypography = Typography(
-    displayLarge = Base.displayLarge.copy(fontFamily = FontFamily.Default),
-    displayMedium = Base.displayMedium.copy(fontFamily = FontFamily.Default),
-    displaySmall = Base.displaySmall.copy(fontFamily = FontFamily.Default),
-    // Welcome title.
-    headlineLarge = style(32, 40),
-    headlineMedium = style(28, 36),
-    // Screen title (h2).
-    headlineSmall = style(24, 32, FontWeight.Medium),
-    // Top app bar.
-    titleLarge = style(22, 28),
+    displayLarge = Base.displayLarge.copy(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold),
+    displayMedium = Base.displayMedium.copy(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold),
+    displaySmall = Base.displaySmall.copy(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold),
+    // Welcome title, brand name.
+    headlineLarge = title(32, 40),
+    headlineMedium = title(28, 36),
+    // Screen title.
+    headlineSmall = title(24, 32),
+    // Card and section titles.
+    titleLarge = title(20, 28),
     // Tagline.
-    titleMedium = style(18, 26),
-    titleSmall = style(16, 24, FontWeight.Medium),
+    titleMedium = text(18, 26, FontWeight.Medium),
+    titleSmall = text(16, 24, FontWeight.SemiBold),
     // Body text.
-    bodyLarge = style(16, 24),
+    bodyLarge = text(16, 24),
     // Caption: metadata only, never essential information.
-    bodyMedium = style(14, 20),
-    bodySmall = style(14, 20),
+    bodyMedium = text(14, 20),
+    bodySmall = text(14, 20),
     // Buttons.
-    labelLarge = style(16, 24, FontWeight.Medium),
-    labelMedium = style(14, 20, FontWeight.Medium),
-    labelSmall = style(14, 20, FontWeight.Medium),
+    labelLarge = text(16, 24, FontWeight.SemiBold),
+    labelMedium = text(14, 20, FontWeight.Medium),
+    // Section label: 12 sp caps, 1.5 sp spacing. Decoration only, never essential information.
+    labelSmall = text(12, 16, FontWeight.SemiBold).copy(letterSpacing = 1.5.sp),
 )
