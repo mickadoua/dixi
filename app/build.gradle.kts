@@ -1,7 +1,11 @@
+import com.github.triplet.gradle.androidpublisher.ReleaseStatus
+import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.play.publisher)
 }
 
 // Release numbering. versionCode = number of commits on HEAD (grows with every merge on the
@@ -31,6 +35,10 @@ val uploadKeyMissing = uploadKeyEnv.filterValues { it == null }.keys
 if (uploadKeyMissing.isNotEmpty() && uploadKeyMissing.size < uploadKeyEnv.size) {
     throw GradleException("Upload key: missing $uploadKeyMissing (set all four UPLOAD_* or none)")
 }
+
+// Play service account key, as a file path (scripts/play-publish.sh writes it to a temp file).
+// Not set: Gradle Play Publisher stays off, so ordinary builds never call Play.
+val playCredentials = providers.environmentVariable("PLAY_SERVICE_ACCOUNT_FILE").orNull?.ifEmpty { null }
 
 android {
     namespace = "tech.dmconsulting.voxbulle"
@@ -87,6 +95,25 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Only the release variant goes to Play (never debug or probe).
+    playConfigs {
+        register("release") {
+            enabled.set(playCredentials != null)
+        }
+    }
+}
+
+// Defaults for scripts/play-publish.sh, which passes --track and --release-status.
+// AUTO: if the git versionCode is already taken on Play, use the next free one, so main
+// (squashed, fewer commits than poc) can still publish after a poc upload.
+play {
+    enabled.set(false)
+    playCredentials?.let { serviceAccountCredentials.set(file(it)) }
+    track.set("internal")
+    defaultToAppBundles.set(true)
+    releaseStatus.set(ReleaseStatus.DRAFT)
+    resolutionStrategy.set(ResolutionStrategy.AUTO)
 }
 
 dependencies {
