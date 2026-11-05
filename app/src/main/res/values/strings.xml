@@ -35,6 +35,7 @@
     <string name="settings_bubble_summary">Par-dessus vos autres apps</string>
     <string name="settings_auto_paste">Collage automatique</string>
     <string name="settings_auto_paste_summary">Accessibilité · désactivé</string>
+    <string name="settings_auto_paste_summary_on">Accessibilité · activé</string>
     <string name="settings_language">Langue</string>
     <string name="settings_language_auto">Détection automatique (FR, EN)</string>
     <string name="settings_language_french">Français</string>
@@ -45,6 +46,23 @@
     <string name="settings_privacy_summary">L’audio est envoyé pour transcription puis supprimé : jamais conservé.</string>
     <string name="settings_about">À propos</string>
     <string name="settings_about_summary">Version %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141). Text of the mockup (DMC-121):
+        DRAFT, to be validated before publication (Google Play accessibility policy, founder).
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">Coller directement dans le champ</string>
+    <string name="disclosure_body">Voxbulle utilise le service d’accessibilité d’Android uniquement pour coller le texte dicté dans le champ où vous écrivez.</string>
+    <string name="disclosure_point_no_reading">Nous ne lisons pas le contenu de votre écran.</string>
+    <string name="disclosure_point_no_data">Nous ne collectons aucune donnée via ce service.</string>
+    <string name="disclosure_point_off_anytime">Vous pouvez le désactiver à tout moment.</string>
+    <string name="disclosure_optional">Facultatif : sans lui, le texte est copié et vous le collez vous-même.</string>
+    <string name="disclosure_accept">J’accepte et j’active</string>
+    <string name="disclosure_decline">Non merci</string>
+    <string name="disclosure_draft_note">BROUILLON · texte à valider avant publication</string>
+    <string name="auto_paste_service_label">Voxbulle · collage automatique</string>
+    <string name="auto_paste_service_description">Colle le texte que vous venez de dicter dans le champ où vous écrivez, juste après la dictée. Ne lit pas le contenu de votre écran et ne collecte aucune donnée.</string>
 
     <!-- Main screen, neon mockup 05 (DMC-213). -->
     <string name="screen_home">Accueil</string>
@@ -168,4 +186,5 @@
     <string name="panel_wave_description">Niveau du micro</string>
     <string name="panel_elapsed_description">Durée de l\'enregistrement : %1$s</string>
     <string name="toast_copied">Texte copié</string>
+    <string name="toast_pasted">Texte collé</string>
 </resources>

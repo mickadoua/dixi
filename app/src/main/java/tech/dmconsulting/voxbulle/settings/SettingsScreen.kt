@@ -64,14 +64,15 @@ val DictationLanguage.label: Int
     }
 
 /**
- * Screen 10 (neon mockup 06, DMC-213): offer card, bubble, auto-paste (wired by
- * DMC-141), language, Mistral key (DMC-227), history, privacy, about. A tab: no back arrow.
+ * Screen 10 (neon mockup 06, DMC-213): offer card, bubble, auto-paste (DMC-141, through
+ * screen 8), language, Mistral key (DMC-227), history, privacy, about. A tab: no back arrow.
  */
 @Composable
 fun SettingsScreen(
     settingsStore: SettingsStore,
     history: DictationHistory,
     bubble: BubbleToggle,
+    autoPaste: AutoPasteToggle,
     mistralKey: MistralKeyStore,
     keyCheck: MistralKeyCheck,
     onOpenOffer: () -> Unit,
@@ -111,13 +112,11 @@ fun SettingsScreen(
         )
 
         Section(R.string.settings_section_dictation)
-        // Off and locked until the auto-paste ticket (DMC-141) wires the accessibility service.
         SwitchRow(
             title = R.string.settings_auto_paste,
-            summary = stringResource(R.string.settings_auto_paste_summary),
-            checked = false,
-            enabled = false,
-            onCheckedChange = {},
+            summary = stringResource(if (autoPaste.on == true) R.string.settings_auto_paste_summary_on else R.string.settings_auto_paste_summary),
+            checked = autoPaste.on == true,
+            onCheckedChange = autoPaste.set,
         )
         SettingRow(
             title = R.string.settings_language,

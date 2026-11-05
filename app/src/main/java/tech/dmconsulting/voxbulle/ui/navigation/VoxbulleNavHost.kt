@@ -25,10 +25,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.AppContainer
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.history.HistoryScreen
@@ -45,7 +48,10 @@ import tech.dmconsulting.voxbulle.home.HomeScreen
 import tech.dmconsulting.voxbulle.offer.OfferScreen
 import tech.dmconsulting.voxbulle.onboarding.TrialPreview
 import tech.dmconsulting.voxbulle.onboarding.WelcomeScreen
+import tech.dmconsulting.voxbulle.paste.AutoPasteDisclosureScreen
+import tech.dmconsulting.voxbulle.paste.AutoPasteService
 import tech.dmconsulting.voxbulle.settings.SettingsScreen
+import tech.dmconsulting.voxbulle.settings.rememberAutoPasteToggle
 import tech.dmconsulting.voxbulle.settings.rememberBubbleToggle
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
@@ -74,6 +80,10 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     val entry by navController.currentBackStackEntryAsState()
     val current = Screen.entries.firstOrNull { it.route == entry?.destination?.route } ?: start
     val bubble = rememberBubbleToggle(container.settings)
+    val openDisclosure = { navController.navigate(Screen.AutoPasteDisclosure.route) }
+    val autoPaste = rememberAutoPasteToggle(container.settings, onDisclose = openDisclosure)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val openOffer = { navController.navigate(Screen.Offer.route) }
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         Scaffold(
@@ -98,11 +108,22 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                                 container.settings,
                                 container.history,
                                 bubble,
+                                autoPaste,
                                 container.mistralKey,
                                 container.keyCheck,
                                 onOpenOffer = openOffer,
                             )
                             Screen.Offer -> OfferScreen(onBack = back)
+                            Screen.AutoPasteDisclosure -> AutoPasteDisclosureScreen(
+                                onBack = back,
+                                onAccept = {
+                                    scope.launch { container.settings.update { it.copy(autoPasteEnabled = true) } }
+                                    // Back to screen 10 first: it reads the service again on return.
+                                    back()
+                                    if (!AutoPasteService.isEnabled(context)) context.startActivity(AutoPasteService.settingsIntent())
+                                },
+                                onDecline = back,
+                            )
                             Screen.Welcome -> WelcomeScreen(onStart = { navController.navigate(Screen.MicPermission.route) })
                             else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
                                 // Real calls need a recording: only the fakes run from this preview.

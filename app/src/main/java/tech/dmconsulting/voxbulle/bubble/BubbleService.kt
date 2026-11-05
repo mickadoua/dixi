@@ -24,6 +24,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import tech.dmconsulting.voxbulle.MainActivity
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.VoxbulleApp
@@ -32,6 +33,7 @@ import tech.dmconsulting.voxbulle.dictation.DictationOutput
 import tech.dmconsulting.voxbulle.dictation.DictationPanel
 import tech.dmconsulting.voxbulle.dictation.DictationRecorder
 import tech.dmconsulting.voxbulle.history.copyToClipboard
+import tech.dmconsulting.voxbulle.paste.AutoPasteService
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 import tech.dmconsulting.voxbulle.recording.Recorder
 import tech.dmconsulting.voxbulle.recording.RecorderState
@@ -43,7 +45,8 @@ import tech.dmconsulting.voxbulle.ui.navigation.Screen
 
 /**
  * Shows the floating bubble. A tap starts a dictation, a second tap stops it
- * (5 min max, see [Recorder]); the text is copied and notified (see [DictationController]).
+ * (5 min max, see [Recorder]); the text is copied and notified, or pasted with auto-paste
+ * (see [DictationController]).
  * Dropped on the hide zone, the bubble hides until its notification (or [show]) brings it back.
  */
 class BubbleService : Service(), DictationOutput {
@@ -216,6 +219,15 @@ class BubbleService : Service(), DictationOutput {
     override fun copy(text: String, stoppedAtMs: Long) {
         copyToClipboard(this, text)
         Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop demo=$demoDictation")
+    }
+
+    /** Auto-paste (DMC-141): only if the user turned it on in screen 10 (after screen 8). */
+    override suspend fun paste(): Boolean {
+        overlay.toastPasted = false
+        val on = (application as VoxbulleApp).container.settings.settings.first().autoPasteEnabled
+        val pasted = on && AutoPasteService.paste()
+        overlay.toastPasted = pasted
+        return pasted
     }
 
     override fun showPanel(panel: DictationPanel) {

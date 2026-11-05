@@ -83,6 +83,9 @@ class BubbleOverlay(
     // Touchable: Android 12+ draws a non-touchable overlay at 80 % at most, and the toast must be opaque.
     private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT)
     private var toastShown = false
+
+    /** The last text went straight into the field (auto-paste, DMC-141): « Texte collé ». */
+    var toastPasted = false
     private val tracker = TapDragTracker(ViewConfiguration.get(context).scaledTouchSlop.toFloat())
 
     private var geometry = geometry()
@@ -234,6 +237,7 @@ class BubbleOverlay(
     /** Next to the bubble, on the screen side, centered on it. */
     private fun showToast() {
         if (!shown || toastShown) return
+        toast.setText(if (toastPasted) R.string.toast_pasted else R.string.toast_copied)
         toast.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val glowPx = px(TOAST_GLOW_DP)
         val gap = px(8f)
