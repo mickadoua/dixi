@@ -10,7 +10,5 @@
     <color name="bubble_magenta">#FF3D9A</color>
     <!-- Opaque: the app behind must not show through the disc (DMC-217). -->
     <color name="bubble_hide_zone">#050507</color>
-    <!-- surface-2: the « Texte copié » toast. -->
-    <color name="bubble_toast">#171720</color>
     <color name="bubble_hide_zone_label">#F5F5F7</color>
 </resources>
