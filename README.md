@@ -13,6 +13,8 @@ App Android de dictée vocale : une bulle flottante, on parle, le texte transcri
 
 Package `tech.dmconsulting.voxbulle`, un seul module Gradle (`app`), un package par domaine : `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Les dépendances sont branchées à la main dans `AppContainer`.
 
+Décision (05/11/2026, DMC-360) : un seul module `app`, pas la structure KMP de `mickadoua/template-android` (`androidApp/` + `shared/`). Raison : Voxbulle est une app Android seule, aucune cible iOS n'est prévue. Option écartée : passer en `androidApp/` + `shared/`, ce qui déplace tout le code sans rien apporter tant qu'il n'y a qu'une cible. À revoir si une cible iOS est décidée. Les versions (AGP, Kotlin, BOM Compose, Gradle, SDK) suivent celles du template.
+
 ## Build
 
     sh ./gradlew --no-daemon clean testDebugUnitTest assembleDebug
