@@ -40,7 +40,9 @@ class MainActivity : ComponentActivity() {
                 BubbleSwitch.show(this@MainActivity)
             }
         }
-        val start = debugStartScreen(container, firstCreate = savedInstanceState == null) ?: Screen.start
+        val start = debugStartScreen(container, firstCreate = savedInstanceState == null)
+            ?: Screen.History.takeIf { intent.getStringExtra(EXTRA_SCREEN) == it.name }
+            ?: Screen.start
         val openSettings = intent.getBooleanExtra(EXTRA_OPEN_SETTINGS, false)
         setContent {
             // No saved key: the fakes answer and every screen says « Mode démo » (DMC-227).
@@ -57,8 +59,9 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Debug builds only, for emulator proofs: `--es screen History` opens a screen
-     * directly, `--ei seedHistory N` adds N sample dictations (fictitious texts).
+     * Debug builds only, for emulator proofs: `--es screen Settings` opens any screen
+     * directly (other builds: History only, from the « Texte copié » notification),
+     * `--ei seedHistory N` adds N sample dictations (fictitious texts).
      */
     private fun debugStartScreen(container: AppContainer, firstCreate: Boolean): Screen? {
         if (!BuildConfig.DEBUG) return null
@@ -73,10 +76,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        return Screen.entries.firstOrNull { it.name == intent.getStringExtra("screen") }
+        return Screen.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_SCREEN) }
     }
 
     companion object {
+        /** Name of the [Screen] to open. */
+        const val EXTRA_SCREEN = "screen"
+
         /** Opens screen 10 over the start screen: dictation notifications about the key. */
         const val EXTRA_OPEN_SETTINGS = "openSettings"
 

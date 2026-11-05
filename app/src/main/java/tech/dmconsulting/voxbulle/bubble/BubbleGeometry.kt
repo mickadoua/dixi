@@ -56,4 +56,15 @@ class BubbleGeometry(
         val dy = centerY - targetY
         return dx * dx + dy * dy <= radius * radius
     }
+
+    /**
+     * Top of the panel card for a bubble at [bubbleY]: just above the bubble
+     * (mockup 09), or just below when there is no room above. [gap] between them.
+     */
+    fun panelTop(bubbleY: Int, panelHeight: Int, gap: Int): Int {
+        val above = bubbleY - gap - panelHeight
+        if (above >= minY) return above
+        val below = bubbleY + bubbleSize + gap
+        return below.coerceAtMost(maxOf(minY, screenHeight - insets.bottom - margin - panelHeight))
+    }
 }

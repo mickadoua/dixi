@@ -20,13 +20,13 @@ import androidx.core.graphics.withClip
 import androidx.core.graphics.withTranslation
 import tech.dmconsulting.voxbulle.R
 
-private fun View.dp(value: Float) = value * resources.displayMetrics.density
+internal fun View.dp(value: Float) = value * resources.displayMetrics.density
 
 /** CSS blur radius (2 sigma) to the Android BlurMaskFilter radius (sigma = 0.57735 r + 0.5). */
-private fun View.blur(cssDp: Float) = (dp(cssDp) / 2f - 0.5f).coerceAtLeast(0.5f) / 0.57735f
+internal fun View.blur(cssDp: Float) = (dp(cssDp) / 2f - 0.5f).coerceAtLeast(0.5f) / 0.57735f
 
 /** BlurMaskFilter needs a software layer before Android 9. */
-private fun View.allowBlur() {
+internal fun View.allowBlur() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 }
 
@@ -34,6 +34,9 @@ private fun View.allowBlur() {
 private val LOW_WAVE = floatArrayOf(6f, 12f, 18f, 12f, 6f)
 private val HIGH_WAVE = floatArrayOf(14f, 26f, 34f, 26f, 14f)
 private const val CHECK_PATH = "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
+
+/** Material « priority_high »: an exclamation mark. */
+private const val ERROR_PATH = "M10 3h4v12h-4zM12 17a2 2 0 1 1 0 4a2 2 0 1 1 0-4z"
 
 /** The 56 dp disc and its content for each state. Takes the touches. */
 class BubbleView(context: Context) : View(context) {
@@ -61,6 +64,7 @@ class BubbleView(context: Context) : View(context) {
     private val arc = RectF()
     private val disc = Path()
     private val check = PathParser.createPathFromPathData(CHECK_PATH)
+    private val exclamation = PathParser.createPathFromPathData(ERROR_PATH)
 
     init {
         isClickable = true
@@ -96,7 +100,8 @@ class BubbleView(context: Context) : View(context) {
             BubbleState.Idle -> drawWave(canvas, LOW_WAVE, content, glow = true)
             BubbleState.Listening -> drawWave(canvas, HIGH_WAVE, content, glow = false)
             BubbleState.Processing -> drawSpinner(canvas, content)
-            BubbleState.Ready -> drawCheck(canvas, content)
+            BubbleState.Ready -> drawIcon(canvas, check, content)
+            BubbleState.Error -> drawIcon(canvas, exclamation, content)
         }
     }
 
@@ -133,16 +138,16 @@ class BubbleView(context: Context) : View(context) {
         if (spins) postInvalidateOnAnimation()
     }
 
-    /** 28 dp check with its glow (24-unit Material path). */
-    private fun drawCheck(canvas: Canvas, color: Int) {
+    /** 28 dp icon from a 24-unit Material path: the check, or the error mark. */
+    private fun drawIcon(canvas: Canvas, icon: Path, color: Int) {
         val size = dp(28f)
         val scale = size / 24f
         ink.color = color
         glowInk.color = ColorUtils.setAlphaComponent(color, 230)
         canvas.withTranslation((width - size) / 2f, (height - size) / 2f) {
             scale(scale, scale)
-            drawPath(check, glowInk)
-            drawPath(check, ink)
+            drawPath(icon, glowInk)
+            drawPath(icon, ink)
         }
     }
 

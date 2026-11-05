@@ -17,12 +17,15 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import androidx.core.view.ViewCompat
 import tech.dmconsulting.voxbulle.R
+import tech.dmconsulting.voxbulle.dictation.DictationPanel
 import tech.dmconsulting.voxbulle.recording.MicrophoneRecorder
 
 /**
  * The bubble windows: the disc (takes touches, never the focus), its shadow and
  * halo behind (no touch), and the hide zone while dragging. Drag moves the
  * bubble; on release it snaps to the nearest side, or hides over the cross.
+ * During a dictation, the panel (mockups 09 and 10) over a dimmed screen; after it,
+ * the « Texte copié » toast next to the bubble.
  */
 class BubbleOverlay(
     private val context: Context,
@@ -30,6 +33,10 @@ class BubbleOverlay(
     private val store: BubblePositionStore,
     private val onTap: () -> Unit,
     private val onHide: () -> Unit,
+    onCancel: () -> Unit = {},
+    onFinish: () -> Unit = {},
+    onRedo: () -> Unit = {},
+    onValidate: (String) -> Unit = {},
 ) {
     private val windowManager = context.getSystemService(WindowManager::class.java)
     private val density = context.resources.displayMetrics.density
@@ -54,6 +61,28 @@ class BubbleOverlay(
     private val bubbleParams = params(size, touchable = true)
     private val backdropParams = params(size + 2 * glow, touchable = false)
     private val hideZoneParams = params(hideZoneWidth, touchable = false, height = hideZoneHeight)
+    private val panelGlow = px(PANEL_GLOW_DP)
+    private val panelSide = px(12f)
+    private val scrim = View(context).apply {
+        setBackgroundColor(context.getColor(R.color.panel_scrim))
+        visibility = View.GONE
+    }
+    private val scrimParams = params(WindowManager.LayoutParams.MATCH_PARENT, touchable = false).apply {
+        height = WindowManager.LayoutParams.MATCH_PARENT
+        // Android 12+ lets touches through an overlay at 80 % at most.
+        alpha = 0.8f
+    }
+    private val panel = PanelView(context, onCancel, onFinish, onRedo, onValidate)
+    private val panelParams = params(0, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT).apply {
+        flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+    }
+    private var panelShown = false
+    private var listeningSinceMs = 0L
+    private val toast = CopiedToastView(context)
+    // Touchable: Android 12+ draws a non-touchable overlay at 80 % at most, and the toast must be opaque.
+    private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT)
+    private var toastShown = false
     private val tracker = TapDragTracker(ViewConfiguration.get(context).scaledTouchSlop.toFloat())
 
     private var geometry = geometry()
@@ -83,8 +112,9 @@ class BubbleOverlay(
         // Added first, so the bubble stays above the cross while dragging.
         placeHideZone()
         hideZone.visibility = View.INVISIBLE
+        // The dimmed screen goes under the bubble, so it is added first; it stays gone until a panel shows.
         addAllOrNone(
-            listOf(hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
+            listOf(scrim to scrimParams, hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
             add = { (view, params) -> windowManager.addView(view, params) },
             remove = { (view, _) -> windowManager.removeView(view) },
         )
@@ -122,9 +152,12 @@ class BubbleOverlay(
         snapAnimator?.cancel()
         hideHideZone()
         if (!shown) return
+        removePanel()
+        removeToast()
         windowManager.removeView(bubble)
         windowManager.removeView(backdrop)
         windowManager.removeView(hideZone)
+        windowManager.removeView(scrim)
         shown = false
     }
 
@@ -132,10 +165,96 @@ class BubbleOverlay(
         bubble.state = state
         backdrop.state = state
         backdrop.alpha = state.opacity
+        // « Texte prêt » shows the toast until the bubble goes back to rest.
+        if (state == BubbleState.Ready) showToast() else removeToast()
     }
 
-    fun setVoiceLevel(level: Float) {
+    /** [level]: 0 to 1. [nowMs]: elapsedRealtime, for the panel timer. */
+    fun setVoiceLevel(level: Float, nowMs: Long = 0) {
         backdrop.voiceLevel = level
+        if (panelShown && panel.panel is DictationPanel.Listening) {
+            panel.wave.push(level)
+            panel.setElapsed(nowMs - listeningSinceMs)
+        }
+    }
+
+    /** Shows [newPanel] next to the bubble, or removes it ([DictationPanel.None]). */
+    fun showPanel(newPanel: DictationPanel, nowMs: Long) {
+        if (!shown) return
+        if (newPanel == DictationPanel.None) {
+            removePanel()
+            return
+        }
+        if (newPanel is DictationPanel.Listening) listeningSinceMs = newPanel.startedAtMs
+        panel.show(newPanel, nowMs - listeningSinceMs)
+        // Mockup 10 shows the suggestion alone; the bubble comes back with « Texte copié ».
+        val suggestion = newPanel is DictationPanel.Suggestion
+        listOf(bubble, backdrop).forEach { it.visibility = if (suggestion) View.GONE else View.VISIBLE }
+        // The keyboard needs a focusable window, only to correct the suggestion.
+        panelParams.flags = if (suggestion) {
+            panelParams.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+        } else {
+            panelParams.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        }
+        placePanel()
+        if (panelShown) {
+            windowManager.updateViewLayout(panel, panelParams)
+        } else {
+            windowManager.addView(panel, panelParams)
+            panelShown = true
+            scrim.visibility = View.VISIBLE
+        }
+        Log.i(TAG, "panel ${newPanel::class.simpleName} at y=${panelParams.y + panelGlow}")
+        panel.post { if (panelShown) Log.i(TAG, "panel buttons ${panel.centers()}") }
+    }
+
+    /** Debug proof only. */
+    fun markSuggestionWord(offset: Int) = panel.suggestion.markWordAt(offset)
+
+    private fun placePanel() {
+        val width = geometry.screenWidth - geometry.insets.left - geometry.insets.right - 2 * panelSide
+        panel.measure(
+            View.MeasureSpec.makeMeasureSpec(width + 2 * panelGlow, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val cardHeight = panel.measuredHeight - 2 * panelGlow
+        panelParams.width = width + 2 * panelGlow
+        panelParams.x = geometry.insets.left + panelSide - panelGlow
+        panelParams.y = geometry.panelTop(bubbleParams.y, cardHeight, gap = px(4f)) - panelGlow
+    }
+
+    private fun removePanel() {
+        listOf(bubble, backdrop).forEach { it.visibility = View.VISIBLE }
+        scrim.visibility = View.GONE
+        if (!panelShown) return
+        windowManager.removeView(panel)
+        panelShown = false
+    }
+
+    /** Next to the bubble, on the screen side, centered on it. */
+    private fun showToast() {
+        if (!shown || toastShown) return
+        toast.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val glowPx = px(TOAST_GLOW_DP)
+        val gap = px(8f)
+        toastParams.x = if (store.position.side == Side.Right) {
+            bubbleParams.x - gap - toast.measuredWidth + glowPx
+        } else {
+            bubbleParams.x + size + gap - glowPx
+        }
+        toastParams.y = bubbleParams.y + (size - toast.measuredHeight) / 2
+        try {
+            windowManager.addView(toast, toastParams)
+            toastShown = true
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "copied toast FAILED", e)
+        }
+    }
+
+    private fun removeToast() {
+        if (!toastShown) return
+        windowManager.removeView(toast)
+        toastShown = false
     }
 
     /** Rotation or screen size change: same side, same vertical place. */
@@ -239,6 +358,11 @@ class BubbleOverlay(
         if (shown) {
             windowManager.updateViewLayout(backdrop, backdropParams)
             windowManager.updateViewLayout(bubble, bubbleParams)
+        }
+        if (panelShown) {
+            // The panel follows the bubble it comes from.
+            placePanel()
+            windowManager.updateViewLayout(panel, panelParams)
         }
     }
 
