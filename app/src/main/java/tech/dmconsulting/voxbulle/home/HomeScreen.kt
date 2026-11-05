@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,12 +36,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.Instant
 import java.time.ZoneId
+import tech.dmconsulting.voxbulle.BuildConfig
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.history.Dictation
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.history.copyToClipboard
 import tech.dmconsulting.voxbulle.history.formatDictationDate
+import tech.dmconsulting.voxbulle.recording.TrialLog
 import tech.dmconsulting.voxbulle.settings.BubbleToggle
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.GlowLayer
@@ -106,7 +109,30 @@ fun HomeScreen(bubble: BubbleToggle, history: DictationHistory, onOpenOffer: () 
             // From Android 13 the system confirms the copy itself.
             if (copyToClipboard(context, it.text)) Toast.makeText(context, R.string.text_copied, Toast.LENGTH_SHORT).show()
         })
+        if (BuildConfig.DEBUG) Trials()
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** Debug builds only: the trial log of the real-phone test (DMC-139), no log reading needed. */
+@Composable
+private fun Trials() {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { TrialLog.load(context) }
+    val trials by TrialLog.trials.collectAsState()
+    Spacer(Modifier.height(28.dp))
+    SectionLabel("Essais : ${trials.count { it.passed }} réussis sur ${trials.size}")
+    trials.forEach {
+        Text(it.label(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
+    }
+    if (trials.isNotEmpty()) {
+        NeonChip(
+            "Effacer les essais",
+            color = Neon.Cyan,
+            height = 48.dp,
+            onClick = { TrialLog.clear(context) },
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
 }
 

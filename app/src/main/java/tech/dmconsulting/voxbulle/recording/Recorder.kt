@@ -10,6 +10,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
 import java.io.File
+import tech.dmconsulting.voxbulle.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -96,8 +97,10 @@ class Recorder(private val context: Context) {
             return RecordingOutcome.Cancelled
         }
         handler.removeCallbacks(tick)
-        val outcome = session?.stop() ?: RecordingOutcome.Cancelled
+        val stopped = session
+        val outcome = stopped?.stop() ?: RecordingOutcome.Cancelled
         session = null
+        if (stopped != null) logTrial(foreground = true, stopped.lastDurationMs, stopped.lastMaxAmplitude)
         finish(outcome)
         return outcome
     }
@@ -131,6 +134,7 @@ class Recorder(private val context: Context) {
         }
         this.service = service
         if (error != null) {
+            logTrial(foreground = false)
             finish(RecordingOutcome.Failure(error))
             return
         }
@@ -139,6 +143,7 @@ class Recorder(private val context: Context) {
         val file = File(context.cacheDir, "$AUDIO_PREFIX${System.currentTimeMillis()}$AUDIO_SUFFIX")
         newSession.start(file)?.let {
             Log.e(TAG, "recording FAILED: $it")
+            logTrial(foreground = true)
             finish(RecordingOutcome.Failure(it))
             return
         }
@@ -159,6 +164,13 @@ class Recorder(private val context: Context) {
         service = null
         _state.value = RecorderState.Idle
         onFinished?.invoke(RecordingOutcome.Failure(RecordingError.StartFailed))
+    }
+
+    /** Debug builds: one line per recording for the real-phone test (DMC-139). */
+    private fun logTrial(foreground: Boolean, durationMs: Long = 0, maxAmplitude: Int = 0) {
+        if (!BuildConfig.DEBUG) return
+        val trial = TrialLog.add(context, foreground, durationMs, maxAmplitude)
+        Log.i(TAG, "trial ${trial.label()}")
     }
 
     private fun finish(outcome: RecordingOutcome?) {

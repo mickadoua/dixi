@@ -75,6 +75,9 @@ class RecordingSessionTest {
         session.tick()
         assertEquals(RecordingOutcome.Failure(RecordingError.NothingHeard), session.stop())
         assertFalse(file().exists())
+        // The trial log still sees what was recorded.
+        assertEquals(4_000, session.lastDurationMs)
+        assertEquals(RecordingLimits.DEFAULT.minAmplitude - 1, session.lastMaxAmplitude)
     }
 
     @Test

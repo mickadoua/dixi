@@ -18,6 +18,12 @@ class RecordingSession(
 
     val isRecording: Boolean get() = file != null
 
+    /** File length and loudest sample of the last [stop], kept even when nothing was heard (trial log). */
+    var lastDurationMs = 0L
+        private set
+    var lastMaxAmplitude = 0
+        private set
+
     /** Returns null when recording, or the error. On error no file is left behind. */
     fun start(file: File): RecordingError? {
         check(!isRecording) { "already recording" }
@@ -61,6 +67,8 @@ class RecordingSession(
         file = null
         // The file can be shorter than the wall clock: the microphone takes time to start.
         val duration = capture.durationMs(recorded).takeIf { it > 0 } ?: elapsed
+        lastDurationMs = duration
+        lastMaxAmplitude = maxAmplitude
         if (limits.isNothingHeard(duration, maxAmplitude)) {
             recorded.delete()
             return RecordingOutcome.Failure(RecordingError.NothingHeard)
