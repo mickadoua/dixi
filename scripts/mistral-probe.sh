@@ -9,18 +9,18 @@ PKG=tech.dmconsulting.voxbulle
 APK=$1; OUT=$2
 mkdir -p "$OUT"
 $ADB install -r -g "$APK" || exit 1
-# Only lines logged after this device time count: an old PASS left in the buffer
-# (logcat -c can fail) must not make this run pass.
-SINCE="$($ADB shell date +%s | tr -d '\r').000"
-case $SINCE in [0-9]*.000) ;; *) echo "no device time: $SINCE"; exit 1 ;; esac
-$ADB logcat -c || echo "logcat -c failed, reading lines since $SINCE only"
-$ADB shell am broadcast -n $PKG/.debug.MistralProbeReceiver
+# The receiver starts each line with this id: an old PASS left in the buffer (logcat -c
+# can fail) cannot make this run pass. Not a time filter: after a snapshot load the
+# emulator clock jumps back for some seconds.
+RUN="run-$(date +%s)-$$"
+$ADB logcat -c || echo "logcat -c failed, reading the lines of $RUN only"
+$ADB shell am broadcast -n $PKG/.debug.MistralProbeReceiver --es run "$RUN"
 for i in $(seq 1 30); do
-  $ADB logcat -d -v epoch -T "$SINCE" -s VoxbulleProbe:* > "$OUT/probe.txt"
-  grep -q "PROBE \(PASS\|FAIL\)" "$OUT/probe.txt" && break
+  $ADB logcat -d -s VoxbulleProbe:* | grep -F "$RUN " > "$OUT/probe.txt"
+  grep -q "$RUN PROBE \(PASS\|FAIL\)" "$OUT/probe.txt" && break
   sleep 1
 done
-$ADB logcat -d -v epoch -T "$SINCE" | grep -E "FATAL|AndroidRuntime" > "$OUT/crash.txt"
+$ADB logcat -d | grep -E "FATAL|AndroidRuntime" > "$OUT/crash.txt"
 $ADB shell dumpsys package $PKG | grep -m1 -o "flags=\[[^]]*\]" > "$OUT/package-flags.txt"
 cat "$OUT/probe.txt"; echo "crash lines: $(wc -l < "$OUT/crash.txt")"; cat "$OUT/package-flags.txt"
-grep -q "PROBE PASS" "$OUT/probe.txt"
+grep -q "$RUN PROBE PASS" "$OUT/probe.txt"
