@@ -476,13 +476,14 @@ golden_check_intact() {
   changed=$(diff <(cat "$GOLDEN/$1/files") <(printf '%s\n' "$now") | sed -n 's/^[<>] \(.*\) [^ ]* [^ ]*$/\1/p' | LC_ALL=C sort -u)
   other=$(grep -v -E '^[^/]+\.avd/snapshots/[^/]+/snapshot\.pb$' <<<"$changed")
   log "fichiers du snapshot modifiés par la session $id : $(paste -sd' ' <<<"$changed")"
-  if [ -z "$other" ]; then
+  # Liste illisible (changed vide alors que files diffère) : invalidé.
+  if [ -n "$changed" ] && [ -z "$other" ]; then
     printf '%s\n' "$now" >"$GOLDEN/$1/files"
     golden_note "$1" ready "$(cat "$GOLDEN/$1/info" 2>/dev/null)
 meta_changed=$(paste -sd' ' <<<"$changed") (session $id, sans effet)"
     return 0
   fi
-  golden_invalidate "$1" "modifié par la session $id : $(paste -sd' ' <<<"$other" | head -c 300) (isolation non garantie)"
+  golden_invalidate "$1" "modifié par la session $id : $(paste -sd' ' <<<"${other:-?}" | head -c 300) (isolation non garantie)"
 }
 
 # Profil dont le snapshot est à (re)construire (dans $gwant), si l'émulateur
