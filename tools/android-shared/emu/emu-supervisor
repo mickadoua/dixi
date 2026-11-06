@@ -362,19 +362,37 @@ make_snap_avd() {
   log "session $id : copies du snapshot prêtes en $((EPOCHSECONDS - t)) s ($(du -smc "$dst/$profile.avd"/*.qcow2 2>/dev/null | tail -n 1 | cut -f1) Mo de .qcow2)"
 }
 
+# Options de démarrage de <profil> (DMC-408) : <profil>.avd/emu-options du
+# volume SDK, écrit par sdk-sync.sh (Sacha seul). Liste blanche : lowram=yes
+# (-lowram) et memory=<Mo> (-memory, de 1024 à 8192) ; le reste est ignoré.
+# Résultat dans popts.
+profile_opts() {
+  local f=$EMU_AVD_DIR/$1.avd/emu-options m
+  popts=()
+  [ "$(emu_kv "$f" lowram)" != yes ] || popts+=(-lowram)
+  m=$(emu_kv "$f" memory)
+  if [[ "$m" =~ ^[0-9]{4}$ ]] && [ "$m" -ge 1024 ] && [ "$m" -le 8192 ]; then
+    popts+=(-memory "$m")
+  elif [ -n "$m" ]; then
+    log "profil $1 : memory=$m ignoré (attendu : 1024 à 8192 Mo)"
+  fi
+}
+
 # Lance le serveur adb et l'émulateur de $profile sur les AVD de <dossier>.
 # <cold> : à froid, données remises à zéro ; <snapshot> : chargement du
 # snapshot propre, en lecture seule (les écritures vont dans des copies
 # temporaires sous $RUN/tmp, supprimées à l'arrêt). <réseau>=0 : serveur adb
 # limité au conteneur (construction du snapshot : aucun agent ne doit s'y connecter).
 launch_emulator() {
-  local avd_home=$1 mode=$2 net=${3:-1} opts listen=(-a)
+  local avd_home=$1 mode=$2 net=${3:-1} opts popts listen=(-a)
   if [ "$mode" = snapshot ]; then
     opts=(-read-only -snapshot "$SNAP_NAME" -force-snapshot-load -no-snapshot-save)
   else
     opts=(-no-snapshot-load -no-snapshot-save -wipe-data)
   fi
   [ "$net" = 1 ] || listen=()
+  profile_opts "$profile"
+  [ "${#popts[@]}" = 0 ] || log "profil $profile : options ${popts[*]}"
   mkdir -p "$RUN/tmp"
   # Serveur adb de la session, joignable par les agents sur le réseau Docker
   # interne (-a). Il vit et meurt avec l'émulateur.
@@ -389,7 +407,7 @@ launch_emulator() {
     timeout -k 10 "$((EMU_MAX_SECONDS + 60))" "$EMU_EMULATOR_DIR/emulator" \
     -avd "$profile" -port "$EMU_CONSOLE_PORT" \
     -no-window -no-audio -no-boot-anim \
-    "${opts[@]}" \
+    "${opts[@]}" "${popts[@]}" \
     -gpu swiftshader_indirect -accel on -no-metrics \
     </dev/null >"$RUN/emulator.log" 2>&1 &
   grp=$!
@@ -469,15 +487,16 @@ snap_mode() {
     *) echo off ;;
   esac
 }
-# Empreinte de ce dont dépend le snapshot : définition de l'AVD, version de
-# l'émulateur et de l'image système, clé adb. Une mise à jour du SDK
-# (sdk-sync) ou de l'AVD le rend donc caduc, et il est reconstruit.
+# Empreinte de ce dont dépend le snapshot : définition de l'AVD et options du
+# profil (s'il en a), version de l'émulateur et de l'image système, clé adb.
+# Une mise à jour du SDK (sdk-sync) ou de l'AVD le rend donc caduc, et il est reconstruit.
 golden_stamp() {
   local sysdir
   sysdir=$(sed -n 's/^image\.sysdir\.1=//p' "$EMU_AVD_DIR/$1.avd/config.ini" 2>/dev/null | head -n 1)
   {
     echo "format=1 snapshot=$SNAP_NAME"
     cat "$EMU_AVD_DIR/$1.avd/config.ini"
+    [ ! -f "$EMU_AVD_DIR/$1.avd/emu-options" ] || cat "$EMU_AVD_DIR/$1.avd/emu-options"
     cat "$EMU_EMULATOR_DIR/source.properties"
     cat "$ANDROID_HOME/${sysdir%/}/source.properties"
     cat "$UHOME/.android/adbkey.pub"

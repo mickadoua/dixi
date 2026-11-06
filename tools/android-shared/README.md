@@ -316,7 +316,10 @@ Profils (`EMU_PROFILES` dans `android-sdk.versions`) :
 | Profil | Image système | Appareil | RAM invitée |
 |---|---|---|---|
 | `phone` | `system-images;android-36;google_apis;x86_64` | `pixel_7` (1080×2400) | 4 Go (minimum imposé par l'émulateur) |
+| `phonelow` (essai DMC-408) | `system-images;android-36;google_apis;x86_64` | `pixel_7` (1080×2400) | 2,5 Go (`-lowram -memory 2560`) |
 | `tv` | `system-images;android-36;google-tv;x86_64` | `tv_1080p` (1920×1080) | 2 Go |
+
+**Options par profil** (DMC-408) : un 4e champ facultatif de `EMU_PROFILES`, séparé par des virgules. Seules `lowram` (`-lowram`) et `memory=<Mo>` (`-memory`, de 1024 à 8192) sont permises ; `sdk-sync.sh` refuse toute autre option. Il les écrit dans `avd/<profil>.avd/emu-options` (`lowram=yes`, `memory=2560`), dans le volume en lecture seule. Le superviseur les relit à chaque démarrage, avec la même liste blanche, et les ajoute à la ligne de commande de l'émulateur (construction du snapshot comprise). Elles entrent dans l'empreinte du snapshot : les changer le rend caduc.
 
 Mesures réelles du 03/11 (N100, KVM, démarrage à froid, `-wipe-data`) :
 

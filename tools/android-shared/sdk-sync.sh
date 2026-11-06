@@ -6,7 +6,8 @@
 # Usage : sdk-sync.sh [--dry-run] <racine-du-volume>
 #   <racine>/jdk  JAVA_HOME (lien vers jdk-<version>)
 #   <racine>/sdk  ANDROID_HOME (doit déjà contenir cmdline-tools/latest)
-#   <racine>/avd  profils de l'émulateur (config.ini), lus par emu-start
+#   <racine>/avd  profils de l'émulateur (config.ini, emu-options), lus par
+#                 emu-start et le superviseur
 #   <racine>/emulator-libs  bibliothèques X11 du qemu headless
 # --dry-run : affiche l'écart avec android-sdk.versions sans toucher aux
 #   paquets ni au JDK (code 3 s'il y a un écart). sdkmanager rafraîchit
@@ -27,9 +28,33 @@ done
 # shellcheck source=android-sdk.versions
 . "$here/android-sdk.versions"
 
+# Profil <nom>:<image>:<appareil>[:<options>] -> name image device options.
+# Options (DMC-408), séparées par des virgules, liste blanche du superviseur :
+# lowram, memory=<Mo> (1024 à 8192). Elles deviennent <nom>.avd/emu-options.
+parse_profile() {
+  local raw extra o list=()
+  IFS=: read -r name image device raw extra <<<"$1"
+  options=''
+  if [ -z "$name" ] || [ -z "$image" ] || [ -z "$device" ] || [ -n "$extra" ]; then
+    echo "EMU_PROFILES : profil mal formé : $1" >&2; exit 2
+  fi
+  [ -z "$raw" ] || IFS=, read -ra list <<<"$raw"
+  for o in "${list[@]}"; do
+    case "$o" in
+      lowram) options+="lowram=yes"$'\n' ;;
+      memory=[1-8][0-9][0-9][0-9])
+        if [ "${o#memory=}" -lt 1024 ] || [ "${o#memory=}" -gt 8192 ]; then
+          echo "EMU_PROFILES : $name : $o hors de 1024 à 8192" >&2; exit 2
+        fi
+        options+="$o"$'\n' ;;
+      *) echo "EMU_PROFILES : $name : option non permise : $o (lowram, memory=<Mo>)" >&2; exit 2 ;;
+    esac
+  done
+}
+
 # Chaque image d'un profil doit être listée, sinon l'étape 4 la retirerait.
 for spec in $EMU_PROFILES; do
-  image=${spec#*:} image=${image%:*}
+  parse_profile "$spec"
   case " $SYSTEM_IMAGES " in
     *" $image "*) ;;
     *) echo "EMU_PROFILES : $image n'est pas dans SYSTEM_IMAGES" >&2; exit 2 ;;
@@ -175,25 +200,40 @@ done
 avd=$root/avd
 declare -A profile_names=()
 for spec in $EMU_PROFILES; do
-  name=${spec%%:*} rest=${spec#*:}
-  image=${rest%:*} device=${rest##*:}
+  parse_profile "$spec"
   profile_names[$name]=1
   sysdir="image.sysdir.1=${image//;//}/"
   if grep -qxF "$sysdir" "$avd/$name.avd/config.ini" 2>/dev/null &&
     grep -qxF "hw.device.name=$device" "$avd/$name.avd/config.ini"; then
     say "Profil $name déjà en place ($image, $device)"
-    continue
+  else
+    drift=1
+    say "Profil $name : $image, $device"
+    if [ "$dry" = 0 ]; then
+      [ -n "$tmp" ] || tmp=$(mktemp -d "$root/.sync.XXXXXX")
+      echo no | ANDROID_AVD_HOME="$tmp/avd" ANDROID_USER_HOME="$tmp/user" ANDROID_HOME="$sdk" \
+        "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -f -n "$name" -k "$image" -d "$device" \
+        -p "$tmp/avd/$name.avd" >/dev/null
+      mkdir -p "$avd/$name.avd"
+      cp "$tmp/avd/$name.avd/config.ini" "$avd/$name.avd/.config.ini.new"
+      mv -f "$avd/$name.avd/.config.ini.new" "$avd/$name.avd/config.ini"
+    fi
   fi
-  drift=1
-  say "Profil $name : $image, $device"
-  [ "$dry" = 1 ] && continue
-  [ -n "$tmp" ] || tmp=$(mktemp -d "$root/.sync.XXXXXX")
-  echo no | ANDROID_AVD_HOME="$tmp/avd" ANDROID_USER_HOME="$tmp/user" ANDROID_HOME="$sdk" \
-    "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -f -n "$name" -k "$image" -d "$device" \
-    -p "$tmp/avd/$name.avd" >/dev/null
-  mkdir -p "$avd/$name.avd"
-  cp "$tmp/avd/$name.avd/config.ini" "$avd/$name.avd/.config.ini.new"
-  mv -f "$avd/$name.avd/.config.ini.new" "$avd/$name.avd/config.ini"
+  # Options de démarrage lues par le superviseur (absentes : aucune).
+  opt_file=$avd/$name.avd/emu-options
+  if [ -z "$options" ]; then
+    [ -e "$opt_file" ] || continue
+    drift=1
+    say "Profil $name : options retirées"
+    run rm -f "$opt_file"
+  elif [ "$(cat "$opt_file" 2>/dev/null)" != "${options%$'\n'}" ]; then
+    drift=1
+    say "Profil $name : options $(printf '%s' "$options" | paste -sd' ')"
+    [ "$dry" = 1 ] && continue
+    mkdir -p "$avd/$name.avd"
+    printf '%s' "$options" >"$opt_file.new"
+    mv -f "$opt_file.new" "$opt_file"
+  fi
 done
 for d in "$avd"/*.avd; do
   [ -d "$d" ] || continue

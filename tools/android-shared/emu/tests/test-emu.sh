@@ -860,6 +860,37 @@ check "ce_available : snapshot démarré en ≥ 5 s avant la prise" '[ "$(sed -n
 rm -f "$W/snap.conf"
 reset
 
+# 35. Options par profil (DMC-408) : liste blanche lowram / memory, lue dans
+# <profil>.avd/emu-options ; le reste n'arrive jamais à l'émulateur.
+printf 'lowram=yes\nmemory=2560\n' >"$W/avd/phone.avd/emu-options"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "options : -lowram -memory 2560 passés à l'émulateur" '[ $rc = 0 ] && grep -q -- "-lowram -memory 2560 -gpu" "$W/emulator.args" && wait_clean'
+check "options : tv sans options" '"$here/emu-run" tv -- true 2>/dev/null && ! grep -q -- "-lowram\|-memory" "$W/emulator.args" && wait_clean'
+reset
+printf 'lowram=no\nmemory=512\ngpu=host\n-gpu host\n' >"$W/avd/phone.avd/emu-options"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "options : hors liste blanche ignorées, memory hors bornes noté" '[ $rc = 0 ] && ! grep -q -- "-lowram\|-memory\|host" "$W/emulator.args" && grep -q "memory=512 ignoré" "$W/supervisor.log" && wait_clean'
+reset
+printf 'memory=4096x\n' >"$W/avd/phone.avd/emu-options"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "options : memory non numérique ignoré" '[ $rc = 0 ] && ! grep -q -- "-memory" "$W/emulator.args" && wait_clean'
+reset
+# Le snapshot dépend des options : les changer le rend caduc, et la
+# construction comme la session les reçoivent.
+rm -f "$W/avd/phone.avd/emu-options"
+echo "phone=on" >"$W/snap.conf"
+check "options : snapshot construit sans options" wait_golden
+st0=$(cat "$G/stamp")
+printf 'lowram=yes\nmemory=2560\n' >"$W/avd/phone.avd/emu-options"
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "options : options changées : snapshot caduc, à froid avec les options" '[ $rc = 0 ] && grep -q -- "-wipe-data -lowram -memory 2560" "$W/emulator.args" && grep -q "snapshot pas encore prêt" "$W/supervisor.log"'
+check "options : snapshot reconstruit avec les options" 'wait_golden && [ "$(cat "$G/stamp")" != "$st0" ] && grep -q -- "-wipe-data -lowram -memory 2560" "$W/emulator.args"'
+reset
+"$here/emu-run" phone -- true 2>/dev/null; rc=$?
+check "options : session chargée depuis le snapshot avec les mêmes options" '[ $rc = 0 ] && grep -q -- "-read-only .* -lowram -memory 2560" "$W/emulator.args" && wait_clean'
+rm -f "$W/avd/phone.avd/emu-options" "$W/snap.conf"
+reset
+
 stop_sup
 echo "---"
 echo "$pass ok, $failn en échec"
