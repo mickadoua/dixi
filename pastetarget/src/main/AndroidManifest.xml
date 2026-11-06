@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:label="Dixi paste target"
+        android:theme="@android:style/Theme.Material.Light.DarkActionBar">
+
+        <!-- adb shell am start -n tech.dmconsulting.dixi.pastetarget/.PasteTargetActivity, extra focus=password: see the class. -->
+        <activity
+            android:name=".PasteTargetActivity"
+            android:exported="true"
+            android:windowSoftInputMode="stateVisible|adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
