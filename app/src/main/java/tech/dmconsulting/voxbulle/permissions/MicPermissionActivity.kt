@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +32,7 @@ import tech.dmconsulting.voxbulle.ui.theme.VoxbulleTheme
  * the user dictates (DMC-338). Opened by the bubble, over the app in use: an
  * explanation, then Android's requests. Allowed: the dictation starts. Refused a
  * second time (Android will not ask again): a way to the app's settings.
+ * Microphone already allowed: only the notification request, then the dictation (DMC-372).
  */
 class MicPermissionActivity : ComponentActivity() {
 
@@ -39,7 +41,9 @@ class MicPermissionActivity : ComponentActivity() {
         setContent {
             VoxbulleTheme {
                 MicPermissionFlow(
+                    notificationsOnly = intent.getBooleanExtra(EXTRA_NOTIFICATIONS_ONLY, false),
                     askNotifications = { needsNotificationPermission() },
+                    onAskNotifications = { NotificationAskStore(this).asked = true },
                     canAskMicAgain = { shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) },
                     openSettings = { startActivity(appSettingsIntent()) },
                     onDone = ::done,
@@ -54,32 +58,52 @@ class MicPermissionActivity : ComponentActivity() {
         finish()
     }
 
-    private fun needsNotificationPermission() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-        PackageManager.PERMISSION_GRANTED
+    private fun needsNotificationPermission() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !granted(Manifest.permission.POST_NOTIFICATIONS)
 
     private fun appSettingsIntent() = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     companion object {
-        fun start(context: Context) {
+        private const val EXTRA_NOTIFICATIONS_ONLY = "notifications_only"
+
+        fun start(context: Context, notificationsOnly: Boolean = false) {
             context.startActivity(
-                Intent(context, MicPermissionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent(context, MicPermissionActivity::class.java)
+                    .putExtra(EXTRA_NOTIFICATIONS_ONLY, notificationsOnly)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
+        }
+
+        /** The first dictation with the microphone already allowed asks the notifications once. */
+        fun askNotificationsIfNeeded(context: Context): Boolean {
+            val store = NotificationAskStore(context)
+            val ask = shouldAskNotifications(
+                sdk = Build.VERSION.SDK_INT,
+                micGranted = context.granted(Manifest.permission.RECORD_AUDIO),
+                notificationsGranted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    context.granted(Manifest.permission.POST_NOTIFICATIONS),
+                askedBefore = store.asked,
+            )
+            if (ask) start(context, notificationsOnly = true)
+            return ask
         }
     }
 }
+
+private fun Context.granted(permission: String) = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
 private enum class Step { Explain, Asking, Settings }
 
 @Composable
 private fun MicPermissionFlow(
+    notificationsOnly: Boolean,
     askNotifications: () -> Boolean,
+    onAskNotifications: () -> Unit,
     canAskMicAgain: () -> Boolean,
     openSettings: () -> Unit,
     onDone: (micGranted: Boolean) -> Unit,
 ) {
-    var step by rememberSaveable { mutableStateOf(Step.Explain) }
+    var step by rememberSaveable { mutableStateOf(if (notificationsOnly) Step.Asking else Step.Explain) }
     var micGranted by rememberSaveable { mutableStateOf(false) }
 
     fun afterMic() {
@@ -95,12 +119,26 @@ private fun MicPermissionFlow(
 
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         // Refused notifications do not stop the dictation: only « Texte copié » is lost.
-        afterMic()
+        if (notificationsOnly) onDone(true) else afterMic()
+    }
+    fun launchNotifications() {
+        onAskNotifications()
+        notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    if (notificationsOnly) {
+        // Once, not again after a rotation: the request is already on screen.
+        var launched by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            if (!launched) {
+                launched = true
+                launchNotifications()
+            }
+        }
     }
     val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         micGranted = granted
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && askNotifications()) {
-            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            launchNotifications()
         } else {
             afterMic()
         }

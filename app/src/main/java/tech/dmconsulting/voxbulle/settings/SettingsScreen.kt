@@ -180,7 +180,7 @@ fun SettingsScreen(
     }
 }
 
-/** « Ton offre »: the free offer for now, and the way to the offer screen (slots only). */
+/** « Votre offre »: the free offer for now, and the way to the offer screen (slots only). */
 @Composable
 private fun OfferCard(onOpenOffer: () -> Unit, modifier: Modifier = Modifier) {
     NeonCard(modifier.fillMaxWidth(), important = true) {

@@ -93,6 +93,14 @@ class DictationControllerTest {
         override fun askMicrophone() {
             micAsks++
         }
+
+        var notificationAsk = false
+        var notificationAsks = 0
+
+        override fun askNotifications(): Boolean {
+            if (notificationAsk) notificationAsks++
+            return notificationAsk
+        }
     }
 
     private val scope = TestScope()
@@ -238,6 +246,28 @@ class DictationControllerTest {
         assertEquals(1, output.micAsks)
         assertEquals(emptyList<BubbleState>(), states)
         assertEquals(emptyList<Int>(), output.errors)
+    }
+
+    @Test
+    fun notificationsToAskWaitWithoutListening() {
+        output.notificationAsk = true
+        controller.onTap()
+
+        assertEquals(1, output.notificationAsks)
+        assertEquals(0, recorder.starts)
+        assertEquals(emptyList<BubbleState>(), states)
+        assertEquals(emptyList<Int>(), output.errors)
+    }
+
+    @Test
+    fun theTapAfterTheNotificationRequestStartsTheDictation() {
+        output.notificationAsk = true
+        controller.onTap()
+        output.notificationAsk = false
+        controller.onTap()
+
+        assertEquals(BubbleState.Listening, bubble.state)
+        assertEquals(1, recorder.starts)
     }
 
     @Test

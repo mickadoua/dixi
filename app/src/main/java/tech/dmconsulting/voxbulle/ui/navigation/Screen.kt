@@ -45,7 +45,7 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
         val tabs = listOf(Home, History, Settings)
 
         /**
-         * The offer screen and its ways in (main screen chip, « Ton offre » card) stay
+         * The offer screen and its ways in (main screen chip, « Votre offre » card) stay
          * hidden until the founder sets the offers: no placeholder text in the store build (DMC-338).
          */
         val offerShown = false

@@ -82,8 +82,10 @@
     <string name="welcome_start">Commencer</string>
     <string name="welcome_step">Étape %1$d sur %2$d</string>
 
-    <!-- Offers, neon mockups 06 and 07: slots only, no price before the founder decides. -->
-    <string name="offer_your_offer">Ton offre</string>
+    <!-- Offers, neon mockups 06 and 07: slots only, no price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372). -->
+    <string name="offer_your_offer">Votre offre</string>
     <string name="offer_free">Gratuite</string>
     <string name="offer_current">Offre actuelle</string>
     <string name="offer_upgrade">Passer à l\'offre payante</string>
@@ -128,11 +130,11 @@
     <string name="error_mic_denied">Voxbulle a besoin du micro. Autorisez-le dans les réglages.</string>
     <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
     <string name="mic_ask_title">Autoriser le micro</string>
-    <string name="mic_ask_body">Voxbulle écoute seulement quand vous touchez la bulle, pour écrire ce que vous dites. Les notifications montrent l\'enregistrement en cours et « Texte copié ».</string>
+    <string name="mic_ask_body">Voxbulle écoute seulement quand vous touchez la bulle, pour écrire ce que vous dictez. Les notifications montrent l\'enregistrement en cours et « Texte copié ».</string>
     <string name="mic_ask_continue">Continuer</string>
     <string name="action_later">Plus tard</string>
     <string name="mic_settings_title">Micro refusé</string>
-    <string name="mic_settings_body">Pour dicter, ouvrez les réglages de Voxbulle, puis Autorisations, Micro, Autoriser.</string>
+    <string name="mic_settings_body">Pour dicter, ouvrez les réglages de Voxbulle, puis Autorisations › Micro › Autoriser.</string>
     <string name="mic_settings_open">Ouvrir les réglages</string>
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>

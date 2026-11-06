@@ -64,6 +64,12 @@ interface DictationOutput {
 
     /** No microphone permission yet: explain, then ask Android (DMC-338). */
     fun askMicrophone()
+
+    /**
+     * Microphone allowed but notifications never asked (Android 13+): asks once (DMC-372).
+     * True when the request opened: it starts the dictation itself once answered.
+     */
+    fun askNotifications(): Boolean
 }
 
 /**
@@ -98,6 +104,7 @@ class DictationController(
     }
 
     private fun start() {
+        if (output.askNotifications()) return
         val error = recorder.start()
         if (error == RecordingError.MicrophoneDenied) {
             // Not an error yet: the user was never asked, or can still say yes.
