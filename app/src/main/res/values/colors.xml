@@ -1,5 +1,6 @@
 <resources>
     <color name="surface">#050507</color>
+    <color name="ic_launcher_background">#050507</color>
 
     <!-- Bubble, neon charter § Bulle (DMC-213). Dark only. -->
     <color name="bubble_disc">#0A0A0E</color>
