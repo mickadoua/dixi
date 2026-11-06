@@ -145,6 +145,7 @@ class BubbleService :
         } else {
             try {
                 overlay.show()
+                BubbleVisibility.set(true)
                 if (intent?.action == ACTION_DICTATE) onBubbleTap()
             } catch (e: RuntimeException) {
                 Log.e(TAG, "bubble show FAILED", e)
@@ -166,12 +167,14 @@ class BubbleService :
         recorder.onFinished = null
         recorder.cancel()
         overlay.remove()
+        BubbleVisibility.set(false)
         super.onDestroy()
     }
 
     private fun hide() {
         Log.i(TAG, "bubble hidden")
         overlay.remove()
+        BubbleVisibility.set(false)
         store.hidden = true
         if (store.hideToEdge) {
             showEdge()
@@ -198,6 +201,7 @@ class BubbleService :
         overlay.removeEdge()
         try {
             overlay.show()
+            BubbleVisibility.set(true)
         } catch (e: RuntimeException) {
             Log.e(TAG, "bubble show FAILED", e)
             stopSelf()
