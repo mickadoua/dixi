@@ -11,7 +11,7 @@ import tech.dmconsulting.voxbulle.bubble.BubbleService
  * and can keep the « Texte copié » notification longer (copied_timeout_ms).
  * Kept in memory until the process ends. No extra resets to the defaults.
  *
- *   adb shell am broadcast -n tech.dmconsulting.voxbulle/.recording.DebugRecordingReceiver \
+ *   adb shell am broadcast -n tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.recording.DebugRecordingReceiver \
  *       --el max_ms 10000 --el warn_ms 7000 --ei min_amplitude 0 --el copied_timeout_ms 60000
  */
 class DebugRecordingReceiver : BroadcastReceiver() {

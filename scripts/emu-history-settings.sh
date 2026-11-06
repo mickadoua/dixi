@@ -8,13 +8,14 @@
 set -u
 PART=${1:-history}; shift
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-proof-history}
 APK=app/build/outputs/apk/debug/app-debug.apk
 HISTORY_FILE=files/datastore/dictation_history.json
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
-open() { $ADB shell am start -S -W -n $PKG/.MainActivity "$@" >/dev/null; sleep 2; }
+open() { $ADB shell am start -S -W -n $PKG/$NS.MainActivity "$@" >/dev/null; sleep 2; }
 night() { $ADB shell cmd uimode night "$1" >/dev/null; sleep 2; }
 entries() { $ADB shell run-as $PKG cat $HISTORY_FILE 2>/dev/null | python3 -c 'import json,sys
 d=sys.stdin.read().strip(); print(len(json.loads(d)) if d else 0)'; }

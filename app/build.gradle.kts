@@ -44,11 +44,14 @@ if (uploadKeyMissing.isNotEmpty() && uploadKeyMissing.size < uploadKeyEnv.size) 
 val playCredentials = providers.environmentVariable("PLAY_SERVICE_ACCOUNT_FILE").orNull?.ifEmpty { null }
 
 android {
+    // The app is Dixi since 06/11/2026 (DMC-383): only applicationId changed. The namespace (R,
+    // BuildConfig, Kotlin packages) keeps the old name, which users never see; moving every
+    // package would only add risk. Component names are tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.X.
     namespace = "tech.dmconsulting.voxbulle"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "tech.dmconsulting.voxbulle"
+        applicationId = "tech.dmconsulting.dixi"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode

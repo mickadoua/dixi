@@ -8,13 +8,14 @@
 # Never use a real key here: FAKE_KEY below is not one.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-proof-mistral-key}
 APK=${2:-app/build/outputs/apk/debug/app-debug.apk}
 FAKE_KEY=fausse-cle-de-preuve-0000000000
 mkdir -p "$OUT"
 shot() { dump; $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(stat -c %s "$OUT/$1.png") bytes)"; }
-open() { $ADB shell am start -S -W -n $PKG/.MainActivity "$@" >/dev/null; waitfor; }
+open() { $ADB shell am start -S -W -n $PKG/$NS.MainActivity "$@" >/dev/null; waitfor; }
 # Screen 10 scrolls: swipe up until the key section's « Tester la clé » button is on screen.
 to_key() {
     for i in 1 2 3 4 5; do
