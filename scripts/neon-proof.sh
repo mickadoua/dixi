@@ -6,14 +6,15 @@
 # Parts can run one by one in a session kept by emu-renew (each under 10 min).
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-neon-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { dismiss_anr; $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
 log() { $ADB logcat -d -s VoxbulleProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
-state() { $ADB shell am broadcast -p $PKG -a $PKG.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs 60000 >/dev/null; }
+state() { $ADB shell am broadcast -p $PKG -a $NS.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs 60000 >/dev/null; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 focused() { $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG"; }
 # A loaded emulator often shows « System UI isn't responding »: tap « Wait ».
@@ -29,7 +30,7 @@ dismiss_anr() {
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 screen() {
   $ADB shell am force-stop $PKG; sleep 1
-  $ADB shell am start -W -n $PKG/.MainActivity --es screen "$1" ${2:-} >/dev/null
+  $ADB shell am start -W -n $PKG/$NS.MainActivity --es screen "$1" ${2:-} >/dev/null
   for _ in 1 2 3 4 5 6; do focused && break; sleep 1; done
   sleep 3
 }
