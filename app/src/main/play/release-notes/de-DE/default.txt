@@ -1,4 +1,4 @@
-Erste Version von Voxbulle.
+Erste Version von Dixi.
 • Schwebende Blase zum Diktieren in all Ihren Apps.
 • Transkription durch Mistral mit Ihrem eigenen API-Schlüssel.
 • Wort antippen und korrigieren, dann bestätigen.

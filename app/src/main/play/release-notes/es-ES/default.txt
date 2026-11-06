@@ -1,4 +1,4 @@
-Primera versión de Voxbulle.
+Primera versión de Dixi.
 • Burbuja flotante para dictar en todas tus apps.
 • Transcripción de Mistral con tu propia clave API.
 • Toca una palabra para corregirla antes de confirmar.
