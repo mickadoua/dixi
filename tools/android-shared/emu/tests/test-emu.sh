@@ -884,7 +884,9 @@ st0=$(cat "$G/stamp")
 printf 'lowram=yes\nmemory=2560\n' >"$W/avd/phone.avd/emu-options"
 "$here/emu-run" phone -- true 2>/dev/null; rc=$?
 check "options : options changées : snapshot caduc, à froid avec les options" '[ $rc = 0 ] && grep -q -- "-wipe-data -lowram -memory 2560" "$W/emulator.args" && grep -q "snapshot pas encore prêt" "$W/supervisor.log"'
-check "options : snapshot reconstruit avec les options" 'wait_golden && [ "$(cat "$G/stamp")" != "$st0" ] && grep -q -- "-wipe-data -lowram -memory 2560" "$W/emulator.args"'
+# L'ancien stamp reste en place jusqu'à la reconstruction (après EMU_GOLDEN_IDLE_S).
+wait_new_golden() { local _; for _ in $(seq 150); do [ -f "$G/stamp" ] && [ "$(cat "$G/stamp")" != "$1" ] && clean && return 0; sleep 0.2; done; return 1; }
+check "options : snapshot reconstruit avec les options" 'wait_new_golden "$st0" && grep -q -- "-wipe-data -lowram -memory 2560" "$W/emulator.args"'
 reset
 "$here/emu-run" phone -- true 2>/dev/null; rc=$?
 check "options : session chargée depuis le snapshot avec les mêmes options" '[ $rc = 0 ] && grep -q -- "-read-only .* -lowram -memory 2560" "$W/emulator.args" && wait_clean'
