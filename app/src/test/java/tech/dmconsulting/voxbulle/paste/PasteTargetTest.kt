@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PasteTargetTest {
-    private val own = "tech.dmconsulting.voxbulle"
+    private val own = "tech.dmconsulting.dixi"
     private val other = "com.android.contacts"
 
     private fun target(

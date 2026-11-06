@@ -11,7 +11,8 @@
 #
 # Secrets come from the environment (Paperclip secrets) and are never printed:
 #   <PREFIX>_UPLOAD_KEYSTORE_B64, <PREFIX>_UPLOAD_KEYSTORE_PASSWORD, <PREFIX>_UPLOAD_KEY_ALIAS,
-#   <PREFIX>_UPLOAD_KEY_PASSWORD (PREFIX = $PLAY_SECRET_PREFIX, default VOXBULLE), and
+#   <PREFIX>_UPLOAD_KEY_PASSWORD (PREFIX = $PLAY_SECRET_PREFIX, default VOXBULLE, kept after the
+#   rename to Dixi: the upload key does not depend on the name, DMC-383), and
 #   PLAY_SERVICE_ACCOUNT_JSON (content of the service account key). The keystore and the key are
 #   written to a private temp dir, deleted on exit.
 set -euo pipefail

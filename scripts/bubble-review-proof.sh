@@ -5,7 +5,8 @@
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-review-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-bubble-review-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -17,7 +18,7 @@ wake() {
   $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard; sleep 1
   $ADB shell dumpsys power | grep -o 'mWakefulness=[A-Za-z]*' | head -1
 }
-show_bubble() { wake; $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; wait_log "bubble shown" 15; sleep 2; }
+show_bubble() { wake; $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; wait_log "bubble shown" 15; sleep 2; }
 wait_log() { for _ in $(seq 1 "${2:-10}"); do log | grep -q "$1" && return 0; sleep 1; done; return 1; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 screen_size() { read -r W H <<< "$($ADB shell wm size | sed -n 's/.*: \([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)"; }
