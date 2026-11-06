@@ -1,6 +1,5 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -10,6 +9,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
 import tech.dmconsulting.voxbulle.transcription.MistralHttp.auth
+import java.io.File
 
 /**
  * Mistral Voxtral speech-to-text: `POST /v1/audio/transcriptions`, multipart form

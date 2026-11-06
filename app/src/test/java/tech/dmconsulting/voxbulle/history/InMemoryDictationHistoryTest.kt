@@ -1,10 +1,10 @@
 package tech.dmconsulting.voxbulle.history
 
-import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 
 class InMemoryDictationHistoryTest {
     private fun dictation(i: Int) = Dictation("texte $i", Instant.ofEpochSecond(i.toLong()))

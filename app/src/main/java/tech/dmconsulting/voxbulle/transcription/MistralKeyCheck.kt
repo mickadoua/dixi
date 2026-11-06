@@ -28,6 +28,7 @@ class MistralKeyCheck(
         val result = MistralHttp.execute(client.newCall(request)) { VoxtralResult.Success(Unit) }
         return when (result) {
             is VoxtralResult.Success -> KeyCheck.Valid
+
             is VoxtralResult.Failure -> when (result.error) {
                 VoxtralError.InvalidKey -> KeyCheck.Rejected
                 VoxtralError.NoConnection, VoxtralError.Timeout -> KeyCheck.NoConnection

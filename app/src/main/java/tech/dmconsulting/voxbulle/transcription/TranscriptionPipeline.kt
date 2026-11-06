@@ -1,8 +1,8 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
 import kotlinx.coroutines.flow.first
 import tech.dmconsulting.voxbulle.settings.SettingsStore
+import java.io.File
 
 /**
  * A dictation's two texts: [raw] from Voxtral (screen 3, « brut » card) and
@@ -35,9 +35,11 @@ class TranscriptionPipeline(
         }
         return when (val result = cleaner.clean(raw, language)) {
             is VoxtralResult.Success -> VoxtralResult.Success(Transcript(raw, result.value))
+
             // Nothing worth copying. FakeTextCleaner says so for a dictation of only « euh »;
             // VoxtralTextCleaner only for a blank text, which VoxtralTranscriber never returns.
             is VoxtralResult.Failure if result.error == VoxtralError.NothingHeard -> result
+
             is VoxtralResult.Failure -> VoxtralResult.Success(Transcript(raw, cleaned = null, cleanupError = result.error))
         }
     }

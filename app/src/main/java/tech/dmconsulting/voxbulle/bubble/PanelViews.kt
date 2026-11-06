@@ -91,6 +91,7 @@ class PanelView(
         style = Paint.Style.STROKE
         maskFilter = BlurMaskFilter(blur(14f), BlurMaskFilter.Blur.NORMAL)
     }
+
     @ColorInt private var accent = ContextCompat.getColor(context, R.color.bubble_orange)
 
     private val label = TextView(context).apply {
@@ -175,7 +176,13 @@ class PanelView(
         )
         val listening = newPanel is DictationPanel.Listening
         listOf(wave, live).forEach { it.visibility = if (isSuggestion) GONE else VISIBLE }
-        elapsed.visibility = if (listening) VISIBLE else if (isSuggestion) GONE else INVISIBLE
+        elapsed.visibility = if (listening) {
+            VISIBLE
+        } else if (isSuggestion) {
+            GONE
+        } else {
+            INVISIBLE
+        }
         wave.spinning = newPanel == DictationPanel.Processing
         if (listening && previous !is DictationPanel.Listening) {
             wave.reset()
@@ -229,8 +236,13 @@ class PanelView(
         }
         border.color = accent
         canvas.drawRoundRect(
-            card.left + dp(0.75f), card.top + dp(0.75f), card.right - dp(0.75f), card.bottom - dp(0.75f),
-            r, r, border,
+            card.left + dp(0.75f),
+            card.top + dp(0.75f),
+            card.right - dp(0.75f),
+            card.bottom - dp(0.75f),
+            r,
+            r,
+            border,
         )
     }
 }

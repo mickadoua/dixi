@@ -13,8 +13,7 @@ data class RecordingLimits(
     val minDurationMs: Long = 500,
     val minAmplitude: Int = 250,
 ) {
-    fun isNothingHeard(durationMs: Long, maxAmplitude: Int): Boolean =
-        durationMs < minDurationMs || maxAmplitude < minAmplitude
+    fun isNothingHeard(durationMs: Long, maxAmplitude: Int): Boolean = durationMs < minDurationMs || maxAmplitude < minAmplitude
 
     companion object {
         val DEFAULT = RecordingLimits()

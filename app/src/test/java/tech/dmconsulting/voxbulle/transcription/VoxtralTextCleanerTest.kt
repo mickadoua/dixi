@@ -1,7 +1,5 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -20,6 +18,8 @@ import org.junit.Before
 import org.junit.Test
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
 import tech.dmconsulting.voxbulle.settings.InMemorySettingsStore
+import java.io.File
+import java.util.concurrent.TimeUnit
 
 class VoxtralTextCleanerTest {
     private val server = MockWebServer()
@@ -163,13 +163,11 @@ class VoxtralTextCleanerTest {
         assertFalse(cleaner.toString().contains(TEST_KEY))
     }
 
-    private fun systemPromptSent(): String =
-        sentJson(server.takeRequest().body!!.utf8())["messages"]!!.jsonArray[0].jsonObject["content"]!!.jsonPrimitive.content
+    private fun systemPromptSent(): String = sentJson(server.takeRequest().body!!.utf8())["messages"]!!.jsonArray[0].jsonObject["content"]!!.jsonPrimitive.content
 
     private fun sentJson(body: String): JsonObject = Json.parseToJsonElement(body).jsonObject
 
-    private fun chatAnswer(content: String, finishReason: String = "stop") =
-        """{"id":"c1","model":"mistral-small-2603","choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"$finishReason"}]}"""
+    private fun chatAnswer(content: String, finishReason: String = "stop") = """{"id":"c1","model":"mistral-small-2603","choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"$finishReason"}]}"""
 
     private companion object {
         /** Fictitious dictation, like the mockups' sample. */

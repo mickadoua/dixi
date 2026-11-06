@@ -22,13 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import java.io.File
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.transcription.Transcript
 import tech.dmconsulting.voxbulle.transcription.TranscriptionPipeline
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
+import java.io.File
 
 /**
  * Demo-mode run of the transcription on screen 3: no microphone, the fake
@@ -60,11 +60,13 @@ fun TrialPreview(pipeline: TranscriptionPipeline) {
         if (running) CircularProgressIndicator()
         when (val current = result) {
             null -> Unit
+
             is VoxtralResult.Failure -> Text(
                 stringResource(current.error.message),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyLarge,
             )
+
             is VoxtralResult.Success -> {
                 TextCard(
                     label = stringResource(R.string.trial_raw),

@@ -10,8 +10,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.bubble.BubbleService
@@ -21,6 +19,8 @@ import tech.dmconsulting.voxbulle.settings.KeyStatus
 import tech.dmconsulting.voxbulle.ui.navigation.Screen
 import tech.dmconsulting.voxbulle.ui.navigation.VoxbulleNavHost
 import tech.dmconsulting.voxbulle.ui.theme.VoxbulleTheme
+import java.time.Duration
+import java.time.Instant
 
 class MainActivity : ComponentActivity() {
 

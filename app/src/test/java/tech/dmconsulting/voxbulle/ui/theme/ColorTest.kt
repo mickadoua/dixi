@@ -38,8 +38,12 @@ class ColorTest {
             .let { (r, g, b) -> 0.2126 * r + 0.7152 * g + 0.0722 * b }
         fun ratio(a: Color, b: Color) = (maxOf(lum(a), lum(b)) + 0.05) / (minOf(lum(a), lum(b)) + 0.05)
         val text = listOf(
-            Neon.Text to Neon.Bg, Neon.TextMuted to Neon.Surface, Neon.OrangeText to Neon.Bg,
-            Neon.OrangeText to Neon.Surface, Neon.OnOrange to Neon.Orange, Neon.Cyan to Neon.Bg,
+            Neon.Text to Neon.Bg,
+            Neon.TextMuted to Neon.Surface,
+            Neon.OrangeText to Neon.Bg,
+            Neon.OrangeText to Neon.Surface,
+            Neon.OnOrange to Neon.Orange,
+            Neon.Cyan to Neon.Bg,
             Neon.Magenta to Neon.Surface,
         )
         text.forEach { (fg, bg) -> assert(ratio(fg, bg) >= 4.5) { "$fg on $bg: ${ratio(fg, bg)}" } }

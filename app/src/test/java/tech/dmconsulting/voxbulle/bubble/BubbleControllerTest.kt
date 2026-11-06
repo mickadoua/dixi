@@ -20,7 +20,10 @@ class BubbleControllerTest {
 
         fun advance(ms: Long) {
             now += ms
-            tasks.filter { it.first <= now }.forEach { tasks.remove(it); it.second() }
+            tasks.filter { it.first <= now }.forEach {
+                tasks.remove(it)
+                it.second()
+            }
         }
 
         val pending get() = tasks.size

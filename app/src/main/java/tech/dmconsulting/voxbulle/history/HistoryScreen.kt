@@ -38,12 +38,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import java.time.Instant
-import java.time.ZoneId
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.ui.components.VoxbulleTopBar
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
+import java.time.Instant
+import java.time.ZoneId
 
 /** Screen 9: the last dictations, newest first. Tapping a line or its icon copies the text. */
 @Composable
@@ -91,11 +91,13 @@ fun HistoryScreen(history: DictationHistory, onBack: () -> Unit, onOpenSettings:
                 when {
                     // Still reading the file: show nothing rather than a false "empty".
                     list == null -> Unit
+
                     list.isEmpty() -> item {
                         Box(Modifier.fillMaxWidth().padding(vertical = Dimens.ScreenMargin), Alignment.Center) {
                             Text(stringResource(R.string.history_empty), style = MaterialTheme.typography.bodyLarge)
                         }
                     }
+
                     else -> items(list) { dictation ->
                         HistoryItem(dictation, onCopy = { copy(dictation) })
                     }

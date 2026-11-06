@@ -1,12 +1,12 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import java.io.File
 
 class FakesTest {
     @Test

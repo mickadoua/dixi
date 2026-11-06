@@ -52,8 +52,10 @@ class VoxtralTextCleaner(
             when {
                 // The raw text was not blank: an empty answer is the service's fault.
                 text.isEmpty() -> VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
+
                 // Cut by max_tokens or another stop: words would be lost, the pipeline keeps the raw text.
                 choice?.isComplete != true -> VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
+
                 else -> VoxtralResult.Success(text)
             }
         }
@@ -62,9 +64,11 @@ class VoxtralTextCleaner(
     /** `content` is a string, or a list of chunks for some models: keep the text chunks. */
     private fun contentText(content: JsonElement): String = when (content) {
         is JsonPrimitive -> content.contentOrNull.orEmpty()
+
         is JsonArray -> content.joinToString("") { chunk ->
             chunk.jsonObject["text"]?.jsonPrimitive?.contentOrNull.orEmpty()
         }
+
         else -> ""
     }
 

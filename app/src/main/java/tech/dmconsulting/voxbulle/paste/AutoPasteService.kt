@@ -96,7 +96,6 @@ class AutoPasteService : AccessibilityService() {
         }
 
         /** Android's accessibility settings, where the user turns the service on. */
-        fun settingsIntent(): Intent =
-            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        fun settingsIntent(): Intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }
