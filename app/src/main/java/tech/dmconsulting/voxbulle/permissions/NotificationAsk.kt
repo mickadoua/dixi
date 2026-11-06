@@ -11,6 +11,12 @@ import androidx.core.content.edit
  */
 fun shouldAskNotifications(sdk: Int, micGranted: Boolean, notificationsGranted: Boolean, askedBefore: Boolean) = sdk >= Build.VERSION_CODES.TIRAMISU && micGranted && !notificationsGranted && !askedBefore
 
+/**
+ * In the microphone flow, after the microphone request, allowed or refused (DMC-378).
+ * Asked before, on an earlier flow: not shown a second time.
+ */
+fun shouldAskNotificationsAfterMic(sdk: Int, notificationsGranted: Boolean, askedBefore: Boolean) = sdk >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted && !askedBefore
+
 /** Whether Android's notification request was already shown, kept across updates. */
 class NotificationAskStore(context: Context) {
 

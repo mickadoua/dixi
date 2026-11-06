@@ -32,4 +32,24 @@ class NotificationAskTest {
     fun beforeAndroid13ThereIsNothingToAsk() {
         assertFalse(shouldAskNotifications(android12, micGranted = true, notificationsGranted = false, askedBefore = false))
     }
+
+    @Test
+    fun microphoneFlowAsksTheNotificationsTheFirstTime() {
+        assertTrue(shouldAskNotificationsAfterMic(android13, notificationsGranted = false, askedBefore = false))
+    }
+
+    @Test
+    fun microphoneFlowDoesNotAskTheNotificationsASecondTime() {
+        assertFalse(shouldAskNotificationsAfterMic(android13, notificationsGranted = false, askedBefore = true))
+    }
+
+    @Test
+    fun microphoneFlowDoesNotAskAllowedNotifications() {
+        assertFalse(shouldAskNotificationsAfterMic(android13, notificationsGranted = true, askedBefore = false))
+    }
+
+    @Test
+    fun microphoneFlowBeforeAndroid13DoesNotAskTheNotifications() {
+        assertFalse(shouldAskNotificationsAfterMic(android12, notificationsGranted = false, askedBefore = false))
+    }
 }
