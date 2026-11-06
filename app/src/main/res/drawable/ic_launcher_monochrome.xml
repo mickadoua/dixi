@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed icon: ring, D and dot in one colour (DMC-385). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="4.34"
+        android:translateY="4.34"
+        android:scaleX="0.1938"
+        android:scaleY="0.1938">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#000000"
+            android:strokeWidth="26"
+            android:pathData="M256,109m-0,0a147,147 0 1,0 0,294a147,147 0 1,0 0,-294" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#000000"
+            android:strokeWidth="38"
+            android:strokeLineJoin="round"
+            android:pathData="M216,192H252A64,64 0 0,1 252,320H216Z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M344,151m-0,0a17,17 0 1,0 0,34a17,17 0 1,0 0,-34" />
+    </group>
+</vector>
