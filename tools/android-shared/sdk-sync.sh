@@ -31,15 +31,21 @@ done
 # Profil <nom>:<image>:<appareil>[:<options>] -> name image device options.
 # Options (DMC-408), séparées par des virgules, liste blanche du superviseur :
 # lowram, memory=<Mo> (1024 à 8192). Elles deviennent <nom>.avd/emu-options.
+# Champ vide, deux-points ou virgule en trop, option en double : refusé.
 parse_profile() {
-  local raw extra o list=()
+  local raw extra o seen=' ' colons=${1//[^:]/} list=()
   IFS=: read -r name image device raw extra <<<"$1"
   options=''
-  if [ -z "$name" ] || [ -z "$image" ] || [ -z "$device" ] || [ -n "$extra" ]; then
+  if [ -z "$name" ] || [ -z "$image" ] || [ -z "$device" ] || [ -n "$extra" ] ||
+    { [ "${#colons}" = 3 ] && ! [[ $raw =~ ^[^,]+(,[^,]+)*$ ]]; } || [ "${#colons}" -gt 3 ]; then
     echo "EMU_PROFILES : profil mal formé : $1" >&2; exit 2
   fi
   [ -z "$raw" ] || IFS=, read -ra list <<<"$raw"
   for o in "${list[@]}"; do
+    case "$seen" in
+      *" ${o%%=*} "*) echo "EMU_PROFILES : $name : option en double : ${o%%=*}" >&2; exit 2 ;;
+    esac
+    seen+="${o%%=*} "
     case "$o" in
       lowram) options+="lowram=yes"$'\n' ;;
       memory=[1-8][0-9][0-9][0-9])

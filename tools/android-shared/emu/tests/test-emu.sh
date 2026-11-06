@@ -891,6 +891,34 @@ check "options : session chargée depuis le snapshot avec les mêmes options" '[
 rm -f "$W/avd/phone.avd/emu-options" "$W/snap.conf"
 reset
 
+# 36. EMU_PROFILES (DMC-408) : sdk-sync.sh refuse toute option hors liste
+# blanche ou mal écrite (code 2, avant tout geste), puis écrit ou retire
+# <profil>.avd/emu-options (vu ici en --dry-run, sans SDK réel).
+S=$W/sync
+mkdir -p "$S/root/sdk/cmdline-tools/latest/bin" "$S/root/avd/phone.avd"
+cp "$src/../sdk-sync.sh" "$S/"
+printf '#!/bin/sh\nexit 0\n' >"$S/root/sdk/cmdline-tools/latest/bin/sdkmanager"
+chmod 755 "$S/sdk-sync.sh" "$S/root/sdk/cmdline-tools/latest/bin/sdkmanager"
+img='system-images;android-36;google_apis;x86_64'
+sync_profiles() {
+  { cat "$src/../android-sdk.versions"; printf 'EMU_PROFILES="%s"\n' "$1"; } >"$S/android-sdk.versions"
+  EMU_CTL=$S/ctl "$S/sdk-sync.sh" --dry-run "$S/root" >"$S/out" 2>&1
+}
+bad=''
+for o in 'lowram,' ',lowram' 'lowram,,memory=2048' '' 'lowram:' 'lowram:x' 'lowram,lowram' \
+  'memory=1024,memory=2048' 'memory=02560' 'memory=1023' 'memory=9000' 'memory=' 'gpu=host' '-gpu host' 'lowram=yes'; do
+  sync_profiles "phone:$img:pixel_7:$o"
+  [ $? = 2 ] && grep -q "^EMU_PROFILES : " "$S/out" && ! grep -q "^==" "$S/out" || bad+=" [$o]"
+done
+check "profils : options mal écrites ou hors liste refusées (2) avant tout geste" '[ -z "$bad" ] || { echo "acceptées :$bad"; false; }'
+sync_profiles "phone:$img:pixel_7:memory=8192,lowram"; rc=$?
+check "profils : options permises acceptées, emu-options à écrire" '[ $rc = 3 ] && grep -q "Profil phone : options memory=8192 lowram=yes" "$S/out"'
+printf 'memory=8192\nlowram=yes\n' >"$S/root/avd/phone.avd/emu-options"
+sync_profiles "phone:$img:pixel_7:memory=8192,lowram"
+check "profils : emu-options déjà à jour, rien à écrire" '! grep -q "Profil phone : options" "$S/out"'
+sync_profiles "phone:$img:pixel_7"
+check "profils : options retirées du profil, emu-options à retirer" 'grep -q "Profil phone : options retirées" "$S/out" && grep -q "(dry-run) rm -f .*/phone.avd/emu-options" "$S/out"'
+
 stop_sup
 echo "---"
 echo "$pass ok, $failn en échec"
