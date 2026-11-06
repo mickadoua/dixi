@@ -19,9 +19,10 @@ EMULATOR_REVISION="37.2.13"
 # <nom>:<image système>:<appareil avdmanager>[:<options>]. Une image non listée
 # est retirée. Options, séparées par des virgules (DMC-408) : lowram (-lowram),
 # memory=<Mo> (-memory, 1024 à 8192). Rien d'autre n'est accepté.
-# phonelow : profil d'essai de DMC-408 (retiré à la fin de l'essai).
+# phone : -lowram -memory 2560 depuis le 06/11 (DMC-408). Sans -lowram,
+# l'émulateur impose 4096 Mo, et le qemu dépassait le plafond du conteneur.
 SYSTEM_IMAGES="system-images;android-36;google_apis;x86_64 system-images;android-36;google-tv;x86_64"
-EMU_PROFILES="phone:system-images;android-36;google_apis;x86_64:pixel_7 phonelow:system-images;android-36;google_apis;x86_64:pixel_7:lowram,memory=2560 tv:system-images;android-36;google-tv;x86_64:tv_1080p"
+EMU_PROFILES="phone:system-images;android-36;google_apis;x86_64:pixel_7:lowram,memory=2560 tv:system-images;android-36;google-tv;x86_64:tv_1080p"
 
 # Bibliothèques que l'image des conteneurs d'agents n'a pas et dont le qemu
 # headless a besoin (paquets Debian trixie, extraits sans root dans
