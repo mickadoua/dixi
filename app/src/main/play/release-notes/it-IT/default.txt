@@ -1,4 +1,4 @@
-Prima versione di Voxbulle.
+Prima versione di Dixi.
 • Bolla mobile per dettare in tutte le tue app.
 • Trascrizione Mistral con la tua chiave API.
 • Tocca una parola per correggerla prima di confermare.

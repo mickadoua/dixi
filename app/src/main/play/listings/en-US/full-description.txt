@@ -1,11 +1,11 @@
-Voxbulle is a floating bubble that turns your voice into text, in any Android app.
+Dixi is a floating bubble that turns your voice into text, in any Android app.
 
 HOW IT WORKS
 1. Tap the bubble. It floats above your other apps.
 2. Speak. The wave moves with your voice, for up to 5 minutes per dictation.
-3. Voxbulle suggests the text. Tap a word to fix it, then confirm: the text is copied (and pasted for you if you turn on the option below).
+3. Dixi suggests the text. Tap a word to fix it, then confirm: the text is copied (and pasted for you if you turn on the option below).
 
-WHAT VOXBULLE DOES
+WHAT DIXI DOES
 • A bubble over your other apps. Hide it with one gesture; an edge strip or a notification brings it back.
 • The text is tidied: punctuation, paragraphs, filler words removed. The meaning does not change.
 • Dictation in French or English. Automatic detection between the two, or pick a language in settings.
@@ -13,17 +13,18 @@ WHAT VOXBULLE DOES
 • No account to create.
 
 MISTRAL TRANSCRIPTION, WITH YOUR OWN API KEY
-Transcription is done by Mistral (Voxtral model). To use it, you create your own API key at console.mistral.ai and paste it into Voxbulle's settings. The key stays encrypted on your phone. API usage is billed by Mistral under its own terms, not by Voxbulle. Without a key, the app runs in demo mode: sample text, nothing is sent.
+Transcription is done by Mistral (Voxtral model). To use it, you create your own API key at console.mistral.ai and paste it into Dixi's settings. The key stays encrypted on your phone. API usage is billed by Mistral under its own terms, not by Dixi. Without a key, the app runs in demo mode: sample text, nothing is sent.
 
 AUTO-PASTE (OPTIONAL)
-Off by default. If you turn it on, Voxbulle uses Android's accessibility service for one thing only: pasting the dictated text into the field where you are typing. It does not read your screen content and collects no data. Without this option, the text is copied and you paste it yourself.
+Off by default. If you turn it on, Dixi uses Android's accessibility service for one thing only: pasting the dictated text into the field where you are typing. It does not read your screen content and collects no data. Without this option, the text is copied and you paste it yourself.
 
 YOUR DATA
-• Audio and the transcribed text go through Mistral for transcription. Voxbulle never keeps the audio.
+• Audio and the transcribed text go through Mistral for transcription. Dixi never keeps the audio.
 • The text of your last dictations stays on your phone.
 • Your API key stays on your phone, encrypted.
 
 GOOD TO KNOW
 • The app interface is in French for now.
-• Voxbulle needs the microphone, an Internet connection and permission to display the bubble over other apps.
-• Voxbulle is a product of DM Consulting.
+• Dixi needs the microphone, an Internet connection and permission to display the bubble over other apps.
+• Dixi is a product of DM Consulting.
+• Dixi: “I have said” in Latin.
