@@ -545,6 +545,23 @@ meta_changed=$(paste -sd' ' <<<"$changed") (session $id, sans effet)"
   golden_invalidate "$1" "modifié par la session $id : $(paste -sd' ' <<<"${other:-?}" | head -c 300) (isolation non garantie)"
 }
 
+# Snapshot d'un profil retiré par sdk-sync (plus de config.ini) : supprimé avec
+# son état publié, sinon il reste sur le disque (2 Go pour phonelow, DMC-408).
+# Aucun profil visible (volume des AVD absent ou vide) : ce n'est pas un
+# retrait, rien n'est supprimé.
+golden_prune() {
+  local d p
+  [ -n "$(emu_profiles)" ] || return 0
+  for d in "$GOLDEN"/*; do
+    if [ -L "$d" ] || [ ! -d "$d" ]; then continue; fi
+    p=${d##*/}
+    [ ! -f "$EMU_AVD_DIR/$p.avd/config.ini" ] || continue
+    rm -rf -- "$d"
+    rm -f -- "$EMU_CTL/golden.$p"
+    log "snapshot propre de $p retiré : profil absent de $EMU_AVD_DIR"
+  done
+}
+
 # Profil dont le snapshot est à (re)construire (dans $gwant), si l'émulateur
 # est au repos depuis EMU_GOLDEN_IDLE_S. Appelée hors sous-shell : sinon
 # next_golden_check serait perdu et l'empreinte recalculée à chaque tour.
@@ -553,9 +570,10 @@ golden_wanted() {
   gwant=""
   [ "$EPOCHSECONDS" -ge "$next_golden_check" ] || return 1
   next_golden_check=$((EPOCHSECONDS + EMU_GOLDEN_CHECK_S))
-  [ -f "$EMU_SNAPSHOT_CONF" ] || return 1
   [ $((EPOCHSECONDS - last_busy)) -ge "$EMU_GOLDEN_IDLE_S" ] || return 1
   ! emu_maintenance_on || return 1
+  golden_prune
+  [ -f "$EMU_SNAPSHOT_CONF" ] || return 1
   for p in $(emu_profiles); do
     emu_valid_profile "$p" && [ "$(snap_mode "$p")" != off ] || continue
     golden_current "$p" && continue
