@@ -58,7 +58,11 @@ class MicPermissionActivity : ComponentActivity() {
         finish()
     }
 
-    private fun needsNotificationPermission() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !granted(Manifest.permission.POST_NOTIFICATIONS)
+    private fun needsNotificationPermission() = shouldAskNotificationsAfterMic(
+        sdk = Build.VERSION.SDK_INT,
+        notificationsGranted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && granted(Manifest.permission.POST_NOTIFICATIONS),
+        askedBefore = NotificationAskStore(this).asked,
+    )
 
     private fun appSettingsIntent() = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
