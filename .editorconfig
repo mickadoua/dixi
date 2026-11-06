@@ -1,0 +1,9 @@
+# Règles de style Kotlin, lues par Spotless/ktlint (sh ./gradlew spotlessCheck).
+# Mêmes règles que mickadoua/template-android.
+root = true
+
+[*.{kt,kts}]
+# Style d'Android Studio (kotlin.code.style=official).
+ktlint_code_style = intellij_idea
+# Les fonctions @Composable s'écrivent en PascalCase.
+ktlint_function_naming_ignore_when_annotated_with = Composable
