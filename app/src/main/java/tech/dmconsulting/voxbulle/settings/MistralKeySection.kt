@@ -32,14 +32,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import java.io.IOException
-import java.security.GeneralSecurityException
-import java.security.ProviderException
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.transcription.KeyCheck
 import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.ProviderException
 
 @get:StringRes
 val KeyStatus.label: Int

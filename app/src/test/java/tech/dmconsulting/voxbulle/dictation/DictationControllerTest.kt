@@ -1,10 +1,9 @@
 package tech.dmconsulting.voxbulle.dictation
 
-import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,7 +13,6 @@ import org.junit.rules.TemporaryFolder
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleController
 import tech.dmconsulting.voxbulle.bubble.BubbleState
-import java.io.IOException
 import tech.dmconsulting.voxbulle.history.Dictation
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.history.InMemoryDictationHistory
@@ -27,6 +25,8 @@ import tech.dmconsulting.voxbulle.transcription.FakeTranscriber
 import tech.dmconsulting.voxbulle.transcription.TranscriptionPipeline
 import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
+import java.io.IOException
+import java.time.Instant
 
 class DictationControllerTest {
     @get:Rule
@@ -421,7 +421,6 @@ class DictationControllerTest {
         assertEquals(R.string.error_mic_denied, RecordingError.MicrophoneDenied.message)
         assertEquals(R.string.error_recording_failed, RecordingError.StartFailed.message)
     }
-
 
     private fun suggestion(): String {
         recorder.nextOutcome = recorded()

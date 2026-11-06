@@ -67,12 +67,18 @@ fun Modifier.neonGlow(color: Color, shape: Shape, vararg layers: GlowLayer): Mod
             paint.color = color.copy(alpha = layer.alpha).toArgb()
             when (outline) {
                 is Outline.Rectangle -> canvas.nativeCanvas.drawRect(
-                    outline.rect.left, outline.rect.top, outline.rect.right, outline.rect.bottom, paint,
+                    outline.rect.left,
+                    outline.rect.top,
+                    outline.rect.right,
+                    outline.rect.bottom,
+                    paint,
                 )
+
                 is Outline.Rounded -> {
                     val r = outline.roundRect
                     canvas.nativeCanvas.drawRoundRect(r.left, r.top, r.right, r.bottom, r.topLeftCornerRadius.x, r.topLeftCornerRadius.y, paint)
                 }
+
                 is Outline.Generic -> canvas.nativeCanvas.drawPath(outline.path.asAndroidPath(), paint)
             }
         }
@@ -128,8 +134,7 @@ fun NeonToggleCard(
     }
 }
 
-private fun Modifier.cardGlow(glow: Pair<Color, GlowLayer>?): Modifier =
-    glow?.let { (color, layer) -> neonGlow(color, CardShape, layer) } ?: this
+private fun Modifier.cardGlow(glow: Pair<Color, GlowLayer>?): Modifier = glow?.let { (color, layer) -> neonGlow(color, CardShape, layer) } ?: this
 
 /** Filled orange pill, 56 dp: the main action. */
 @Composable

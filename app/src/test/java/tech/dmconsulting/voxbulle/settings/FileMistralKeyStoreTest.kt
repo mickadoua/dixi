@@ -1,7 +1,5 @@
 package tech.dmconsulting.voxbulle.settings
 
-import java.io.File
-import java.security.GeneralSecurityException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,6 +10,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
+import java.security.GeneralSecurityException
 
 /** The Keystore does not exist on the JVM: [XorCipher] stands in; the emulator proof covers [KeystoreKeyCipher]. */
 class FileMistralKeyStoreTest {

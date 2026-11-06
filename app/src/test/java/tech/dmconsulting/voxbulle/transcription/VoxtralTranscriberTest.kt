@@ -1,7 +1,5 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -15,6 +13,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import java.io.File
+import java.util.concurrent.TimeUnit
 
 class VoxtralTranscriberTest {
     @get:Rule val folder = TemporaryFolder()

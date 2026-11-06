@@ -1,14 +1,5 @@
 package tech.dmconsulting.voxbulle.debug
 
-import java.io.BufferedReader
-import java.io.Closeable
-import java.io.File
-import java.io.InputStreamReader
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -22,6 +13,15 @@ import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 import tech.dmconsulting.voxbulle.transcription.VoxtralTextCleaner
 import tech.dmconsulting.voxbulle.transcription.VoxtralTranscriber
+import java.io.BufferedReader
+import java.io.Closeable
+import java.io.File
+import java.io.InputStreamReader
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 /**
  * Runs the real Mistral clients against canned answers from a loopback server, so the
@@ -81,10 +81,9 @@ object MistralProbe {
         lines + if (lines.all { it.startsWith("OK") }) PASS else FAIL
     }
 
-    private fun chatAnswer(content: String, finishReason: String) =
-        """{"id":"probe","object":"chat.completion","model":"${VoxtralTextCleaner.MODEL}","choices":[{"index":0,""" +
-            """"message":{"role":"assistant","content":$content},"finish_reason":"$finishReason"}],""" +
-            """"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}"""
+    private fun chatAnswer(content: String, finishReason: String) = """{"id":"probe","object":"chat.completion","model":"${VoxtralTextCleaner.MODEL}","choices":[{"index":0,""" +
+        """"message":{"role":"assistant","content":$content},"finish_reason":"$finishReason"}],""" +
+        """"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}"""
 
     /** Shape of a Mistral transcription answer, with fields the client ignores. */
     private const val TRANSCRIPTION_ANSWER =

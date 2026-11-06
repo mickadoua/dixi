@@ -1,15 +1,15 @@
 package tech.dmconsulting.voxbulle.settings
 
-import java.io.File
-import java.io.IOException
-import java.security.GeneralSecurityException
-import java.security.ProviderException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.ProviderException
 
 /** Seals the key before it touches the disk. On the phone: [KeystoreKeyCipher]. */
 interface KeyCipher {
@@ -30,6 +30,7 @@ class FileMistralKeyStore(
 ) : MistralKeyStore {
     private val rejectedMarker = File(file.parentFile, file.name + ".rejected")
     private val lock = Mutex()
+
     @Volatile private var cached: String? = null
 
     // Two file checks, once per process: cheap enough for the main thread.

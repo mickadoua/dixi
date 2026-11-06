@@ -19,11 +19,9 @@ val Inter = FontFamily(
 
 private val Base = Typography()
 
-private fun title(size: Int, lineHeight: Int) =
-    TextStyle(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold, fontSize = size.sp, lineHeight = lineHeight.sp)
+private fun title(size: Int, lineHeight: Int) = TextStyle(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold, fontSize = size.sp, lineHeight = lineHeight.sp)
 
-private fun text(size: Int, lineHeight: Int, weight: FontWeight = FontWeight.Normal) =
-    TextStyle(fontFamily = Inter, fontWeight = weight, fontSize = size.sp, lineHeight = lineHeight.sp)
+private fun text(size: Int, lineHeight: Int, weight: FontWeight = FontWeight.Normal) = TextStyle(fontFamily = Inter, fontWeight = weight, fontSize = size.sp, lineHeight = lineHeight.sp)
 
 val VoxbulleTypography = Typography(
     displayLarge = Base.displayLarge.copy(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold),

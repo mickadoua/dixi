@@ -1,7 +1,7 @@
 package tech.dmconsulting.voxbulle.history
 
-import java.time.Instant
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 /** One finished dictation. Text only: the audio is never kept. */
 data class Dictation(val text: String, val createdAt: Instant)

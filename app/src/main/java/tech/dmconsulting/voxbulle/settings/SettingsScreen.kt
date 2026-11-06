@@ -5,8 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +18,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -32,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.BuildConfig
@@ -40,12 +45,6 @@ import tech.dmconsulting.voxbulle.bubble.BubblePositionStore
 import tech.dmconsulting.voxbulle.history.ClearHistoryDialog
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
-import tech.dmconsulting.voxbulle.ui.theme.Dimens
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.text.font.FontWeight
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.LocalDemoMode
 import tech.dmconsulting.voxbulle.ui.components.NeonCard
@@ -53,6 +52,7 @@ import tech.dmconsulting.voxbulle.ui.components.NeonChip
 import tech.dmconsulting.voxbulle.ui.components.NeonOutlinedButton
 import tech.dmconsulting.voxbulle.ui.components.NeonSwitch
 import tech.dmconsulting.voxbulle.ui.components.SectionLabel
+import tech.dmconsulting.voxbulle.ui.theme.Dimens
 import tech.dmconsulting.voxbulle.ui.theme.Neon
 
 @get:StringRes

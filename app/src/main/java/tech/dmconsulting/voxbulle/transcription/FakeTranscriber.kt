@@ -1,8 +1,8 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
 import kotlinx.coroutines.delay
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
+import java.io.File
 
 /**
  * Answers [result] after [delayMs] without any network call. Used in tests and

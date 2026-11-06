@@ -1,9 +1,9 @@
 package tech.dmconsulting.voxbulle.history
 
-import java.time.LocalDateTime
-import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class DictationDateTest {
     private val zone = ZoneId.of("Europe/Paris")

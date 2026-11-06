@@ -10,8 +10,7 @@ class InMemoryDictationHistory : DictationHistory {
 
     override val entries: StateFlow<List<Dictation>> = state
 
-    override suspend fun add(dictation: Dictation) =
-        state.update { (listOf(dictation) + it).take(DictationHistory.MAX_ENTRIES) }
+    override suspend fun add(dictation: Dictation) = state.update { (listOf(dictation) + it).take(DictationHistory.MAX_ENTRIES) }
 
     override suspend fun clear() {
         state.value = emptyList()

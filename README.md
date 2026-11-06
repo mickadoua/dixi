@@ -21,6 +21,11 @@ Décision (05/11/2026, DMC-360) : un seul module `app`, pas la structure KMP de 
 
 Les commits du repo sont faits par l'API GitHub (seule façon d'avoir des commits signés sans clé) : les fichiers n'ont pas le bit exécutable. D'où `sh ./gradlew` et `bash scripts/…`.
 
+Style Kotlin (ktlint 1.8.0 par Spotless, règles dans `.editorconfig`, comme le template) :
+
+    sh ./gradlew --no-daemon spotlessCheck   # vérifie
+    sh ./gradlew --no-daemon spotlessApply   # corrige
+
 ## Publier une version
 
 Play prend un Android App Bundle (`.aab`) signé avec la clé d'envoi.

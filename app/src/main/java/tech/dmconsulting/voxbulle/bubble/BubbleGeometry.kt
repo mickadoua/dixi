@@ -30,8 +30,7 @@ class BubbleGeometry(
     val maxY: Int get() = maxOf(minY, screenHeight - insets.bottom - margin - bubbleSize)
 
     /** Nearest side for a bubble whose left edge is at [x]. */
-    fun nearestSide(x: Int): Side =
-        if (x + bubbleSize / 2f <= screenWidth / 2f) Side.Left else Side.Right
+    fun nearestSide(x: Int): Side = if (x + bubbleSize / 2f <= screenWidth / 2f) Side.Left else Side.Right
 
     fun xFor(side: Side): Int = if (side == Side.Left) minX else maxX
 

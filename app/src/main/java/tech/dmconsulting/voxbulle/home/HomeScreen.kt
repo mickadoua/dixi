@@ -33,8 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.time.Instant
-import java.time.ZoneId
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.history.Dictation
@@ -53,6 +51,8 @@ import tech.dmconsulting.voxbulle.ui.components.SectionLabel
 import tech.dmconsulting.voxbulle.ui.components.neonGlow
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 import tech.dmconsulting.voxbulle.ui.theme.Neon
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Main screen (neon mockup 05, DMC-213): bubble switch, the big « Touchez, parlez »

@@ -1,6 +1,5 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -11,6 +10,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 class MistralKeyCheckTest {
     private val server = MockWebServer()

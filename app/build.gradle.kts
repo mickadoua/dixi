@@ -29,7 +29,10 @@ val appVersionName = providers.environmentVariable("VERSION_NAME").orNull
 // (dev machines, CI). Some but not all set: the build fails, so a half-configured release is
 // never uploaded unsigned by mistake.
 val uploadKeyEnv = listOf(
-    "UPLOAD_KEYSTORE_PATH", "UPLOAD_KEYSTORE_PASSWORD", "UPLOAD_KEY_ALIAS", "UPLOAD_KEY_PASSWORD",
+    "UPLOAD_KEYSTORE_PATH",
+    "UPLOAD_KEYSTORE_PASSWORD",
+    "UPLOAD_KEY_ALIAS",
+    "UPLOAD_KEY_PASSWORD",
 ).associateWith { providers.environmentVariable(it).orNull?.ifEmpty { null } }
 val uploadKeyMissing = uploadKeyEnv.filterValues { it == null }.keys
 if (uploadKeyMissing.isNotEmpty() && uploadKeyMissing.size < uploadKeyEnv.size) {

@@ -1,8 +1,5 @@
 package tech.dmconsulting.voxbulle.history
 
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,6 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.time.Instant
 
 class DataStoreDictationHistoryTest {
     @get:Rule val folder = TemporaryFolder()
