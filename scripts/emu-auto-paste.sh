@@ -17,7 +17,7 @@ SERVICE=$PKG/$PKG.paste.AutoPasteService
 PART=${1:-s}
 OUT=${2:-auto-paste-proof-out}/$PART
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
-TEXT='Bonjour ceci est un texte de test voxbulle.'
+TEXT='Bonjour ceci est un texte de test dixi.'
 mkdir -p "$OUT"
 trap '$ADB logcat -d > "$OUT/logcat-full.txt" 2>/dev/null; $ADB logcat -b crash -d > "$OUT/logcat-crash.txt" 2>/dev/null' EXIT
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
@@ -155,7 +155,7 @@ focus_first_name() {
   $ADB shell am force-stop com.google.android.inputmethod.latin; sleep 2
   focus | tee "$OUT/focus-before-dictation.txt"
 }
-occurrences() { dump "$1"; grep -o 'texte de test voxbulle' "$OUT/$1" | wc -l; }
+occurrences() { dump "$1"; grep -o 'texte de test dixi' "$OUT/$1" | wc -l; }
 
 $ADB shell getprop ro.build.version.sdk
 for _ in $(seq 1 60); do

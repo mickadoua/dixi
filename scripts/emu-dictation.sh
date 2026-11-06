@@ -163,10 +163,10 @@ if [ "$PART" = a ]; then
     wake; $ADB shell input tap $F; sleep 3
     $ADB shell input keyevent KEYCODE_PASTE; sleep 3
     node_center ui-pasted.xml "x" >/dev/null
-    grep -q 'texte de test voxbulle' "$OUT/ui-pasted.xml" && break
+    grep -q 'texte de test dixi' "$OUT/ui-pasted.xml" && break
   done
   shot 6-pasted
-  check "cleaned text pasted" "grep -q 'Bonjour ceci est un texte de test voxbulle.' '$OUT/ui-pasted.xml'"
+  check "cleaned text pasted" "grep -q 'Bonjour ceci est un texte de test dixi.' '$OUT/ui-pasted.xml'"
 fi
 
 if [ "$PART" = b ]; then
@@ -206,7 +206,7 @@ if [ "$PART" = n ]; then
   $ADB shell dumpsys window | grep mCurrentFocus | tee "$OUT/focus-history.txt"
   shot 10-history
   node_center ui-history.xml "x" >/dev/null
-  check "history opened with the text" "grep -q 'MainActivity' '$OUT/focus-history.txt' && grep -q 'Bonjour ceci est un texte de test voxbulle.' '$OUT/ui-history.xml'"
+  check "history opened with the text" "grep -q 'MainActivity' '$OUT/focus-history.txt' && grep -q 'Bonjour ceci est un texte de test dixi.' '$OUT/ui-history.xml'"
 fi
 
 if [ "$PART" = h ]; then
