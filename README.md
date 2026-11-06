@@ -1,4 +1,4 @@
-# Voxbulle
+# Dixi (ex-Voxbulle)
 
 App Android de dictée vocale : une bulle flottante, on parle, le texte transcrit (Voxtral, Mistral) est prêt à coller.
 
@@ -11,7 +11,9 @@ App Android de dictée vocale : une bulle flottante, on parle, le texte transcri
 
 ## Code
 
-Package `tech.dmconsulting.voxbulle`, un seul module Gradle (`app`), un package par domaine : `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Les dépendances sont branchées à la main dans `AppContainer`.
+Package Kotlin `tech.dmconsulting.voxbulle`, un seul module Gradle (`app`), un package par domaine : `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Les dépendances sont branchées à la main dans `AppContainer`.
+
+Décision (06/11/2026, DMC-383) : l'app s'appelle Dixi. Seuls l'`applicationId` (`tech.dmconsulting.dixi`, figé dès le premier envoi sur Play) et les textes visibles changent. Le `namespace` et les packages Kotlin gardent `tech.dmconsulting.voxbulle` : l'utilisateur ne les voit pas, et les déplacer toucherait chaque fichier pour rien. Conséquence : un composant se nomme `tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.X` (forme courte `/.X` impossible), d'où `PKG` et `NS` dans `scripts/`. Les secrets d'envoi gardent le préfixe `VOXBULLE_UPLOAD_*` : la clé ne dépend pas du nom. Le repo et le projet Paperclip gardent leur nom pour l'instant.
 
 Décision (05/11/2026, DMC-360) : un seul module `app`, pas la structure KMP de `mickadoua/template-android` (`androidApp/` + `shared/`). Raison : Voxbulle est une app Android seule, aucune cible iOS n'est prévue. Option écartée : passer en `androidApp/` + `shared/`, ce qui déplace tout le code sans rien apporter tant qu'il n'y a qu'une cible. À revoir si une cible iOS est décidée. Les versions (AGP, Kotlin, BOM Compose, Gradle, SDK) suivent celles du template.
 

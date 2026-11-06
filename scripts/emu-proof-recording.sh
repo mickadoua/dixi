@@ -5,7 +5,8 @@
 #   /opt/android/admin/emu/emu-run phone -- bash scripts/emu-proof-recording.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -17,7 +18,7 @@ since_mark() { log | python3 -c 'import sys; s = sys.stdin.read(); print(s[s.rfi
 wait_log() { for i in $(seq 1 "$2"); do since_mark | grep -q "$1" && return 0; sleep 1; done; echo "TIMEOUT waiting for: $1"; return 1; }
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 cache() { echo "cacheDir: [$($ADB shell run-as $PKG ls cache | tr '\n' ' ')]"; }
-limits() { $ADB shell am broadcast -n $PKG/.recording.DebugRecordingReceiver "$@" >/dev/null; }
+limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
 bubble_xy() { log | sed -n 's/.*bubble shown at x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 tap_bubble() { close_dialogs; sleep 1; $ADB shell input tap $(bubble_xy); }
 # The loaded emulator can drop a tap (shade still closing): tap until the log shows $1.
@@ -26,7 +27,7 @@ tap_until() { for i in 1 2 3; do tap_bubble; wait_log "$1" 8 && return 0; done; 
 wait_idle() { sleep 5; }
 notif_dump() { $ADB shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | grep -E "NotificationRecord|channel=|importance|actions=|\[0\]|android.title=|android.text=|flags=" > "$OUT/$1.txt"; cat "$OUT/$1.txt"; }
 open_contacts() {
-  $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3
+  $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; sleep 3
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
   $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4
   $ADB shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|ResumedActivity'

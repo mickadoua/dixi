@@ -5,7 +5,8 @@
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-bubble-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -14,9 +15,9 @@ log() { $ADB logcat -d -s VoxbulleProof; }
 # Center "x y" from the last log line matching $1 ("... at x=X y=Y").
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
-state() { $ADB shell am broadcast -p $PKG -a $PKG.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs "${2:-1500}" >/dev/null; }
+state() { $ADB shell am broadcast -p $PKG -a $NS.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs "${2:-1500}" >/dev/null; }
 contacts() { $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4; }
-show_bubble() { $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3; }
+show_bubble() { $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; sleep 3; }
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 wait_log() { for _ in $(seq 1 "${2:-10}"); do log | grep -q "$1" && return 0; sleep 1; done; return 1; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
@@ -59,11 +60,11 @@ state Ready 6000; sleep 1; shot 4-ready
 sleep 6; shot 5-back-to-idle
 for _ in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml | grep -q dumped && break; sleep 3; done
 $ADB shell cat /sdcard/ui.xml > "$OUT/ui-idle.xml"
-grep -o 'content-desc="Voxbulle[^"]*"' "$OUT/ui-idle.xml" | head -3
+grep -o 'content-desc="Dixi[^"]*"' "$OUT/ui-idle.xml" | head -3
 
 echo "--- 2. Focus and touches stay with the app below"
 $ADB shell dumpsys window | grep -E 'mCurrentFocus' | tee "$OUT/focus.txt"
-check "focus is not the bubble" "! grep -q voxbulle '$OUT/focus.txt'"
+check "focus is not the bubble" "! grep -q $PKG '$OUT/focus.txt'"
 
 echo "--- 3. Tap starts, drag never taps"
 TAPS=$(count "bubble tapped")

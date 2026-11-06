@@ -11,6 +11,6 @@ import android.os.Build
  */
 fun copyToClipboard(context: Context, text: String): Boolean {
     val clipboard = context.getSystemService(ClipboardManager::class.java)
-    clipboard.setPrimaryClip(ClipData.newPlainText("Voxbulle", text))
+    clipboard.setPrimaryClip(ClipData.newPlainText("Dixi", text))
     return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 }

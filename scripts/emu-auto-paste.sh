@@ -12,8 +12,9 @@
 # the system page is shown by the app, but tapping its switch and dialog is too slow here.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
-SERVICE=$PKG/$PKG.paste.AutoPasteService
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+SERVICE=$PKG/$NS.paste.AutoPasteService
 PART=${1:-s}
 OUT=${2:-auto-paste-proof-out}/$PART
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
@@ -24,15 +25,15 @@ shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$
 log() { $ADB logcat -d -s VoxbulleProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
-limits() { $ADB shell am broadcast -n $PKG/.recording.DebugRecordingReceiver "$@" >/dev/null; }
-open() { $ADB shell am start -S -W -n $PKG/.MainActivity "$@" >/dev/null; sleep 3; }
+limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
+open() { $ADB shell am start -S -W -n $PKG/$NS.MainActivity "$@" >/dev/null; sleep 3; }
 contacts() { $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4; }
 # Contacts' editor in front (its first start after a cold boot is slow).
 contacts_editor() {
   for _ in 1 2 3; do contacts; close_dialogs; wait_focus "EditorActivity" 20 && return 0; done
   return 1
 }
-show_bubble() { $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3; }
+show_bubble() { $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; sleep 3; }
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 focus() { $ADB shell dumpsys window | grep mCurrentFocus; }
@@ -151,7 +152,7 @@ focus_first_name() {
   F=$(node_center ui-contacts.xml "First name"); [ -n "$F" ] || F="540 1026"
   wake; $ADB shell input tap $F; sleep 3
   # The keyboard pushes the emulator over its memory cap during the dictation: stop it
-  # (the field keeps the focus). Not `am kill-all`: it kills Voxbulle and its bubble too.
+  # (the field keeps the focus). Not `am kill-all`: it kills Dixi and its bubble too.
   $ADB shell am force-stop com.google.android.inputmethod.latin; sleep 2
   focus | tee "$OUT/focus-before-dictation.txt"
 }
@@ -205,7 +206,7 @@ if [ "$PART" = s ]; then
   check "accessibility settings opened" "wait_focus com.android.settings 15"
   focus | tee "$OUT/focus-accessibility.txt"
   shot 4-accessibility-settings
-  check "service listed by Android" "node_center ui-a11y.xml 'Voxbulle · collage automatique' | grep -q . || grep -q 'Voxbulle' '$OUT/ui-a11y.xml'"
+  check "service listed by Android" "node_center ui-a11y.xml 'Dixi · collage automatique' | grep -q . || grep -q 'Dixi' '$OUT/ui-a11y.xml'"
   service_on
   $ADB shell input keyevent KEYCODE_BACK
   check "back to screen 10" "wait_focus '$PKG' 15"
@@ -221,7 +222,7 @@ if [ "$PART" = r ]; then
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
   service_off
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW deny
-  $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; wait_focus "$PKG"
+  $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; wait_focus "$PKG"
   check "auto-paste off after the service was turned off in Android" "[ \"\$(switch_state ui-10f.xml 'Collage automatique')\" = false ]"
   check "bubble off after the overlay permission was taken back" "[ \"\$(switch_state ui-10f.xml 'Afficher la bulle')\" = false ]"
   shot 6-settings-after-return
@@ -231,7 +232,7 @@ if [ "$PART" = r ]; then
   check "bubble on" "[ \"\$(switch_state ui-10h.xml 'Afficher la bulle')\" = true ]"
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW deny
-  $ADB shell am start -W -n $PKG/.MainActivity >/dev/null; wait_focus "$PKG"
+  $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; wait_focus "$PKG"
   check "bubble switch off on return" "[ \"\$(switch_state ui-10i.xml 'Afficher la bulle')\" = false ]"
   shot 7-bubble-after-revoke
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow

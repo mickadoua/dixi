@@ -5,14 +5,15 @@
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-dark-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-bubble-dark-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
 log() { $ADB logcat -d -s VoxbulleProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
-state() { $ADB shell am broadcast -p $PKG -a $PKG.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs 1500 >/dev/null; }
+state() { $ADB shell am broadcast -p $PKG -a $NS.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs 1500 >/dev/null; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 
@@ -40,7 +41,7 @@ run() {
   wake; $ADB shell wm dismiss-keyguard; sleep 2
   $ADB shell am force-stop $PKG; sleep 2
   $ADB logcat -c
-  $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3
+  $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; sleep 3
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
   $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4
   $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; sleep 1
