@@ -205,7 +205,7 @@ if [ "$PART" = s ]; then
   check "accessibility settings opened" "wait_focus com.android.settings 15"
   focus | tee "$OUT/focus-accessibility.txt"
   shot 4-accessibility-settings
-  check "service listed by Android" "node_center ui-a11y.xml 'Voxbulle · collage automatique' | grep -q . || grep -q 'Voxbulle' '$OUT/ui-a11y.xml'"
+  check "service listed by Android" "node_center ui-a11y.xml 'Dixi · collage automatique' | grep -q . || grep -q 'Dixi' '$OUT/ui-a11y.xml'"
   service_on
   $ADB shell input keyevent KEYCODE_BACK
   check "back to screen 10" "wait_focus '$PKG' 15"

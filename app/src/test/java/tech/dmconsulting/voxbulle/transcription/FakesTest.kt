@@ -35,7 +35,7 @@ class FakesTest {
     @Test
     fun fakeCleanerDropsHesitationsAndPunctuates() = runTest {
         val result = FakeTextCleaner().clean(FakeTranscriber.SAMPLE_RAW_TEXT, DictationLanguage.Auto)
-        assertEquals(VoxtralResult.Success("Bonjour ceci est un texte de test voxbulle."), result)
+        assertEquals(VoxtralResult.Success("Bonjour ceci est un texte de test dixi."), result)
     }
 
     @Test

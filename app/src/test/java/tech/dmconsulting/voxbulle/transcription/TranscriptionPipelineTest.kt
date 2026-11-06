@@ -16,7 +16,7 @@ class TranscriptionPipelineTest {
         val pipeline = TranscriptionPipeline(FakeTranscriber(), FakeTextCleaner(), InMemorySettingsStore())
         assertEquals(
             VoxtralResult.Success(
-                Transcript(FakeTranscriber.SAMPLE_RAW_TEXT, "Bonjour ceci est un texte de test voxbulle."),
+                Transcript(FakeTranscriber.SAMPLE_RAW_TEXT, "Bonjour ceci est un texte de test dixi."),
             ),
             pipeline.run(audio),
         )

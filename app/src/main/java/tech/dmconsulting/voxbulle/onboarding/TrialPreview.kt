@@ -32,7 +32,7 @@ import java.io.File
 
 /**
  * Demo-mode run of the transcription on screen 3: no microphone, the fake
- * services answer. Shows the « brut » and « Texte Voxbulle » cards or the error
+ * services answer. Shows the « brut » and « Texte Dixi » cards or the error
  * message. Temporary: the real screen 3 (with recording) comes with DMC-140.
  */
 @Composable

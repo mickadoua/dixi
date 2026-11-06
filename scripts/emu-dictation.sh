@@ -188,7 +188,7 @@ if [ "$PART" = b ]; then
   start_bubble
   tap_bubble; sleep 0.3
   shot 8-error-mic-denied
-  check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "mic error shown" "wait_log 'dictation error: Dixi a besoin du micro' 5"
   check "no crash on the tap without mic" "[ \"\$(app_pid)\" = '$PID' ] && no_crash"
   log | grep -E "bubble state|dictation error" | tee "$OUT/errors.txt"
   $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
@@ -228,7 +228,7 @@ if [ "$PART" = c ]; then
   echo "--- c1. Microphone never granted: tap gives the error, no crash"
   tap_bubble; sleep 0.3
   shot 12-error-mic-never-granted
-  check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "mic error shown" "wait_log 'dictation error: Dixi a besoin du micro' 5"
   check "no crash" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
 fi
 
