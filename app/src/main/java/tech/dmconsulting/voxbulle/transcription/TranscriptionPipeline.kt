@@ -6,7 +6,7 @@ import java.io.File
 
 /**
  * A dictation's two texts: [raw] from Voxtral (screen 3, « brut » card) and
- * [cleaned] by Mistral (« Texte Voxbulle » card). [cleaned] is null when the
+ * [cleaned] by Mistral (« Texte Dixi » card). [cleaned] is null when the
  * cleanup failed, with the reason in [cleanupError]: the words are not lost.
  */
 data class Transcript(

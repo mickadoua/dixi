@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Voxbulle</string>
+    <string name="app_name">Dixi</string>
 
     <!-- Screens, named like the mockups (DMC-121). -->
     <string name="screen_heading">%1$d. %2$s</string>
@@ -53,7 +53,7 @@
         The service label and description below are part of it: Android shows them in its settings.
     -->
     <string name="disclosure_title">Coller directement dans le champ</string>
-    <string name="disclosure_body">Voxbulle utilise le service d’accessibilité d’Android uniquement pour coller le texte dicté dans le champ où vous écrivez.</string>
+    <string name="disclosure_body">Dixi utilise le service d’accessibilité d’Android uniquement pour coller le texte dicté dans le champ où vous écrivez.</string>
     <string name="disclosure_point_no_reading">Nous ne lisons pas le contenu de votre écran.</string>
     <string name="disclosure_point_no_data">Nous ne collectons aucune donnée via ce service.</string>
     <string name="disclosure_point_off_anytime">Vous pouvez le désactiver à tout moment.</string>
@@ -61,7 +61,7 @@
     <string name="disclosure_accept">J’accepte et j’active</string>
     <string name="disclosure_decline">Non merci</string>
     <string name="disclosure_draft_note">BROUILLON · texte à valider avant publication</string>
-    <string name="auto_paste_service_label">Voxbulle · collage automatique</string>
+    <string name="auto_paste_service_label">Dixi · collage automatique</string>
     <string name="auto_paste_service_description">Colle le texte que vous venez de dicter dans le champ où vous écrivez, juste après la dictée. Ne lit pas le contenu de votre écran et ne collecte aucune donnée.</string>
 
     <!-- Main screen, neon mockup 05 (DMC-213). -->
@@ -108,11 +108,11 @@
     <string name="settings_section_other">Données et infos</string>
 
     <!-- Bubble and dictation (PoC, DMC-129). -->
-    <string name="bubble_idle">Voxbulle, prêt à dicter</string>
-    <string name="bubble_listening">Voxbulle, enregistrement en cours</string>
-    <string name="bubble_processing">Voxbulle, transcription en cours</string>
-    <string name="bubble_ready">Voxbulle, texte copié</string>
-    <string name="bubble_error">Voxbulle, dictée non aboutie</string>
+    <string name="bubble_idle">Dixi, prêt à dicter</string>
+    <string name="bubble_listening">Dixi, enregistrement en cours</string>
+    <string name="bubble_processing">Dixi, transcription en cours</string>
+    <string name="bubble_ready">Dixi, texte copié</string>
+    <string name="bubble_error">Dixi, dictée non aboutie</string>
     <string name="bubble_hide_zone">Masquer la bulle</string>
     <string name="bubble_hide_zone_label">Lâchez ici pour masquer</string>
     <string name="bubble_action_hide">Masquer la bulle</string>
@@ -127,14 +127,14 @@
     <string name="notif_recording_warning">Arrêt automatique dans 30 s.</string>
     <string name="notif_recording_stop">Arrêter</string>
     <string name="error_nothing_heard">Je n\'ai rien entendu. Réessayez.</string>
-    <string name="error_mic_denied">Voxbulle a besoin du micro. Autorisez-le dans les réglages.</string>
+    <string name="error_mic_denied">Dixi a besoin du micro. Autorisez-le dans les réglages.</string>
     <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
     <string name="mic_ask_title">Autoriser le micro</string>
-    <string name="mic_ask_body">Voxbulle écoute seulement quand vous touchez la bulle, pour écrire ce que vous dictez. Les notifications montrent l\'enregistrement en cours et « Texte copié ».</string>
+    <string name="mic_ask_body">Dixi écoute seulement quand vous touchez la bulle, pour écrire ce que vous dictez. Les notifications montrent l\'enregistrement en cours et « Texte copié ».</string>
     <string name="mic_ask_continue">Continuer</string>
     <string name="action_later">Plus tard</string>
     <string name="mic_settings_title">Micro refusé</string>
-    <string name="mic_settings_body">Pour dicter, ouvrez les réglages de Voxbulle, puis Autorisations › Micro › Autoriser.</string>
+    <string name="mic_settings_body">Pour dicter, ouvrez les réglages de Dixi, puis Autorisations › Micro › Autoriser.</string>
     <string name="mic_settings_open">Ouvrir les réglages</string>
     <string name="error_recording_failed">Le micro n\'a pas démarré. Réessayez.</string>
     <string name="notif_copied_title">Texte copié</string>
@@ -181,7 +181,7 @@
     <string name="demo_mode">Mode démo</string>
     <string name="trial_demo_run">Lancer un essai</string>
     <string name="trial_raw">Vous avez dit (brut)</string>
-    <string name="trial_clean">Texte Voxbulle</string>
+    <string name="trial_clean">Texte Dixi</string>
     <string name="demo_mode_description">Mode démo : transcription simulée, rien n\'est envoyé.</string>
     <!-- Panel next to the bubble: mockups 09 and 10, v1 without live text (DMC-234). -->
     <string name="panel_listening">● Je vous écoute</string>

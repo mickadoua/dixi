@@ -26,6 +26,6 @@ class FakeTranscriber(
         const val DEFAULT_DELAY_MS = 1_500L
 
         /** Fictitious sample, never shipped as real content. */
-        const val SAMPLE_RAW_TEXT = "bonjour euh ceci est un texte de test voxbulle"
+        const val SAMPLE_RAW_TEXT = "bonjour euh ceci est un texte de test dixi"
     }
 }

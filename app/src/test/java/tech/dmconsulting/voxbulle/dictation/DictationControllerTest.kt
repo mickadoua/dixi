@@ -149,7 +149,7 @@ class DictationControllerTest {
         controller.onTap()
         scope.advanceUntilIdle()
 
-        val text = "Bonjour ceci est un texte de test voxbulle."
+        val text = "Bonjour ceci est un texte de test dixi."
         assertEquals(DictationPanel.Suggestion(text), output.panels.last())
         assertTrue("nothing copied before « Valider »", output.texts.isEmpty())
         controller.validate(text)

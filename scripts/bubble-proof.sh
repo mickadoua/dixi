@@ -59,7 +59,7 @@ state Ready 6000; sleep 1; shot 4-ready
 sleep 6; shot 5-back-to-idle
 for _ in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml | grep -q dumped && break; sleep 3; done
 $ADB shell cat /sdcard/ui.xml > "$OUT/ui-idle.xml"
-grep -o 'content-desc="Voxbulle[^"]*"' "$OUT/ui-idle.xml" | head -3
+grep -o 'content-desc="Dixi[^"]*"' "$OUT/ui-idle.xml" | head -3
 
 echo "--- 2. Focus and touches stay with the app below"
 $ADB shell dumpsys window | grep -E 'mCurrentFocus' | tee "$OUT/focus.txt"
