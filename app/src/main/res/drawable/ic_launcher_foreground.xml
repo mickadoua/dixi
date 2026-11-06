@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dixi icon: bubble disc, D, cyan dot (DMC-385). Disc 62 dp, inside the 66 dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="4.34"
+        android:translateY="4.34"
+        android:scaleX="0.1938"
+        android:scaleY="0.1938">
+        <path
+            android:fillColor="#FF7A1A"
+            android:pathData="M256,96m-0,0a160,160 0 1,0 0,320a160,160 0 1,0 0,-320" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#0A0A0C"
+            android:strokeWidth="38"
+            android:strokeLineJoin="round"
+            android:pathData="M216,192H252A64,64 0 0,1 252,320H216Z" />
+        <path
+            android:fillColor="#2BE4FF"
+            android:pathData="M344,151m-0,0a17,17 0 1,0 0,34a17,17 0 1,0 0,-34" />
+    </group>
+</vector>
