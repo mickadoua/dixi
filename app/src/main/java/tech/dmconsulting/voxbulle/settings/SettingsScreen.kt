@@ -66,6 +66,7 @@ val DictationLanguage.label: Int
 /**
  * Screen 10 (neon mockup 06, DMC-213): offer card, bubble, auto-paste (DMC-141, through
  * screen 8), language, Mistral key (DMC-227), history, privacy, about. A tab: no back arrow.
+ * [onOpenOffer]: null while the offer screen is hidden, and its card with it.
  */
 @Composable
 fun SettingsScreen(
@@ -75,7 +76,7 @@ fun SettingsScreen(
     autoPaste: AutoPasteToggle,
     mistralKey: MistralKeyStore,
     keyCheck: MistralKeyCheck,
-    onOpenOffer: () -> Unit,
+    onOpenOffer: (() -> Unit)?,
 ) {
     val settings by settingsStore.settings.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
@@ -95,7 +96,9 @@ fun SettingsScreen(
             Text(stringResource(R.string.screen_settings), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
             if (LocalDemoMode.current) DemoModeLabel()
         }
-        OfferCard(onOpenOffer, Modifier.padding(start = Dimens.ScreenMargin, end = Dimens.ScreenMargin, top = 20.dp))
+        if (onOpenOffer != null) {
+            OfferCard(onOpenOffer, Modifier.padding(start = Dimens.ScreenMargin, end = Dimens.ScreenMargin, top = 20.dp))
+        }
 
         Section(R.string.settings_section_bubble)
         SwitchRow(
