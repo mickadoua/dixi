@@ -248,6 +248,8 @@ class BubbleService :
         MicPermissionActivity.start(this)
     }
 
+    override fun askNotifications(): Boolean = MicPermissionActivity.askNotificationsIfNeeded(this)
+
     /**
      * « Texte copié », gone after 6 s. A tap or « Voir le texte » opens the history (screen 7).
      * In « Mode démo » the fake Voxtral wrote the text: a tap opens screen 10 to add a key (DMC-227).
