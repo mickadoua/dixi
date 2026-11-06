@@ -71,6 +71,7 @@ class DictationControllerTest {
             if (pasteMs > 0) delay(pasteMs)
             return pasteResult()
         }
+        var micAsks = 0
 
         override fun copy(text: String, stoppedAtMs: Long) {
             texts += text
@@ -87,6 +88,10 @@ class DictationControllerTest {
         override fun showPanel(panel: DictationPanel) {
             panels += panel
             if (panel is DictationPanel.Suggestion) suggestedAt = scope.testScheduler.currentTime
+        }
+
+        override fun askMicrophone() {
+            micAsks++
         }
     }
 
@@ -226,17 +231,29 @@ class DictationControllerTest {
     }
 
     @Test
-    fun deniedMicrophoneShowsTheErrorWithoutListening() {
+    fun deniedMicrophoneAsksForItWithoutListeningOrError() {
         recorder.startError = RecordingError.MicrophoneDenied
         controller.onTap()
 
-        assertEquals(listOf(BubbleState.Error), states)
-        assertEquals(listOf(R.string.error_mic_denied), output.errors)
+        assertEquals(1, output.micAsks)
+        assertEquals(emptyList<BubbleState>(), states)
+        assertEquals(emptyList<Int>(), output.errors)
+    }
+
+    @Test
+    fun aTapOnceTheMicrophoneIsAllowedStartsTheDictation() {
+        recorder.startError = RecordingError.MicrophoneDenied
+        controller.onTap()
+        recorder.startError = null
+        controller.onTap()
+
+        assertEquals(BubbleState.Listening, bubble.state)
+        assertEquals(2, recorder.starts)
     }
 
     @Test
     fun aTapOnTheErrorStartsANewDictation() {
-        recorder.startError = RecordingError.MicrophoneDenied
+        recorder.startError = RecordingError.StartFailed
         controller.onTap()
         recorder.startError = null
         controller.onTap()

@@ -61,6 +61,9 @@ interface DictationOutput {
     fun showError(@StringRes message: Int)
 
     fun showPanel(panel: DictationPanel)
+
+    /** No microphone permission yet: explain, then ask Android (DMC-338). */
+    fun askMicrophone()
 }
 
 /**
@@ -96,6 +99,11 @@ class DictationController(
 
     private fun start() {
         val error = recorder.start()
+        if (error == RecordingError.MicrophoneDenied) {
+            // Not an error yet: the user was never asked, or can still say yes.
+            output.askMicrophone()
+            return
+        }
         if (error != null) {
             fail(error.message)
             return

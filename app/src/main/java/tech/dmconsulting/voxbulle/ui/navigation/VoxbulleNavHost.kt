@@ -84,7 +84,7 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     val autoPaste = rememberAutoPasteToggle(container.settings, onDisclose = openDisclosure)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val openOffer = { navController.navigate(Screen.Offer.route) }
+    val openOffer = if (Screen.offerShown) ({ navController.navigate(Screen.Offer.route) }) else null
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         Scaffold(
             containerColor = Neon.Bg,

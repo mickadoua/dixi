@@ -25,10 +25,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Own task, over the app in use: opened by the bubble to ask for the microphone. -->
+        <activity
+            android:name=".permissions.MicPermissionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Voxbulle.Translucent" />
+
+        <!-- Not a foreground service: only RecordingService opens the microphone (DMC-338). -->
         <service
             android:name=".bubble.BubbleService"
-            android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:exported="false" />
 
         <service
             android:name=".recording.RecordingService"
