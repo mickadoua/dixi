@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Resource ids for uiautomator: tech.dmconsulting.dixi.pastetarget:id/field_text, …/field_password. -->
+    <item name="field_text" type="id" />
+    <item name="field_password" type="id" />
+    <item name="password_length" type="id" />
+</resources>

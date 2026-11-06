@@ -235,6 +235,7 @@ class BubbleService :
         val on = (application as VoxbulleApp).container.settings.settings.first().autoPasteEnabled
         val pasted = on && AutoPasteService.paste()
         overlay.toastPasted = pasted
+        debugPastedReadyMs?.let { controller.readyToIdleMs = if (pasted) it else BubbleController.READY_TO_IDLE_MS }
         return pasted
     }
 
@@ -410,6 +411,10 @@ class BubbleService :
         /** Set only by the debug build (DebugRecordingReceiver): the emulator opens the shade too slowly for 6 s. */
         @Volatile
         var debugCopiedTimeoutMs: Long? = null
+
+        /** Set only by the debug build (DebugRecordingReceiver): « Texte collé » shows 1.5 s, too short for an emulator screenshot. */
+        @Volatile
+        var debugPastedReadyMs: Long? = null
 
         /** Shows the bubble again, even if the user hid it. */
         const val ACTION_SHOW = "tech.dmconsulting.voxbulle.action.SHOW_BUBBLE"

@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "voxbulle-poc"
 include(":app")
+include(":pastetarget")
