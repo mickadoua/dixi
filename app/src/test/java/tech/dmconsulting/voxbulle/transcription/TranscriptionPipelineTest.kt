@@ -1,12 +1,12 @@
 package tech.dmconsulting.voxbulle.transcription
 
-import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import tech.dmconsulting.voxbulle.settings.AppSettings
 import tech.dmconsulting.voxbulle.settings.DictationLanguage
 import tech.dmconsulting.voxbulle.settings.InMemorySettingsStore
+import java.io.File
 
 class TranscriptionPipelineTest {
     private val audio = File("dictation.m4a")

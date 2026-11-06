@@ -1,6 +1,5 @@
 package tech.dmconsulting.voxbulle
 
-import java.io.File
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockWebServer
 import org.junit.After
@@ -25,6 +24,7 @@ import tech.dmconsulting.voxbulle.transcription.Transcript
 import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 import tech.dmconsulting.voxbulle.transcription.answer
+import java.io.File
 
 class AppContainerTest {
     @get:Rule val folder = TemporaryFolder()
@@ -41,8 +41,7 @@ class AppContainerTest {
     @After
     fun tearDown() = server.close()
 
-    private fun container(key: String? = null) =
-        AppContainer(mistralKey = InMemoryMistralKeyStore(key), mistralBaseUrl = server.url("/"))
+    private fun container(key: String? = null) = AppContainer(mistralKey = InMemoryMistralKeyStore(key), mistralBaseUrl = server.url("/"))
 
     @Test
     fun withoutKeyTheFakesAnswerAndNothingIsSent() = runTest {

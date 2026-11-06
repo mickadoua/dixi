@@ -9,10 +9,10 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
-import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
 
 enum class RecorderState { Idle, Starting, Recording, Warning }
 
@@ -46,11 +46,13 @@ class Recorder(private val context: Context) {
                     _state.value = RecorderState.Warning
                     service?.showWarning()
                 }
+
                 TimerEvent.LimitReached -> {
                     Log.i(TAG, "recording limit reached at ${session?.elapsedMs()} ms")
                     stop()
                     return
                 }
+
                 null -> Unit
             }
             handler.postDelayed(this, TICK_MS)
@@ -122,11 +124,13 @@ class Recorder(private val context: Context) {
                 Log.i(TAG, "stale service command ignored (token $token, current $startToken)")
                 return
             }
+
             ForegroundDecision.StopService -> {
                 // Stopped before the service was ready.
                 service.stopRecordingForeground()
                 return
             }
+
             ForegroundDecision.Open -> Unit
         }
         this.service = service
@@ -177,13 +181,12 @@ class Recorder(private val context: Context) {
          * What to do when the service reaches the foreground for start [token].
          * A stale token while a newer start runs is ignored, so it cannot stop that recording.
          */
-        internal fun foregroundDecision(token: Int, currentToken: Int, state: RecorderState): ForegroundDecision =
-            when {
-                state == RecorderState.Idle -> ForegroundDecision.StopService
-                token != currentToken -> ForegroundDecision.Ignore
-                state == RecorderState.Starting -> ForegroundDecision.Open
-                else -> ForegroundDecision.Ignore
-            }
+        internal fun foregroundDecision(token: Int, currentToken: Int, state: RecorderState): ForegroundDecision = when {
+            state == RecorderState.Idle -> ForegroundDecision.StopService
+            token != currentToken -> ForegroundDecision.Ignore
+            state == RecorderState.Starting -> ForegroundDecision.Open
+            else -> ForegroundDecision.Ignore
+        }
 
         private const val TAG = MicrophoneRecorder.TAG
         private const val TICK_MS = 250L

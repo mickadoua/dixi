@@ -41,13 +41,16 @@ class BubbleOverlay(
     private val windowManager = context.getSystemService(WindowManager::class.java)
     private val density = context.resources.displayMetrics.density
     private val size = px(56f)
+
     /** Room around the disc in the backdrop window: glow and halo rings. */
     private val glow = px(BubbleState.GLOW_MARGIN_DP)
     private val margin = px(8f)
     private val hideZoneWidth = px(240f)
     private val hideZoneHeight = px(180f)
+
     /** Drop target radius around the disc center (the disc itself is 72 dp). */
     private val hideTargetRadius = px(48f)
+
     /** Disc bottom 52 dp above the navigation bar, as before the neon pass. */
     private val hideZoneBottom = px(52f - HideZoneView.GLOW_DP)
 
@@ -80,6 +83,7 @@ class BubbleOverlay(
     private var panelShown = false
     private var listeningSinceMs = 0L
     private val toast = CopiedToastView(context)
+
     // Touchable: Android 12+ draws a non-touchable overlay at 80 % at most, and the toast must be opaque.
     private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT)
     private var toastShown = false
@@ -296,6 +300,7 @@ class BubbleOverlay(
                 startY = bubbleParams.y
                 view.isPressed = true
             }
+
             MotionEvent.ACTION_MOVE -> {
                 if (ignoreGesture) return true
                 if (tracker.move(event.rawX, event.rawY)) {
@@ -304,6 +309,7 @@ class BubbleOverlay(
                 }
                 if (tracker.isDragging) dragTo(event)
             }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 view.isPressed = false
                 if (ignoreGesture) return true
@@ -317,11 +323,14 @@ class BubbleOverlay(
                 hideHideZone()
                 when (release) {
                     Release.Click -> view.performClick()
+
                     Release.Hide -> {
                         Log.i(TAG, "bubble dropped on hide zone")
                         onHide()
                     }
+
                     Release.Snap -> snap()
+
                     Release.None -> Unit
                 }
             }
@@ -436,7 +445,10 @@ class BubbleOverlay(
                 WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
             )
             return BubbleGeometry(
-                metrics.bounds.width(), metrics.bounds.height(), size, margin,
+                metrics.bounds.width(),
+                metrics.bounds.height(),
+                size,
+                margin,
                 BubbleGeometry.Insets(i.left, i.top, i.right, i.bottom),
             )
         }
@@ -445,7 +457,10 @@ class BubbleOverlay(
         windowManager.defaultDisplay.getRealMetrics(metrics)
         // Before Android 11 there is no public inset query here: typical bar heights.
         return BubbleGeometry(
-            metrics.widthPixels, metrics.heightPixels, size, margin,
+            metrics.widthPixels,
+            metrics.heightPixels,
+            size,
+            margin,
             BubbleGeometry.Insets(0, px(24f), 0, px(48f)),
         )
     }

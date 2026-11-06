@@ -50,7 +50,9 @@ import tech.dmconsulting.voxbulle.ui.navigation.Screen
  * (see [DictationController]).
  * Dropped on the hide zone, the bubble hides until its notification (or [show]) brings it back.
  */
-class BubbleService : Service(), DictationOutput {
+class BubbleService :
+    Service(),
+    DictationOutput {
 
     private val handler = Handler(Looper.getMainLooper())
     private val scope = MainScope()
@@ -86,6 +88,7 @@ class BubbleService : Service(), DictationOutput {
             elapsedMs = SystemClock::elapsedRealtime,
         )
     }
+
     /** The last dictation went to the fakes: no key saved (DMC-227). */
     private var demoDictation = false
     private lateinit var store: BubblePositionStore
@@ -251,14 +254,17 @@ class BubbleService : Service(), DictationOutput {
      */
     override fun notifyCopied(recordingMs: Long) {
         val history = PendingIntent.getActivity(
-            this, 0,
+            this,
+            0,
             Intent(this, MainActivity::class.java)
                 .putExtra(MainActivity.EXTRA_SCREEN, Screen.History.name)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val hide = PendingIntent.getService(
-            this, 1, Intent(this, BubbleService::class.java).setAction(ACTION_HIDE),
+            this,
+            1,
+            Intent(this, BubbleService::class.java).setAction(ACTION_HIDE),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
@@ -321,7 +327,9 @@ class BubbleService : Service(), DictationOutput {
     @SuppressLint("LaunchActivityFromNotification")
     private fun notifyHidden() {
         val show = PendingIntent.getService(
-            this, 0, Intent(this, BubbleService::class.java).setAction(ACTION_SHOW),
+            this,
+            0,
+            Intent(this, BubbleService::class.java).setAction(ACTION_SHOW),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_BUBBLE)

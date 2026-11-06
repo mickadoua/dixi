@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import kotlin.concurrent.thread
 import kotlinx.coroutines.runBlocking
+import kotlin.concurrent.thread
 
 /**
  * Runs [MistralProbe] in the installed APK and logs its report under [TAG]. Debug and probe

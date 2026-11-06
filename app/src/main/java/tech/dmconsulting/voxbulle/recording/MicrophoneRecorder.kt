@@ -64,8 +64,7 @@ class MicrophoneRecorder(private val context: Context) : AudioCapture {
     }
 
     @Suppress("DEPRECATION")
-    private fun newRecorder(): MediaRecorder =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+    private fun newRecorder(): MediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
 
     companion object {
         /** Kept from the PoC: scripts/emu-proof.sh reads this log tag. */

@@ -5,10 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
-import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +13,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
+import java.time.Instant
 
 /** History kept in a JSON file on the phone, so it survives the app being stopped. Text only. */
 class DataStoreDictationHistory(private val store: DataStore<List<Dictation>>) : DictationHistory {

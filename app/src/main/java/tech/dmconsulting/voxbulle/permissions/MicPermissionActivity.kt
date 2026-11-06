@@ -54,14 +54,12 @@ class MicPermissionActivity : ComponentActivity() {
         finish()
     }
 
-    private fun needsNotificationPermission() =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
+    private fun needsNotificationPermission() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+        PackageManager.PERMISSION_GRANTED
 
-    private fun appSettingsIntent() =
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    private fun appSettingsIntent() = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     companion object {
         fun start(context: Context) {
@@ -87,8 +85,10 @@ private fun MicPermissionFlow(
     fun afterMic() {
         when {
             micGranted -> onDone(true)
+
             // Second refusal, or « Ne plus demander »: only the settings can allow it now.
             !canAskMicAgain() -> step = Step.Settings
+
             else -> onDone(false)
         }
     }
@@ -117,7 +117,9 @@ private fun MicPermissionFlow(
             },
             onDismiss = { onDone(false) },
         )
+
         Step.Asking -> Unit
+
         Step.Settings -> PermissionDialog(
             title = R.string.mic_settings_title,
             body = R.string.mic_settings_body,

@@ -18,6 +18,5 @@ object BubbleSwitch {
     }
 
     /** Android's "Display over other apps" page for this app. */
-    fun overlayPermissionIntent(context: Context) =
-        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+    fun overlayPermissionIntent(context: Context) = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
 }

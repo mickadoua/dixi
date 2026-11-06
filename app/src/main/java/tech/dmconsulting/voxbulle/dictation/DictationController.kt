@@ -1,9 +1,6 @@
 package tech.dmconsulting.voxbulle.dictation
 
 import androidx.annotation.StringRes
-import java.io.File
-import java.time.Instant
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -18,6 +15,9 @@ import tech.dmconsulting.voxbulle.recording.RecordingOutcome
 import tech.dmconsulting.voxbulle.transcription.Transcript
 import tech.dmconsulting.voxbulle.transcription.VoxtralError
 import tech.dmconsulting.voxbulle.transcription.VoxtralResult
+import java.io.File
+import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 
 /** The microphone side of a dictation; every end comes back to [DictationController.onRecordingFinished]. */
 interface DictationRecorder {
@@ -178,10 +178,12 @@ class DictationController(
         }
         when (outcome) {
             is RecordingOutcome.Failure -> fail(outcome.error.message)
+
             RecordingOutcome.Cancelled -> {
                 output.showPanel(DictationPanel.None)
                 bubble.setState(BubbleState.Idle)
             }
+
             is RecordingOutcome.Success -> process(outcome)
         }
     }
@@ -204,6 +206,7 @@ class DictationController(
             }
             when (result) {
                 is VoxtralResult.Failure -> fail(result.error.message)
+
                 is VoxtralResult.Success -> {
                     pending = Pending(stoppedAt, recording.durationMs)
                     output.showPanel(DictationPanel.Suggestion(result.value.text))

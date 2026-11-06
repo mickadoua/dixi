@@ -244,6 +244,7 @@ class HideZoneView(context: Context) : View(context) {
         typeface = ResourcesCompat.getFont(context, R.font.inter_semibold)
         color = ContextCompat.getColor(context, R.color.bubble_hide_zone_label)
     }
+
     // Dark pill behind the label: readable on a light or a dark app behind.
     private val labelPill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.bubble_hide_zone), 235)
@@ -276,9 +277,13 @@ class HideZoneView(context: Context) : View(context) {
         val padX = dp(12f)
         val padY = dp(6f)
         canvas.drawRoundRect(
-            cx - labelBounds.width() / 2f - padX, baseline + labelBounds.top - padY,
-            cx + labelBounds.width() / 2f + padX, baseline + labelBounds.bottom + padY,
-            dp(16f), dp(16f), labelPill,
+            cx - labelBounds.width() / 2f - padX,
+            baseline + labelBounds.top - padY,
+            cx + labelBounds.width() / 2f + padX,
+            baseline + labelBounds.bottom + padY,
+            dp(16f),
+            dp(16f),
+            labelPill,
         )
         canvas.drawText(label, cx, baseline, text)
     }

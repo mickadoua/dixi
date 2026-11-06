@@ -99,11 +99,13 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                     composable(screen.route) {
                         when (screen) {
                             Screen.Home -> HomeScreen(bubble, container.history, onOpenOffer = openOffer)
+
                             Screen.History -> HistoryScreen(
                                 history = container.history,
                                 onBack = back,
                                 onOpenSettings = { navController.navigate(Screen.Settings.route) },
                             )
+
                             Screen.Settings -> SettingsScreen(
                                 container.settings,
                                 container.history,
@@ -113,7 +115,9 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                                 container.keyCheck,
                                 onOpenOffer = openOffer,
                             )
+
                             Screen.Offer -> OfferScreen(onBack = back)
+
                             Screen.AutoPasteDisclosure -> AutoPasteDisclosureScreen(
                                 onBack = back,
                                 onAccept = {
@@ -124,7 +128,9 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
                                 },
                                 onDecline = back,
                             )
+
                             Screen.Welcome -> WelcomeScreen(onStart = { navController.navigate(Screen.MicPermission.route) })
+
                             else -> PlaceholderScreen(screen, onOpen = { navController.navigate(it.route) }) {
                                 // Real calls need a recording: only the fakes run from this preview.
                                 if (screen == Screen.Trial && demoMode) TrialPreview(container.transcription)

@@ -1,9 +1,9 @@
 package tech.dmconsulting.voxbulle.debug
 
-import java.nio.file.Files
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.nio.file.Files
 
 /** The probe passes on the JVM; scripts/mistral-probe.sh runs it in the minified APK. */
 class MistralProbeTest {
