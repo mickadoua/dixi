@@ -4,7 +4,8 @@
 #   /opt/android/admin/emu/emu-run phone -- bash scripts/emu-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -21,7 +22,7 @@ sleep 25
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 close_dialogs
 $ADB logcat -c
-$ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true
+$ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true
 sleep 3
 # Another app in front. Not Settings: it hides third-party overlays on purpose.
 $ADB shell pm list packages | grep -E 'chrome|contacts|dialer|messaging|launcher' | tee "$OUT/packages.txt"

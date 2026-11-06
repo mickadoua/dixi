@@ -5,7 +5,8 @@
 #   emu-run phone -- scripts/mistral-probe.sh app/build/outputs/apk/probe/app-probe.apk OUT_DIR
 set -u
 ADB=${ADB:-$ANDROID_HOME/platform-tools/adb}
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 APK=$1; OUT=$2
 mkdir -p "$OUT"
 $ADB install -r -g "$APK" || exit 1
@@ -14,7 +15,7 @@ $ADB install -r -g "$APK" || exit 1
 # emulator clock jumps back for some seconds.
 RUN="run-$(date +%s)-$$"
 $ADB logcat -c || echo "logcat -c failed, reading the lines of $RUN only"
-$ADB shell am broadcast -n $PKG/.debug.MistralProbeReceiver --es run "$RUN"
+$ADB shell am broadcast -n $PKG/$NS.debug.MistralProbeReceiver --es run "$RUN"
 for i in $(seq 1 30); do
   $ADB logcat -d -s VoxbulleProbe:* | grep -F "$RUN " > "$OUT/probe.txt"
   grep -q "$RUN PROBE \(PASS\|FAIL\)" "$OUT/probe.txt" && break

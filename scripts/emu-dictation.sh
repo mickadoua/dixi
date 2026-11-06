@@ -9,7 +9,8 @@
 #   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-dictation.sh a <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
-PKG=tech.dmconsulting.voxbulle
+PKG=tech.dmconsulting.dixi
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
 PART=${1:-a}
 OUT=${2:-dictation-proof-out}/$PART
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
@@ -18,9 +19,9 @@ shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$
 log() { $ADB logcat -d -s VoxbulleProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
-limits() { $ADB shell am broadcast -n $PKG/.recording.DebugRecordingReceiver "$@" >/dev/null; }
+limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
 contacts() { $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact >/dev/null; sleep 4; }
-show_bubble() { $ADB shell am start -W -n $PKG/.MainActivity --ez showBubble true >/dev/null; sleep 3; }
+show_bubble() { $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null; sleep 3; }
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
 wait_log() { for _ in $(seq 1 "${2:-10}"); do log | grep -q "$1" && return 0; sleep 1; done; return 1; }
@@ -188,7 +189,7 @@ if [ "$PART" = b ]; then
   start_bubble
   tap_bubble; sleep 0.3
   shot 8-error-mic-denied
-  check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "mic error shown" "wait_log 'dictation error: Dixi a besoin du micro' 5"
   check "no crash on the tap without mic" "[ \"\$(app_pid)\" = '$PID' ] && no_crash"
   log | grep -E "bubble state|dictation error" | tee "$OUT/errors.txt"
   $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
@@ -228,7 +229,7 @@ if [ "$PART" = c ]; then
   echo "--- c1. Microphone never granted: tap gives the error, no crash"
   tap_bubble; sleep 0.3
   shot 12-error-mic-never-granted
-  check "mic error shown" "wait_log 'dictation error: Voxbulle a besoin du micro' 5"
+  check "mic error shown" "wait_log 'dictation error: Dixi a besoin du micro' 5"
   check "no crash" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
 fi
 
