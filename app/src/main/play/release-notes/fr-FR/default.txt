@@ -1,4 +1,4 @@
-Première version de Voxbulle.
+Première version de Dixi.
 • Bulle flottante pour dicter dans toutes vos applis.
 • Transcription par Mistral avec votre propre clé API.
 • Correction d'un mot au toucher avant de valider.

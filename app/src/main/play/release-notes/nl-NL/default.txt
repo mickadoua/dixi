@@ -1,4 +1,4 @@
-Eerste versie van Voxbulle.
+Eerste versie van Dixi.
 • Zwevende bel om in al je apps te dicteren.
 • Transcriptie door Mistral met je eigen API-sleutel.
 • Tik op een woord om het te verbeteren voor je bevestigt.

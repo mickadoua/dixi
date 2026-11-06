@@ -1,11 +1,11 @@
-Voxbulle è una bolla mobile che trasforma la tua voce in testo, in qualsiasi app Android.
+Dixi è una bolla mobile che trasforma la tua voce in testo, in qualsiasi app Android.
 
 COME FUNZIONA
 1. Tocca la bolla: resta sopra le tue altre app.
 2. Parla. L'onda si muove con la tua voce, fino a 5 minuti per dettatura.
-3. Voxbulle ti propone il testo. Tocca una parola per correggerla, poi conferma: il testo viene copiato (e incollato per te se attivi l'opzione qui sotto).
+3. Dixi ti propone il testo. Tocca una parola per correggerla, poi conferma: il testo viene copiato (e incollato per te se attivi l'opzione qui sotto).
 
-COSA FA VOXBULLE
+COSA FA DIXI
 • Una bolla sopra le altre app, che nascondi con un gesto. Una linguetta sul bordo o una notifica la riporta.
 • Il testo viene sistemato: punteggiatura, paragrafi, esitazioni tolte. Il senso non cambia.
 • Dettatura in francese o inglese. Rilevamento automatico tra i due, o lingua scelta nelle impostazioni.
@@ -13,17 +13,18 @@ COSA FA VOXBULLE
 • Nessun account da creare.
 
 TRASCRIZIONE MISTRAL, CON LA TUA CHIAVE API
-La trascrizione è fatta da Mistral (modello Voxtral). Per usarla crei la tua chiave API su console.mistral.ai e la incolli nelle impostazioni di Voxbulle. La chiave resta cifrata sul telefono. L'uso dell'API è fatturato da Mistral secondo le sue condizioni, non da Voxbulle. Senza chiave, l'app funziona in modalità demo: testo di esempio, non viene inviato nulla.
+La trascrizione è fatta da Mistral (modello Voxtral). Per usarla crei la tua chiave API su console.mistral.ai e la incolli nelle impostazioni di Dixi. La chiave resta cifrata sul telefono. L'uso dell'API è fatturato da Mistral secondo le sue condizioni, non da Dixi. Senza chiave, l'app funziona in modalità demo: testo di esempio, non viene inviato nulla.
 
 INCOLLA AUTOMATICO (OPZIONALE)
-Disattivato per impostazione predefinita. Se lo attivi, Voxbulle usa il servizio di accessibilità di Android per una sola cosa: incollare il testo dettato nel campo in cui scrivi. Non legge il contenuto dello schermo e non raccoglie dati. Senza questa opzione, il testo viene copiato e lo incolli tu.
+Disattivato per impostazione predefinita. Se lo attivi, Dixi usa il servizio di accessibilità di Android per una sola cosa: incollare il testo dettato nel campo in cui scrivi. Non legge il contenuto dello schermo e non raccoglie dati. Senza questa opzione, il testo viene copiato e lo incolli tu.
 
 I TUOI DATI
-• L'audio e il testo trascritto passano da Mistral per la trascrizione. Voxbulle non conserva mai l'audio.
+• L'audio e il testo trascritto passano da Mistral per la trascrizione. Dixi non conserva mai l'audio.
 • Il testo delle ultime dettature resta sul telefono.
 • La tua chiave API resta sul telefono, cifrata.
 
 DA SAPERE
 • Per ora l'interfaccia dell'app è in francese.
-• Voxbulle richiede il microfono, una connessione a Internet e il permesso di mostrare la bolla sopra le altre app.
-• Voxbulle è un prodotto di DM Consulting.
+• Dixi richiede il microfono, una connessione a Internet e il permesso di mostrare la bolla sopra le altre app.
+• Dixi è un prodotto di DM Consulting.
+• Dixi: «ho detto» in latino.
