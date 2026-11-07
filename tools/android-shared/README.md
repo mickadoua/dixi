@@ -315,11 +315,19 @@ Profils (`EMU_PROFILES` dans `android-sdk.versions`) :
 
 | Profil | Image système | Appareil | RAM invitée |
 |---|---|---|---|
-| `phone` | `system-images;android-36;google_apis;x86_64` | `pixel_7` (1080×2400) | 4 Go (minimum imposé par l'émulateur) |
-| `phonelow` (essai DMC-408) | `system-images;android-36;google_apis;x86_64` | `pixel_7` (1080×2400) | 2,5 Go (`-lowram -memory 2560`) |
+| `phone` | `system-images;android-36;google_apis;x86_64` | `pixel_7` (1080×2400) | 2,5 Go (`-lowram -memory 2560`, depuis le 06/11) |
 | `tv` | `system-images;android-36;google-tv;x86_64` | `tv_1080p` (1920×1080) | 2 Go |
 
 **Options par profil** (DMC-408) : un 4e champ facultatif de `EMU_PROFILES`, séparé par des virgules. Seules `lowram` (`-lowram`) et `memory=<Mo>` (`-memory`, de 1024 à 8192) sont permises ; `sdk-sync.sh` refuse toute autre option. Il les écrit dans `avd/<profil>.avd/emu-options` (`lowram=yes`, `memory=2560`), dans le volume en lecture seule. Le superviseur les relit à chaque démarrage, avec la même liste blanche, et les ajoute à la ligne de commande de l'émulateur (construction du snapshot comprise). Elles entrent dans l'empreinte du snapshot : les changer le rend caduc.
+
+**`phone` à 2,5 Go** (DMC-408, mesures du 06/11 sur le profil d'essai `phonelow`, retiré depuis). Sans `-lowram`, l'émulateur porte toute RAM invitée sous 4096 Mo à 4096 Mo (« Increasing RAM size to 4096MB »). Le qemu de `phone` atteignait alors ~4,5 Go dès le démarrage, et il était tué à 5120 Mo au bout de 2 à 7 min.
+
+| Profil | Démarrage à froid | Depuis le snapshot | VmRSS du qemu à « prêt » | Snapshot sur disque |
+|---|---|---|---|---|
+| `phone`, 4096 Mo | 88 à 165 s | 18 à 28 s | 4365 à 4499 Mo | 2720 Mo |
+| `-lowram -memory 2560` | 96 et 103 s | 11 à 15 s | 3210 (froid) à 3404 Mo | 2090 Mo |
+
+Avec 2560 Mo, Android voit 2,4 Gio (`MemTotal`) et 1,8 Gio de zram. `ro.config.low_ram` n'est **pas** posée : Android ne passe pas en mode « appareil à faible mémoire », il a seulement moins de RAM. Une session de 13 min (`emu-proof.sh`, puis les parties a, b, n et h de `emu-dictation.sh`) a tenu, sans aucune mise à mort par manque de mémoire dans Android. `emu-panel.sh` passe en 13/13 sur les deux tailles. Les parties a et n de `emu-dictation.sh` donnent les mêmes échecs sur les deux tailles : ce script attend encore la copie directe, sans la suggestion à valider.
 
 Mesures réelles du 03/11 (N100, KVM, démarrage à froid, `-wipe-data`) :
 
