@@ -921,6 +921,20 @@ check "profils : emu-options déjà à jour, rien à écrire" '! grep -q "Profil
 sync_profiles "phone:$img:pixel_7"
 check "profils : options retirées du profil, emu-options à retirer" 'grep -q "Profil phone : options retirées" "$S/out" && grep -q "(dry-run) rm -f .*/phone.avd/emu-options" "$S/out"'
 
+# 37. Snapshot d'un profil retiré (DMC-408) : supprimé au repos, avec son état
+# publié ; celui d'un profil présent reste. Aucun profil visible (volume des
+# AVD absent) : rien n'est supprimé.
+wait_gone() { local _; for _ in $(seq 50); do [ ! -e "$1" ] && return 0; sleep 0.2; done; return 1; }
+mkdir -p "$W/data/golden/phone/avd" "$W/avd.off"
+mv "$W/avd" "$W/avd.off/avd" && mkdir "$W/avd"
+mkdir -p "$W/data/golden/old/avd" && echo x >"$W/data/golden/old/avd/ram.bin"
+echo "state=ready" >"$W/ctl/golden.old"
+sleep 6
+check "profil retiré : rien supprimé sans aucun profil visible" '[ -f "$W/data/golden/old/avd/ram.bin" ] && [ -d "$W/data/golden/phone" ] && [ -f "$W/ctl/golden.old" ]'
+rmdir "$W/avd" && mv "$W/avd.off/avd" "$W/avd" && rmdir "$W/avd.off"
+check "profil retiré : snapshot et état publié supprimés au repos" 'wait_gone "$W/data/golden/old" && wait_gone "$W/ctl/golden.old" && grep -q "snapshot propre de old retiré" "$W/supervisor.log"'
+check "profil retiré : snapshot d'un profil présent gardé" '[ -d "$W/data/golden/phone" ]'
+
 stop_sup
 echo "---"
 echo "$pass ok, $failn en échec"
