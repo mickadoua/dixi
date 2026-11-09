@@ -39,6 +39,21 @@ class FakesTest {
     }
 
     @Test
+    fun fakeCleanerDropsEnglishHesitations() = runTest {
+        val result = FakeTextCleaner().clean("hello um this is a dixi test text", DictationLanguage.Auto)
+        assertEquals(VoxtralResult.Success("Hello this is a dixi test text."), result)
+    }
+
+    @Test
+    fun fakeTranscriberReadsItsTextAtEachDictation() = runTest {
+        var text = "bonjour"
+        val fake = FakeTranscriber(delayMs = 0) { VoxtralResult.Success(text) }
+        assertEquals(VoxtralResult.Success("bonjour"), fake.transcribe(File("a.m4a"), DictationLanguage.Auto))
+        text = "hello"
+        assertEquals(VoxtralResult.Success("hello"), fake.transcribe(File("a.m4a"), DictationLanguage.Auto))
+    }
+
+    @Test
     fun fakeCleanerReportsSilence() = runTest {
         assertEquals(
             VoxtralResult.Failure(VoxtralError.NothingHeard),

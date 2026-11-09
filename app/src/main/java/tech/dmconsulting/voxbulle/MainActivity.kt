@@ -70,8 +70,9 @@ class MainActivity : ComponentActivity() {
         if (seed > 0 && firstCreate) {
             lifecycleScope.launch {
                 val now = Instant.now()
+                val samples = resources.getStringArray(R.array.debug_sample_dictations)
                 (seed downTo 1).forEach { i ->
-                    val text = SAMPLE_TEXTS[(i - 1) % SAMPLE_TEXTS.size]
+                    val text = samples[(i - 1) % samples.size]
                     container.history.add(Dictation(text, now.minus(Duration.ofHours(7L * (i - 1)))))
                 }
             }
@@ -85,12 +86,5 @@ class MainActivity : ComponentActivity() {
 
         /** Opens screen 10 over the start screen: dictation notifications about the key. */
         const val EXTRA_OPEN_SETTINGS = "openSettings"
-
-        private val SAMPLE_TEXTS = listOf(
-            "Bonjour Claire, je voulais confirmer le rendez-vous de jeudi à 14 h.",
-            "Compte-rendu : le client valide le devis. Prochaine étape, l’envoi du contrat signé " +
-                "et la planification de la réunion de lancement avec toute l’équipe la semaine prochaine.",
-            "Pense à relancer le fournisseur pour la livraison de lundi.",
-        )
     }
 }

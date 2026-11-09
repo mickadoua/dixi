@@ -277,7 +277,7 @@ class BubbleService :
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(getString(R.string.notif_copied_title))
-            .setSubText(formatDuration(recordingMs))
+            .setSubText(formatDuration(recordingMs, resources.configuration.locales[0]))
             .addAction(0, getString(R.string.notif_copied_show_text), history)
             .addAction(0, getString(R.string.bubble_action_hide), hide)
             .setAutoCancel(true)
