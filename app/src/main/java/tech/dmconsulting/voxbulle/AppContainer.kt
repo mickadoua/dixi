@@ -19,6 +19,7 @@ import tech.dmconsulting.voxbulle.transcription.MistralKeyCheck
 import tech.dmconsulting.voxbulle.transcription.TextCleaner
 import tech.dmconsulting.voxbulle.transcription.Transcriber
 import tech.dmconsulting.voxbulle.transcription.TranscriptionPipeline
+import tech.dmconsulting.voxbulle.transcription.VoxtralResult
 import tech.dmconsulting.voxbulle.transcription.VoxtralTextCleaner
 import tech.dmconsulting.voxbulle.transcription.VoxtralTranscriber
 
@@ -34,6 +35,8 @@ class AppContainer(
     val history: DictationHistory = InMemoryDictationHistory(),
     val settings: SettingsStore = InMemorySettingsStore(),
     mistralBaseUrl: HttpUrl = MistralHttp.defaultBaseUrl,
+    /** Raw text of a demo dictation, in the phone language. */
+    demoRawText: () -> String = { FakeTranscriber.SAMPLE_RAW_TEXT },
 ) {
 
     /** True without a saved key: dictations use the fakes and screens show « Mode démo ». */
@@ -41,7 +44,9 @@ class AppContainer(
 
     private val httpClient by lazy { MistralHttp.newClient() }
 
-    val transcriber: Transcriber = KeyedTranscriber(mistralKey, FakeTranscriber()) { key ->
+    private val demoTranscriber = FakeTranscriber { VoxtralResult.Success(demoRawText()) }
+
+    val transcriber: Transcriber = KeyedTranscriber(mistralKey, demoTranscriber) { key ->
         VoxtralTranscriber(key, httpClient, mistralBaseUrl)
     }
 

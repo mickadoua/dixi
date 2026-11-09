@@ -38,7 +38,7 @@ import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.history.Dictation
 import tech.dmconsulting.voxbulle.history.DictationHistory
 import tech.dmconsulting.voxbulle.history.copyToClipboard
-import tech.dmconsulting.voxbulle.history.formatDictationDate
+import tech.dmconsulting.voxbulle.history.dictationDateLabel
 import tech.dmconsulting.voxbulle.settings.BubbleToggle
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
 import tech.dmconsulting.voxbulle.ui.components.GlowLayer
@@ -51,8 +51,6 @@ import tech.dmconsulting.voxbulle.ui.components.SectionLabel
 import tech.dmconsulting.voxbulle.ui.components.neonGlow
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
 import tech.dmconsulting.voxbulle.ui.theme.Neon
-import java.time.Instant
-import java.time.ZoneId
 
 /**
  * Main screen (neon mockup 05, DMC-213): bubble switch, the big « Touchez, parlez »
@@ -179,13 +177,7 @@ private fun LastDictation(dictation: Dictation?, onCopy: (Dictation) -> Unit) {
         Text(dictation.text, style = MaterialTheme.typography.bodyLarge)
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                formatDictationDate(
-                    createdAt = dictation.createdAt,
-                    now = Instant.now(),
-                    zone = ZoneId.systemDefault(),
-                    today = stringResource(R.string.history_today),
-                    yesterday = stringResource(R.string.history_yesterday),
-                ),
+                dictationDateLabel(dictation.createdAt),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Neon.TextMuted,
                 modifier = Modifier.weight(1f),

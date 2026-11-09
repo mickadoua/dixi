@@ -16,6 +16,7 @@ class VoxbulleApp : Application() {
             mistralKey = FileMistralKeyStore(File(noBackupFilesDir, MISTRAL_KEY_FILE), KeystoreKeyCipher()),
             history = DataStoreDictationHistory.create(dataStoreFile("dictation_history.json")),
             settings = DataStoreSettingsStore.create(dataStoreFile("settings.preferences_pb")),
+            demoRawText = { getString(R.string.demo_raw_text) },
         )
     }
 
