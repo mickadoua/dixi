@@ -154,7 +154,7 @@
     <string name="key_status_none">Aucune clé · mode démo, rien n\'est envoyé</string>
     <string name="key_status_saved">Clé enregistrée</string>
     <string name="key_status_rejected">Clé refusée par Mistral. Vérifiez-la ou collez-en une autre.</string>
-    <string name="key_help">Créez une clé sur console.mistral.ai, puis collez-la ici. Elle reste chiffrée sur ce téléphone : jamais affichée, jamais sauvegardée ailleurs.</string>
+    <string name="key_help">Créez une clé sur console.mistral.ai, puis collez-la ici. Elle reste chiffrée sur ce téléphone : jamais affichée, jamais sauvegardée.</string>
     <string name="key_field">Coller la clé</string>
     <string name="key_save">Enregistrer</string>
     <string name="key_test">Tester la clé</string>

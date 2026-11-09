@@ -43,7 +43,7 @@
     <string name="settings_clear_history">Clear history</string>
     <string name="settings_clear_history_summary">Your last 20 dictations, text only</string>
     <string name="settings_privacy">Privacy</string>
-    <string name="settings_privacy_summary">Audio is sent for transcription, then deleted: never kept.</string>
+    <string name="settings_privacy_summary">Audio goes to Mistral for transcription. Dixi never keeps it.</string>
     <string name="settings_about">About</string>
     <string name="settings_about_summary">Version %1$s</string>
 
@@ -77,7 +77,7 @@
     <string name="home_last_dictation">Last dictation</string>
 
     <!-- Onboarding screen 1, neon mockup 08. -->
-    <string name="welcome_tagline">Speak, and it is written neatly. In all your apps.</string>
+    <string name="welcome_tagline">Speak, and Dixi writes it up cleanly. In every app.</string>
     <string name="welcome_no_account">No account to create.</string>
     <string name="welcome_start">Get started</string>
     <string name="welcome_step">Step %1$d of %2$d</string>
@@ -154,7 +154,7 @@
     <string name="key_status_none">No key · demo mode, nothing is sent</string>
     <string name="key_status_saved">Key saved</string>
     <string name="key_status_rejected">Key refused by Mistral. Check it or paste another one.</string>
-    <string name="key_help">Create a key at console.mistral.ai, then paste it here. It stays encrypted on this phone: never shown, never backed up anywhere else.</string>
+    <string name="key_help">Create a key at console.mistral.ai, then paste it here. It stays encrypted on this phone. It is never shown and never backed up.</string>
     <string name="key_field">Paste the key</string>
     <string name="key_save">Save</string>
     <string name="key_test">Test the key</string>
@@ -165,7 +165,7 @@
     <string name="key_deleted">Key deleted. Dictations now use demo mode.</string>
     <string name="key_check_running">Testing…</string>
     <string name="key_check_valid">Valid key: Mistral accepts it.</string>
-    <string name="key_check_rejected">Test: Mistral refuses this key (error 401 or 403).</string>
+    <string name="key_check_rejected">Mistral rejected this key (error 401 or 403).</string>
     <string name="key_check_no_connection">No network. Try again once you are online.</string>
     <string name="key_check_unavailable">Mistral service unavailable. Try again in a few minutes.</string>
     <string name="key_delete_title">Delete the key?</string>
