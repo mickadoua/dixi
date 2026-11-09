@@ -24,7 +24,6 @@ IHRE DATEN
 • Ihr API-Schlüssel bleibt verschlüsselt auf Ihrem Telefon.
 
 GUT ZU WISSEN
-• Die Oberfläche der App ist vorerst auf Französisch.
 • Dixi braucht das Mikrofon, eine Internetverbindung und die Erlaubnis, die Blase über anderen Apps anzuzeigen.
 • Dixi ist ein Produkt von DM Consulting.
 • Dixi: „Ich habe gesagt“ auf Latein.

@@ -4,4 +4,4 @@ Première version de Dixi.
 • Correction d'un mot au toucher avant de valider.
 • Collage automatique en option (accessibilité).
 • Historique des 20 dernières dictées.
-Interface en français pour le moment. Dictée en français et en anglais.
+Dictée en français et en anglais.

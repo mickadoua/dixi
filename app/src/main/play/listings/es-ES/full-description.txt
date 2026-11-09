@@ -24,7 +24,6 @@ TUS DATOS
 • Tu clave API se queda en tu teléfono, cifrada.
 
 CONVIENE SABER
-• Por ahora, la interfaz de la app está en francés.
 • Dixi necesita el micrófono, conexión a Internet y permiso para mostrar la burbuja sobre otras apps.
 • Dixi es un producto de DM Consulting.
 • Dixi: «dije» en latín.
