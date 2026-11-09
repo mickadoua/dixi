@@ -42,8 +42,6 @@ import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.ui.components.VoxbulleTopBar
 import tech.dmconsulting.voxbulle.ui.theme.Dimens
-import java.time.Instant
-import java.time.ZoneId
 
 /** Screen 9: the last dictations, newest first. Tapping a line or its icon copies the text. */
 @Composable
@@ -132,13 +130,7 @@ fun HistoryScreen(history: DictationHistory, onBack: () -> Unit, onOpenSettings:
 
 @Composable
 private fun HistoryItem(dictation: Dictation, onCopy: () -> Unit) {
-    val date = formatDictationDate(
-        createdAt = dictation.createdAt,
-        now = Instant.now(),
-        zone = ZoneId.systemDefault(),
-        today = stringResource(R.string.history_today),
-        yesterday = stringResource(R.string.history_yesterday),
-    )
+    val date = dictationDateLabel(dictation.createdAt)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.medium,

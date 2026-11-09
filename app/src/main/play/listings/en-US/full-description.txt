@@ -24,7 +24,6 @@ YOUR DATA
 • Your API key stays on your phone, encrypted.
 
 GOOD TO KNOW
-• The app interface is in French for now.
 • Dixi needs the microphone, an Internet connection and permission to display the bubble over other apps.
 • Dixi is a product of DM Consulting.
 • Dixi: “I have said” in Latin.
