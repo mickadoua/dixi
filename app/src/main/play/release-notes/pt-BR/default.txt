@@ -4,4 +4,4 @@ Primeira versão do Dixi.
 • Toque em uma palavra para corrigir antes de confirmar.
 • Colagem automática opcional (acessibilidade).
 • Histórico dos últimos 20 ditados.
-Por enquanto, a interface está em francês. Ditado em francês e inglês.
+Ditado em francês e inglês.

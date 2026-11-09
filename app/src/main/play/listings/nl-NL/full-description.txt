@@ -24,7 +24,6 @@ JE GEGEVENS
 • Je API-sleutel blijft versleuteld op je telefoon.
 
 HANDIG OM TE WETEN
-• De interface van de app is voorlopig in het Frans.
 • Dixi heeft de microfoon, een internetverbinding en toestemming nodig om de bel boven andere apps te tonen.
 • Dixi is een product van DM Consulting.
 • Dixi: “ik heb gezegd” in het Latijn.

@@ -24,7 +24,6 @@ I TUOI DATI
 • La tua chiave API resta sul telefono, cifrata.
 
 DA SAPERE
-• Per ora l'interfaccia dell'app è in francese.
 • Dixi richiede il microfono, una connessione a Internet e il permesso di mostrare la bolla sopra le altre app.
 • Dixi è un prodotto di DM Consulting.
 • Dixi: «ho detto» in latino.

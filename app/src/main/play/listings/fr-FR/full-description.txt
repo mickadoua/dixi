@@ -24,7 +24,6 @@ VOS DONNÉES
 • Votre clé API reste sur votre téléphone, chiffrée.
 
 BON À SAVOIR
-• L'interface de l'appli est en français pour le moment.
 • Dixi a besoin du micro, d'une connexion Internet et de l'autorisation d'afficher la bulle par-dessus les autres applis.
 • Dixi est un produit de DM Consulting.
 • Dixi : « j'ai dit » en latin.

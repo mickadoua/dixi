@@ -4,4 +4,4 @@ First version of Dixi.
 • Tap a word to fix it before you confirm.
 • Optional auto-paste (accessibility).
 • History of your last 20 dictations.
-The interface is in French for now. Dictation in French and English.
+Dictation in French and English.
