@@ -4,4 +4,4 @@ Erste Version von Dixi.
 • Wort antippen und korrigieren, dann bestätigen.
 • Optionales automatisches Einfügen (Bedienungshilfen).
 • Verlauf der letzten 20 Diktate.
-Die Oberfläche ist vorerst auf Französisch. Diktat auf Französisch und Englisch.
+Diktat auf Französisch und Englisch.

@@ -24,7 +24,6 @@ SEUS DADOS
 • Sua chave de API fica no seu celular, criptografada.
 
 BOM SABER
-• Por enquanto, a interface do app está em francês.
 • O Dixi precisa do microfone, de conexão com a Internet e de permissão para mostrar a bolha sobre outros apps.
 • O Dixi é um produto da DM Consulting.
 • Dixi: “eu disse” em latim.
