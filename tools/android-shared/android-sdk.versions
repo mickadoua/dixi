@@ -6,8 +6,8 @@
 JDK_VERSION="21.0.13+9"
 
 # Paquets sdkmanager figés par leur identifiant.
-BUILD_TOOLS="36.0.0"
-PLATFORMS="android-37.0"
+BUILD_TOOLS="35.0.0 36.0.0"
+PLATFORMS="android-36 android-37.0"
 
 # sdkmanager n'installe que la dernière version de ces deux paquets :
 # le script vérifie que la révision installée est bien celle-ci.
