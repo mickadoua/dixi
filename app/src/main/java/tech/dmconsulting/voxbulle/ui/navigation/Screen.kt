@@ -26,7 +26,7 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
     val links: List<Screen>
         get() = when (this) {
             Welcome -> listOf(MicPermission)
-            MicPermission -> listOf(Trial)
+            MicPermission -> listOf(Trial, BubbleIntro)
             Trial -> listOf(BubbleIntro)
             BubbleIntro -> listOf(BubbleEnabled)
             BubbleEnabled -> listOf(Home, AutoPasteDisclosure)
@@ -41,6 +41,7 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
     val isTab: Boolean get() = this in tabs
 
     companion object {
+        /** First screen of the onboarding. */
         val start = Welcome
         val tabs = listOf(Home, History, Settings)
 
@@ -49,5 +50,8 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
          * hidden until the founder sets the offers: no placeholder text in the store build (DMC-338).
          */
         val offerShown = false
+
+        /** Where the app opens once the onboarding is done. */
+        val home = Home
     }
 }
