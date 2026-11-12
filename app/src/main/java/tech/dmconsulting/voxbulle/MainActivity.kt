@@ -7,14 +7,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import tech.dmconsulting.voxbulle.bubble.BubbleService
 import tech.dmconsulting.voxbulle.bubble.BubbleSwitch
 import tech.dmconsulting.voxbulle.history.Dictation
+import tech.dmconsulting.voxbulle.onboarding.startScreen
 import tech.dmconsulting.voxbulle.settings.KeyStatus
 import tech.dmconsulting.voxbulle.ui.navigation.Screen
 import tech.dmconsulting.voxbulle.ui.navigation.VoxbulleNavHost
@@ -30,7 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val container = (application as VoxbulleApp).container
         // Test hook kept from the PoC (scripts/emu-proof.sh): start the bubble
-        // from the foreground activity. Onboarding (DMC-140) brings the real path.
+        // from the foreground activity. The real path is the onboarding, screen 4.
         if (intent.getBooleanExtra("showBubble", false) && Settings.canDrawOverlays(this)) {
             BubbleService.show(this)
         }
@@ -40,20 +45,29 @@ class MainActivity : ComponentActivity() {
                 BubbleSwitch.show(this@MainActivity)
             }
         }
-        val start = debugStartScreen(container, firstCreate = savedInstanceState == null)
+        val fixedStart = debugStartScreen(container, firstCreate = savedInstanceState == null)
             ?: Screen.History.takeIf { intent.getStringExtra(EXTRA_SCREEN) == it.name }
-            ?: Screen.start
         val openSettings = intent.getBooleanExtra(EXTRA_OPEN_SETTINGS, false)
         setContent {
             // No saved key: the fakes answer and every screen says « Mode démo » (DMC-227).
             val keyStatus by container.mistralKey.status.collectAsState()
             VoxbulleTheme {
-                VoxbulleNavHost(
-                    container,
-                    demoMode = keyStatus == KeyStatus.None,
-                    start = start,
-                    openOnTop = Screen.Settings.takeIf { openSettings },
-                )
+                // Read once per activity, then kept across rotations so the NavHost graph stays the same.
+                // Without a fixed start: the saved onboarding step, or the home screen once it is done.
+                var start by rememberSaveable { mutableStateOf(fixedStart?.name) }
+                LaunchedEffect(Unit) {
+                    if (start == null) {
+                        start = startScreen(container.settings.settings.first(), BubbleSwitch.canShow(this@MainActivity)).name
+                    }
+                }
+                Screen.entries.firstOrNull { it.name == start }?.let {
+                    VoxbulleNavHost(
+                        container,
+                        demoMode = keyStatus == KeyStatus.None,
+                        start = it,
+                        openOnTop = Screen.Settings.takeIf { openSettings },
+                    )
+                }
             }
         }
     }

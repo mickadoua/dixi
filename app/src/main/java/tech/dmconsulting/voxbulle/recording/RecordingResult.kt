@@ -1,5 +1,7 @@
 package tech.dmconsulting.voxbulle.recording
 
+import androidx.annotation.StringRes
+import tech.dmconsulting.voxbulle.R
 import java.io.File
 
 /** A finished recording. The caller sends [file] to the transcriber, then deletes it. */
@@ -16,6 +18,15 @@ enum class RecordingError {
     /** The system refused the foreground service or the microphone did not start. */
     StartFailed,
 }
+
+/** What to tell the user, the same on screen 3 and from the bubble. */
+@get:StringRes
+val RecordingError.message: Int
+    get() = when (this) {
+        RecordingError.MicrophoneDenied -> R.string.error_mic_denied
+        RecordingError.NothingHeard -> R.string.error_nothing_heard
+        RecordingError.StartFailed -> R.string.error_recording_failed
+    }
 
 sealed interface RecordingOutcome {
     data class Success(val result: RecordingResult) : RecordingOutcome

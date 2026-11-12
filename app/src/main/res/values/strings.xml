@@ -2,7 +2,6 @@
     <string name="app_name">Dixi</string>
 
     <!-- Screens, named like the mockups (DMC-121). -->
-    <string name="screen_heading">%1$d. %2$s</string>
     <string name="screen_welcome">Welcome</string>
     <string name="screen_mic_permission">Microphone permission</string>
     <string name="screen_trial">Try it</string>
@@ -16,6 +15,38 @@
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="text_copied">Text copied</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="onboarding_step">Step %1$d of 3</string>
+    <string name="mic_title">Dixi needs the microphone</string>
+    <string name="mic_body">To turn your voice into text. The audio is sent for transcription, then deleted: never kept.</string>
+    <string name="mic_allow">Allow the microphone</string>
+    <string name="mic_later">Later</string>
+    <string name="mic_open_settings">Open settings</string>
+    <string name="trial_top">Try it</string>
+    <string name="trial_title">Say a sentence</string>
+    <string name="trial_hint">Tap the microphone, speak, then tap again to stop.</string>
+    <string name="trial_hint_stop">I\'m listening. Tap to stop.</string>
+    <string name="trial_start">Start dictation</string>
+    <string name="trial_stop">Stop dictation</string>
+    <string name="trial_processing">Cleaning up the text…</string>
+    <string name="trial_copy">Copy</string>
+    <string name="trial_continue">Continue</string>
+    <string name="trial_skip">Skip the trial</string>
+    <string name="bubble_intro_preview">It stays within thumb\'s reach, in all your apps.</string>
+    <string name="bubble_intro_title">A bubble over your apps</string>
+    <string name="bubble_intro_step_tap">Tap the bubble to dictate</string>
+    <string name="bubble_intro_step_stop">Tap again to stop</string>
+    <string name="bubble_intro_step_copied">The clean text is copied</string>
+    <string name="bubble_intro_system">Android will ask you to allow “Display over other apps”.</string>
+    <string name="bubble_intro_open">Open the setting</string>
+    <string name="bubble_intro_not_now">Not now</string>
+    <string name="bubble_intro_refused">Setting not turned on</string>
+    <string name="bubble_enabled_title">The bubble is ready</string>
+    <string name="bubble_enabled_body">Open WhatsApp or your email, tap the bubble, speak.</string>
+    <string name="bubble_enabled_note">The text is copied. A notification confirms it.</string>
+    <string name="bubble_enabled_finish">Done</string>
+    <string name="bubble_enabled_auto_paste">Turn on auto-paste</string>
 
     <!-- Screen 9, history. -->
     <string name="history_intro">Your last 20 dictations, text only. Audio is never kept.</string>
@@ -179,7 +210,6 @@
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">Demo mode</string>
-    <string name="trial_demo_run">Run a test</string>
     <string name="trial_raw">You said (raw)</string>
     <string name="trial_clean">Dixi text</string>
     <string name="demo_mode_description">Demo mode: simulated transcription, nothing is sent.</string>
