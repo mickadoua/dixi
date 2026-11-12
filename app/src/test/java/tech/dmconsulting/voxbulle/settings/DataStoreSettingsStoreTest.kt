@@ -36,6 +36,7 @@ class DataStoreSettingsStoreTest {
         val file = file()
         val changed = AppSettings(
             onboardingDone = true,
+            onboardingStep = OnboardingStep.BubbleIntro,
             bubbleEnabled = true,
             autoPasteEnabled = true,
             language = DictationLanguage.English,

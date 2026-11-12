@@ -21,6 +21,11 @@ class ScreenTest {
     }
 
     @Test
+    fun onboardingEndsOnTheHomeTab() {
+        assertEquals(Screen.Home, Screen.home)
+    }
+
+    @Test
     fun routesAreUnique() {
         assertEquals(Screen.entries.size, Screen.entries.map { it.route }.toSet().size)
     }
