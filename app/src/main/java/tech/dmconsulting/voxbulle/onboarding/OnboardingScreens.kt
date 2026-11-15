@@ -462,19 +462,21 @@ fun BubbleIntroScreen(onEnabled: () -> Unit, onNotNow: () -> Unit, onBack: () ->
     }
 }
 
-/** Screen 5: the bubble is shown; the real test happens in another app. Auto-paste leads to screen 8. */
+/** Screen 5: the bubble is shown; the real test happens in another app. Auto-paste, if shown, leads to screen 8. */
 @Composable
-fun BubbleEnabledScreen(onFinish: () -> Unit, onAutoPaste: () -> Unit, onBack: () -> Unit) {
+fun BubbleEnabledScreen(onFinish: () -> Unit, onAutoPaste: (() -> Unit)?, onBack: () -> Unit) {
     OnboardingFrame(
         title = stringResource(R.string.onboarding_step, 3),
         onBack = onBack,
         actions = {
             FilledAction(stringResource(R.string.bubble_enabled_finish), onFinish)
-            FilledTonalButton(
-                onClick = onAutoPaste,
-                modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.ButtonHeight),
-            ) {
-                Text(stringResource(R.string.bubble_enabled_auto_paste))
+            if (onAutoPaste != null) {
+                FilledTonalButton(
+                    onClick = onAutoPaste,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.ButtonHeight),
+                ) {
+                    Text(stringResource(R.string.bubble_enabled_auto_paste))
+                }
             }
         },
     ) {

@@ -2,6 +2,5 @@ Première version de Dixi.
 • Bulle flottante pour dicter dans toutes vos applis.
 • Transcription par Mistral avec votre propre clé API.
 • Correction d'un mot au toucher avant de valider.
-• Collage automatique en option (accessibilité).
 • Historique des 20 dernières dictées.
 Dictée en français et en anglais.

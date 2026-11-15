@@ -102,8 +102,8 @@ fun VoxbulleNavHost(container: AppContainer, demoMode: Boolean, start: Screen = 
     val entry by navController.currentBackStackEntryAsState()
     val current = Screen.entries.firstOrNull { it.route == entry?.destination?.route } ?: start
     val bubble = rememberBubbleToggle(container.settings)
-    val openDisclosure = { navController.navigate(Screen.AutoPasteDisclosure.route) }
-    val autoPaste = rememberAutoPasteToggle(container.settings, onDisclose = openDisclosure)
+    val openDisclosure = if (Screen.autoPasteShown) ({ navController.navigate(Screen.AutoPasteDisclosure.route) }) else null
+    val autoPaste = openDisclosure?.let { rememberAutoPasteToggle(container.settings, onDisclose = it) }
     val openOffer = if (Screen.offerShown) ({ navController.navigate(Screen.Offer.route) }) else null
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         Scaffold(

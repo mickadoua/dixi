@@ -13,7 +13,7 @@
     <color name="bubble_hide_zone">#050507</color>
     <color name="bubble_hide_zone_label">#F5F5F7</color>
 
-    <!-- Panel, toast: mockups 09, 10 and 01 (mockups2.html, DMC-213). -->
+    <!-- Panel, toast: designs 09, 10 and 01 (second neon design file, DMC-213). -->
     <color name="panel_text">#F5F5F7</color>
     <color name="panel_muted">#A9A9B8</color>
     <color name="panel_line">#6E6E7E</color>

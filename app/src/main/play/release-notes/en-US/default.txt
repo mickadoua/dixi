@@ -2,6 +2,5 @@ First version of Dixi.
 • Floating bubble to dictate in all your apps.
 • Transcription by Mistral with your own API key.
 • Tap a word to fix it before you confirm.
-• Optional auto-paste (accessibility).
 • History of your last 20 dictations.
 Dictation in French and English.

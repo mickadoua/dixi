@@ -3,7 +3,7 @@ Dixi ist eine schwebende Blase, die Ihre Stimme in Text verwandelt, in jeder And
 SO FUNKTIONIERT ES
 1. Tippen Sie auf die Blase. Sie schwebt über Ihren anderen Apps.
 2. Sprechen Sie. Die Welle bewegt sich mit Ihrer Stimme, bis zu 5 Minuten pro Diktat.
-3. Dixi schlägt Ihnen den Text vor. Tippen Sie ein Wort an, um es zu korrigieren, und bestätigen Sie: Der Text wird kopiert (und für Sie eingefügt, wenn Sie die Option unten aktivieren).
+3. Dixi schlägt Ihnen den Text vor. Tippen Sie ein Wort an, um es zu korrigieren, und bestätigen Sie: Der Text wird kopiert.
 
 WAS DIXI KANN
 • Eine Blase über Ihren anderen Apps, die Sie mit einer Geste ausblenden. Ein Streifen am Rand oder eine Benachrichtigung holt sie zurück.
@@ -14,9 +14,6 @@ WAS DIXI KANN
 
 MISTRAL-TRANSKRIPTION MIT IHREM EIGENEN API-SCHLÜSSEL
 Die Transkription übernimmt Mistral (Modell Voxtral). Dafür erstellen Sie auf console.mistral.ai Ihren eigenen API-Schlüssel und fügen ihn in den Einstellungen von Dixi ein. Der Schlüssel bleibt verschlüsselt auf Ihrem Telefon. Die API-Nutzung rechnet Mistral nach eigenen Bedingungen ab, nicht Dixi. Ohne Schlüssel läuft die App im Demo-Modus: Beispieltext, nichts wird gesendet.
-
-AUTOMATISCHES EINFÜGEN (OPTIONAL)
-Standardmäßig aus. Wenn Sie es aktivieren, nutzt Dixi den Bedienungshilfen-Dienst von Android für genau eines: den diktierten Text in das Feld einzufügen, in dem Sie schreiben. Er liest keine Bildschirminhalte und sammelt keine Daten. Ohne diese Option wird der Text kopiert, und Sie fügen ihn selbst ein.
 
 IHRE DATEN
 • Das Audio und der transkribierte Text laufen für die Transkription über Mistral. Dixi speichert das Audio nie.

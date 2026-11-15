@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import tech.dmconsulting.voxbulle.R
 import tech.dmconsulting.voxbulle.ui.components.DemoModeLabel
@@ -78,12 +77,6 @@ fun AutoPasteDisclosureScreen(onBack: () -> Unit, onAccept: () -> Unit, onDeclin
         ) {
             Text(stringResource(R.string.disclosure_decline), style = MaterialTheme.typography.bodyLarge, color = Neon.Text)
         }
-        Text(
-            stringResource(R.string.disclosure_draft_note),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Neon.Magenta,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 24.dp),
-        )
+        Spacer(Modifier.height(24.dp))
     }
 }
