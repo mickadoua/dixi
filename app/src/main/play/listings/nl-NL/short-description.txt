@@ -1,1 +1,1 @@
-Spreek, de tekst verschijnt in elke app. Zwevende bel, eigen Mistral-sleutel.
+Spreek, tekst wordt gekopieerd, plak hem in elke app. Zwevende bel, eigen key.
