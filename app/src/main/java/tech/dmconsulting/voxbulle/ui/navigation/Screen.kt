@@ -1,6 +1,7 @@
 package tech.dmconsulting.voxbulle.ui.navigation
 
 import androidx.annotation.StringRes
+import tech.dmconsulting.voxbulle.BuildConfig
 import tech.dmconsulting.voxbulle.R
 
 /**
@@ -50,6 +51,12 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
          * hidden until the founder sets the offers: no placeholder text in the store build (DMC-338).
          */
         val offerShown = false
+
+        /**
+         * Screen 8 and its ways in (screen 5 button, settings switch): debug only, like the
+         * accessibility service, until Play accepts it in v1.1 (DMC-572).
+         */
+        val autoPasteShown = BuildConfig.AUTO_PASTE
 
         /** Where the app opens once the onboarding is done. */
         val home = Home

@@ -3,7 +3,7 @@ O Dixi é uma bolha flutuante que transforma sua voz em texto, em qualquer app A
 COMO FUNCIONA
 1. Toque na bolha: ela flutua sobre seus outros apps.
 2. Fale. A onda se move com sua voz, por até 5 minutos por ditado.
-3. O Dixi sugere o texto. Toque em uma palavra para corrigir e confirme: o texto é copiado (e colado para você se ativar a opção abaixo).
+3. O Dixi sugere o texto. Toque em uma palavra para corrigir e confirme: o texto é copiado.
 
 O QUE O DIXI FAZ
 • Uma bolha sobre seus outros apps, que você oculta com um gesto. Uma faixa na borda ou uma notificação a traz de volta.
@@ -14,9 +14,6 @@ O QUE O DIXI FAZ
 
 TRANSCRIÇÃO DA MISTRAL, COM SUA PRÓPRIA CHAVE DE API
 A transcrição é feita pela Mistral (modelo Voxtral). Para usá-la, você cria sua própria chave de API em console.mistral.ai e a cola nos ajustes do Dixi. A chave fica criptografada no seu celular. O uso da API é cobrado pela Mistral, conforme os termos dela, e não pelo Dixi. Sem chave, o app funciona em modo demonstração: texto de exemplo, nada é enviado.
-
-COLAGEM AUTOMÁTICA (OPCIONAL)
-Desativada por padrão. Se você ativar, o Dixi usa o serviço de acessibilidade do Android para uma única coisa: colar o texto ditado no campo em que você escreve. Ele não lê o conteúdo da sua tela e não coleta dados. Sem essa opção, o texto é copiado e você mesmo cola.
 
 SEUS DADOS
 • O áudio e o texto transcrito passam pela Mistral para a transcrição. O Dixi nunca guarda o áudio.

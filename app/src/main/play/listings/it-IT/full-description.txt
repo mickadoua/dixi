@@ -3,7 +3,7 @@ Dixi è una bolla mobile che trasforma la tua voce in testo, in qualsiasi app An
 COME FUNZIONA
 1. Tocca la bolla: resta sopra le tue altre app.
 2. Parla. L'onda si muove con la tua voce, fino a 5 minuti per dettatura.
-3. Dixi ti propone il testo. Tocca una parola per correggerla, poi conferma: il testo viene copiato (e incollato per te se attivi l'opzione qui sotto).
+3. Dixi ti propone il testo. Tocca una parola per correggerla, poi conferma: il testo viene copiato.
 
 COSA FA DIXI
 • Una bolla sopra le altre app, che nascondi con un gesto. Una linguetta sul bordo o una notifica la riporta.
@@ -14,9 +14,6 @@ COSA FA DIXI
 
 TRASCRIZIONE MISTRAL, CON LA TUA CHIAVE API
 La trascrizione è fatta da Mistral (modello Voxtral). Per usarla crei la tua chiave API su console.mistral.ai e la incolli nelle impostazioni di Dixi. La chiave resta cifrata sul telefono. L'uso dell'API è fatturato da Mistral secondo le sue condizioni, non da Dixi. Senza chiave, l'app funziona in modalità demo: testo di esempio, non viene inviato nulla.
-
-INCOLLA AUTOMATICO (OPZIONALE)
-Disattivato per impostazione predefinita. Se lo attivi, Dixi usa il servizio di accessibilità di Android per una sola cosa: incollare il testo dettato nel campo in cui scrivi. Non legge il contenuto dello schermo e non raccoglie dati. Senza questa opzione, il testo viene copiato e lo incolli tu.
 
 I TUOI DATI
 • L'audio e il testo trascritto passano da Mistral per la trascrizione. Dixi non conserva mai l'audio.
