@@ -49,7 +49,9 @@ En option, `VERSION_CODE` et `VERSION_NAME` remplacent les valeurs calculées (p
 
 Sans les quatre variables `UPLOAD_*`, le build release se fait quand même, non signé. Avec une partie seulement, le build échoue. La clé d'envoi vit hors du repo, chez le CTO ; Play garde la clé de signature de l'app (Play App Signing). Ne jamais committer de keystore (`*.jks` et `*.keystore` sont ignorés), ni coller un mot de passe dans une tâche ou un journal.
 
-L'envoi sur les pistes interne et fermée se fait depuis le NAS avec `bash scripts/play-publish.sh` (Gradle Play Publisher, DMC-330 ; usage en tête du script). `bash scripts/play-publish.sh --status` lit l'état des pistes sans rien modifier. Les pistes beta et production, la fiche du store (`--listing`) et toute suppression sont refusées par le script (DMC-500). Tests : `bash scripts/tests/play-publish-test.sh` (fausse API Play locale, sans réseau).
+L'envoi sur les pistes interne et fermée se fait depuis le NAS avec `bash scripts/play-publish.sh` (Gradle Play Publisher, DMC-330 ; usage en tête du script). `bash scripts/play-publish.sh --status` lit l'état des pistes sans rien modifier. Les pistes beta et production et toute suppression sont refusées par le script (DMC-500). Tests : `bash scripts/tests/play-publish-test.sh` (fausse API Play locale, sans réseau).
+
+La fiche du store (textes, images, coordonnées) et la sécurité des données passent par `python3 -I scripts/play-listing.py --langs en-US,fr-FR` (API Android Publisher, DMC-567 ; usage en tête du script), à partir de `app/src/main/play/` : sans option, essai à blanc (edit validé puis jeté) ; `--read` et `--verify` en lecture seule ; `--commit` enregistre puis relit. `--data-safety <csv>` n'est envoyé qu'avec `--commit`. Tests : `bash scripts/tests/play-listing-test.sh`.
 
 ## Clé Mistral
 
