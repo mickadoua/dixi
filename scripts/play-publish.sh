@@ -11,7 +11,8 @@
 #       edits.delete, never edits.commit. Needs only PLAY_SERVICE_ACCOUNT_JSON.
 #
 # Refused, with no way around it (Micka's decision of 11/11/2026 on DMC-442, DMC-500):
-# the public tracks beta and production, --listing (store listing) and any deletion.
+# the public tracks beta and production and any deletion. The store listing is not sent by
+# Gradle from here: it goes through scripts/play-listing.py (Micka, 15/11, DMC-567).
 #
 # Secrets come from the environment (Paperclip secrets) and are never printed:
 #   <PREFIX>_UPLOAD_KEYSTORE_B64, <PREFIX>_UPLOAD_KEYSTORE_PASSWORD, <PREFIX>_UPLOAD_KEY_ALIAS,
@@ -30,7 +31,7 @@ while [ $# -gt 0 ]; do
     case $1 in
         internal|alpha) TRACK=$1 ;;
         beta|production) die 3 "track '$1' is public: refused, it needs Micka's written approval (DMC-500)" ;;
-        --listing) die 3 "--listing refused: the store listing is not published by script (DMC-500)" ;;
+        --listing) die 3 "--listing refused here: the store listing goes through scripts/play-listing.py (DMC-567)" ;;
         --status) MODE=status ;;
         --release-status) STATUS=${2:-}; shift ;;
         *) die 2 "unknown argument '$1' (allowed: internal, alpha, --release-status, --status)" ;;
