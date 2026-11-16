@@ -63,4 +63,6 @@ L'app ne contient aucune clé : ni dans le repo, ni dans l'APK, ni dans `BuildCo
 
 Le script accorde les permissions, affiche la bulle, ouvre Contacts, appuie sur la bulle, puis colle le presse-papiers dans Contacts. Résultats : captures et `logcat.txt` (tag `VoxbulleProof`) dans `<dossier-de-sortie>`.
 
-L'outillage émulateur partagé du NAS est dans `tools/android-shared/` (voir son README).
+## Licence
+
+Apache-2.0, voir `LICENSE`. Les polices Inter sont sous SIL OFL 1.1 (`licenses/fonts-OFL.txt`, `NOTICE`).
