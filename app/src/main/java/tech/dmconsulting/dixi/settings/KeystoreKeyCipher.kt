@@ -54,6 +54,7 @@ class KeystoreKeyCipher(private val alias: String = ALIAS) : KeyCipher {
 
     private companion object {
         const val PROVIDER = "AndroidKeyStore"
+
         // Old app name kept on purpose: a new alias would lose the key already saved (DMC-653).
         const val ALIAS = "voxbulle_mistral_key"
         const val TRANSFORMATION = "AES/GCM/NoPadding"

@@ -21,8 +21,8 @@ import tech.dmconsulting.dixi.bubble.BubbleSwitch
 import tech.dmconsulting.dixi.history.Dictation
 import tech.dmconsulting.dixi.onboarding.startScreen
 import tech.dmconsulting.dixi.settings.KeyStatus
-import tech.dmconsulting.dixi.ui.navigation.Screen
 import tech.dmconsulting.dixi.ui.navigation.DixiNavHost
+import tech.dmconsulting.dixi.ui.navigation.Screen
 import tech.dmconsulting.dixi.ui.theme.DixiTheme
 import java.time.Duration
 import java.time.Instant

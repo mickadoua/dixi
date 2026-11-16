@@ -25,9 +25,9 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import tech.dmconsulting.dixi.DixiApp
 import tech.dmconsulting.dixi.MainActivity
 import tech.dmconsulting.dixi.R
-import tech.dmconsulting.dixi.DixiApp
 import tech.dmconsulting.dixi.dictation.DictationController
 import tech.dmconsulting.dixi.dictation.DictationOutput
 import tech.dmconsulting.dixi.dictation.DictationPanel

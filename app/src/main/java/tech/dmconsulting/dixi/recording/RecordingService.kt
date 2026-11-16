@@ -12,8 +12,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import tech.dmconsulting.dixi.R
 import tech.dmconsulting.dixi.DixiApp
+import tech.dmconsulting.dixi.R
 
 /**
  * Foreground service of type microphone that holds a dictation (Android 14+

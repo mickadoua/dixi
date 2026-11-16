@@ -69,8 +69,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import tech.dmconsulting.dixi.R
 import tech.dmconsulting.dixi.DixiApp
+import tech.dmconsulting.dixi.R
 import tech.dmconsulting.dixi.bubble.BubbleSwitch
 import tech.dmconsulting.dixi.history.copyToClipboard
 import tech.dmconsulting.dixi.recording.MicrophoneRecorder
