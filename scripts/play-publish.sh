@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# DMC-330: builds the release AAB signed with the upload key and publishes it on a Play test
-# track, from the NAS (not GitHub Actions: CI minutes are capped, DMC-131).
+# Builds the release AAB signed with the upload key and publishes it on a Play test
+# track, from a local host (not GitHub Actions: CI minutes are capped).
 #
 # Usage:
 #   scripts/play-publish.sh [internal|alpha] [--release-status draft|completed]
 #       internal (default) = internal testing, alpha = closed testing.
 #       --release-status: draft by default (Play only takes drafts until the app is published).
 #   scripts/play-publish.sh --status
-#       Read only (DMC-500): lists the releases of every track. edits.insert, tracks.list, then
+#       Read only: lists the releases of every track. edits.insert, tracks.list, then
 #       edits.delete, never edits.commit. Needs only PLAY_SERVICE_ACCOUNT_JSON.
 #
-# Refused, with no way around it (Micka's decision of 11/11/2026 on DMC-442, DMC-500):
+# Refused, with no way around it (owner's decision of 11/11/2026):
 # the public tracks beta and production and any deletion. The store listing is not sent by
-# Gradle from here: it goes through scripts/play-listing.py (Micka, 15/11, DMC-567).
+# Gradle from here: it goes through scripts/play-listing.py (owner's decision of 15/11/2026).
 #
-# Secrets come from the environment (Paperclip secrets) and are never printed:
+# Secrets come from the environment and are never printed:
 #   <PREFIX>_UPLOAD_KEYSTORE_B64, <PREFIX>_UPLOAD_KEYSTORE_PASSWORD, <PREFIX>_UPLOAD_KEY_ALIAS,
 #   <PREFIX>_UPLOAD_KEY_PASSWORD (PREFIX = $PLAY_SECRET_PREFIX, default VOXBULLE, kept after the
-#   rename to Dixi: the upload key does not depend on the name, DMC-383), and
+#   rename to Dixi: the upload key does not depend on the name), and
 #   PLAY_SERVICE_ACCOUNT_JSON (content of the service account key). The keystore, the key and
 #   the access token are written to a private temp dir, deleted on exit.
 # PLAY_API_ROOT only exists for scripts/tests/play-publish-test.sh (local fake Play API).
@@ -30,8 +30,8 @@ MODE=publish TRACK=internal STATUS=draft
 while [ $# -gt 0 ]; do
     case $1 in
         internal|alpha) TRACK=$1 ;;
-        beta|production) die 3 "track '$1' is public: refused, it needs Micka's written approval (DMC-500)" ;;
-        --listing) die 3 "--listing refused here: the store listing goes through scripts/play-listing.py (DMC-567)" ;;
+        beta|production) die 3 "track '$1' is public: refused, it needs the owner's written approval" ;;
+        --listing) die 3 "--listing refused here: the store listing goes through scripts/play-listing.py" ;;
         --status) MODE=status ;;
         --release-status) STATUS=${2:-}; shift ;;
         *) die 2 "unknown argument '$1' (allowed: internal, alpha, --release-status, --status)" ;;
@@ -157,7 +157,6 @@ rm -f "$TMP/key.pem"
 export UPLOAD_KEYSTORE_PATH="$TMP/upload.keystore"
 export UPLOAD_KEYSTORE_PASSWORD="${!KS_PASS}" UPLOAD_KEY_ALIAS="${!KEY_ALIAS}" UPLOAD_KEY_PASSWORD="${!KEY_PASS}"
 export PLAY_SERVICE_ACCOUNT_FILE="$TMP/play.json"
-export JAVA_HOME=${JAVA_HOME:-/opt/android/jdk}
 # Gradle needs the paths above, not the raw secrets.
 unset "$KS_B64"
 

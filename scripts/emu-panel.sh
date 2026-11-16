@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Emulator proof for the bubble panel (DMC-237), over Contacts, fake Voxtral.
+# Emulator proof for the bubble panel, over Contacts, fake Voxtral.
 # Real flow: listening panel, Terminer, suggestion, word tap, Valider + toast, Annuler, Refaire.
 # Then captures with the mockup text, next to mockups 09 and 10.
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-panel.sh <out-dir>
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-panel.sh <out-dir>
 # CAPTURES_ONLY=1: only the captures of part 5.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-panel-proof-out}
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"

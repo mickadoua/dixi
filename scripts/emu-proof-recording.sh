@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Emulator proof of the recording (DMC-136): start from the bubble over
+# Emulator proof of the recording: start from the bubble over
 # Contacts, notification, manual stop, « Arrêter » action, 5 min limit
 # (shortened by the debug receiver), nothing heard, microphone denied.
-#   /opt/android/admin/emu/emu-run phone -- bash scripts/emu-proof-recording.sh <out-dir>
+# Needs adb ($ANDROID_HOME) and a debug APK: bash scripts/emu-proof-recording.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -45,7 +45,7 @@ for p in $($ADB shell pm list packages | sed -n 's/^package:\(.*contacts.*\)/\1/
   done
 done
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
-sleep 25  # cold boot on a loaded NAS: let System UI settle
+sleep 25  # cold boot on a loaded host: let System UI settle
 close_dialogs
 $ADB logcat -c
 open_contacts | tee "$OUT/top-activity.txt"

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Emulator proof for screens 9 (history) and 10 (settings), light and dark.
 # Uses the debug-only extras of MainActivity (--es screen, --ei seedHistory).
-# Three parts, one emulator session each (boot alone can take 4 min on the NAS):
-#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh history <out-dir>
-#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh settings <out-dir>
-#   emu-run phone --wait-lock 30 -- bash scripts/emu-history-settings.sh dark <out-dir>
+# Three parts, one emulator session each (boot alone can take 4 min on a loaded host).
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-history-settings.sh history <out-dir>
+#   bash scripts/emu-history-settings.sh settings <out-dir>
+#   bash scripts/emu-history-settings.sh dark <out-dir>
 set -u
 PART=${1:-history}; shift
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-proof-history}
 APK=app/build/outputs/apk/debug/app-debug.apk
 HISTORY_FILE=files/datastore/dictation_history.json
@@ -24,7 +25,7 @@ dump() {
     $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml"
 }
 # Waits until our activity has focus, then lets Compose draw. uiautomator dumps
-# take several seconds each on a loaded NAS: they are kept for taps only.
+# take several seconds each on a loaded host: they are kept for taps only.
 waitfor() {
     for i in $(seq 1 20); do
         $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG" && break
@@ -53,7 +54,7 @@ PY
 }
 
 # Prints the bounds of the « Mode démo » label and of the node $1 (content-desc),
-# and how many pixels they share (QA DMC-167: the label hid the settings icon).
+# and how many pixels they share (found in QA: the label hid the settings icon).
 overlap() {
     dump
     python3 - "$OUT/ui.xml" "$1" <<'PY2'
@@ -81,7 +82,7 @@ $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
 $ADB shell settings put system screen_off_timeout 600000
 $ADB shell settings put global hide_error_dialogs 1
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
-# A cold boot on a loaded NAS can show "System UI isn't responding": let it settle.
+# A cold boot on a loaded host can show "System UI isn't responding": let it settle.
 sleep 15
 $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Emulator proof for the « Clé API Mistral » section of screen 10 (DMC-227), dark neon theme:
+# Emulator proof for the « Clé API Mistral » section of screen 10, dark neon theme:
 # no key, key saved, key refused (a fake key: « Tester la clé » gets 401 from Mistral).
 # Also checks: key kept encrypted across a restart, never in logcat nor the UI tree,
 # key file excluded from backups.
-#   emu-run phone --wait-lock 120 -- bash scripts/emu-mistral-key.sh <out-dir> [apk]
-# One dark theme since the neon charter (DMC-226): MODES="light dark" is no longer needed.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-mistral-key.sh <out-dir> [apk]
+# One dark theme since the neon charter: MODES="light dark" is no longer needed.
 # Never use a real key here: FAKE_KEY below is not one.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-proof-mistral-key}
 APK=${2:-app/build/outputs/apk/debug/app-debug.apk}
 FAKE_KEY=fausse-cle-de-preuve-0000000000
@@ -33,7 +34,7 @@ waitfor() {
     sleep 4
 }
 # Fresh dump each time: a failed dump leaves the previous file on the device (stale).
-# A loaded NAS often shows « System UI isn't responding » over the app: answer « Wait ».
+# A loaded host often shows « System UI isn't responding » over the app: answer « Wait ».
 dump() {
     for attempt in 1 2 3; do
         $ADB shell rm -f /sdcard/ui.xml

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Emulator proof for the onboarding, screens 1 to 5 (DMC-140, DMC-544), with every
+# Emulator proof for the onboarding, screens 1 to 5, with every
 # permission given through Android's own screens (no `install -g`).
-# Two parts, one emulator session each:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 60 -- bash scripts/emu-onboarding.sh light <out-dir>
-#   /opt/android/admin/emu/emu-run phone --wait-lock 60 -- bash scripts/emu-onboarding.sh dark <out-dir>
+# Two parts, one emulator session each. Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-onboarding.sh light <out-dir>
+#   bash scripts/emu-onboarding.sh dark <out-dir>
 # light / dark: the system theme (Android's own screens). The app itself is dark only.
 # light: microphone allowed in the system window, app killed on screen 3 and
 #        reopened there, overlay page left without allowing (“Setting not
@@ -12,7 +12,7 @@
 #        page; same trial and overlay steps.
 # App screens are tapped at fixed points (1080 x 2400 `phone`) and followed
 # through the app's log lines: uiautomator dumps fail too often on the loaded
-# NAS. Dumps are kept for Android's own screens, with fallback points.
+# host. Dumps are kept for Android's own screens, with fallback points.
 # The emulator has no real microphone (level 0): the debug receiver lowers the
 # « nothing heard » threshold to 0 so the trial reaches the fake transcription.
 set -u
@@ -20,7 +20,7 @@ PART=${1:-light}; shift
 OUT=${1:-proof-onboarding}/$PART
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 N=0

@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Emulator captures of the neon charter (DMC-226) for the side-by-side check with
-# Zoé's mockups (DMC-213): onboarding 1, main screen, settings, offer, then the
-# bubble states and the « Masquer » zone over Contacts. Run through emu-run:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/neon-proof.sh <out-dir> [setup screens bubble]
-# Parts can run one by one in a session kept by emu-renew (each under 10 min).
+# Emulator captures of the neon charter for the side-by-side check with
+# the design mockups: onboarding 1, main screen, settings, offer, then the
+# bubble states and the « Masquer » zone over Contacts.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/neon-proof.sh <out-dir> [setup screens bubble]
+# Parts can run one by one in the same emulator session (each under 10 min).
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-neon-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
