@@ -8,14 +8,14 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-panel-proof-out}
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"
 # Always keep the logs, even when a step stops the script.
 trap '$ADB logcat -d > "$OUT/logcat-full.txt" 2>/dev/null; $ADB logcat -b crash -d > "$OUT/logcat-crash.txt" 2>/dev/null' EXIT
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
 limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
@@ -27,7 +27,7 @@ wait_log() { for _ in $(seq 1 "${2:-10}"); do log | grep -q "$1" && return 0; sl
 wait_more() { for _ in $(seq 1 "${3:-10}"); do [ "$(count "$1")" -gt "$2" ] && return 0; sleep 1; done; return 1; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
 audio_files() { $ADB shell run-as $PKG ls cache 2>/dev/null | grep -c 'dictation-.*\.m4a'; }
-panel() { $ADB shell am broadcast -a tech.dmconsulting.voxbulle.debug.SET_BUBBLE_STATE "$@" >/dev/null; }
+panel() { $ADB shell am broadcast -a tech.dmconsulting.dixi.debug.SET_BUBBLE_STATE "$@" >/dev/null; }
 tap_bubble() {
   local n; n=$(count "bubble tapped")
   for _ in 1 2 3; do
@@ -140,6 +140,6 @@ sleep 4; shot 10-suggestion
 panel --es panel None
 panel --es state Ready --el readyMs 8000; sleep 4; shot 01-toast
 
-$ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
-echo "--- VoxbulleProof log"; grep -E "panel|bubble state|clipboard|recording|FATAL" "$OUT/logcat.txt" | tail -60
+$ADB logcat -d -s DixiProof:V AndroidRuntime:E > "$OUT/logcat.txt"
+echo "--- DixiProof log"; grep -E "panel|bubble state|clipboard|recording|FATAL" "$OUT/logcat.txt" | tail -60
 echo "emu-panel done"

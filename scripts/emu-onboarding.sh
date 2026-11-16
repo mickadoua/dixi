@@ -20,7 +20,7 @@ PART=${1:-light}; shift
 OUT=${1:-proof-onboarding}/$PART
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 N=0
@@ -77,8 +77,8 @@ MIC="540 725"          # screen 3, 72 dp microphone button (idle and recording)
 COPY="270 2220"; CONTINUE="810 2220"
 # App log lines since the last mark (logcat is never cleared: the whole log is kept for the proof).
 MARK=start
-mark() { MARK="$1-$RANDOM"; $ADB shell log -t VoxbulleProof "MARK $MARK"; }
-applog() { $ADB logcat -d -s VoxbulleProof:I | sed -n "/MARK $MARK/,\$p"; }
+mark() { MARK="$1-$RANDOM"; $ADB shell log -t DixiProof "MARK $MARK"; }
+applog() { $ADB logcat -d -s DixiProof:I | sed -n "/MARK $MARK/,\$p"; }
 # Waits (up to ~40 s) for an app log line.
 waitlog() {
     for i in $(seq 1 20); do applog | grep -q "$1" && return 0; sleep 2; done
@@ -238,5 +238,5 @@ shot 9-relaunch
 $ADB logcat -d -b all > "$OUT/logcat.txt"
 grep -A8 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A6 "$PKG" | head -20 > "$OUT/crashes.txt"
 echo "app crash lines: $(wc -l < "$OUT/crashes.txt")"
-$ADB logcat -d -s VoxbulleProof:I > "$OUT/app-log.txt"
+$ADB logcat -d -s DixiProof:I > "$OUT/app-log.txt"
 $ADB shell cmd uimode night no

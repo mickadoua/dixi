@@ -9,14 +9,14 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".VoxbulleApp"
+        android:name=".DixiApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
-        android:theme="@style/Theme.Voxbulle">
+        android:theme="@style/Theme.Dixi">
 
         <activity
             android:name=".MainActivity"
@@ -34,7 +34,7 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:taskAffinity=""
-            android:theme="@style/Theme.Voxbulle.Translucent" />
+            android:theme="@style/Theme.Dixi.Translucent" />
 
         <!-- Not a foreground service: only RecordingService opens the microphone (DMC-338). -->
         <service

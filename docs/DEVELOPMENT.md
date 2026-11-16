@@ -10,13 +10,12 @@ Android voice dictation app: a floating bubble, you speak, and the transcribed t
 
 ## Code
 
-Kotlin package `tech.dmconsulting.voxbulle`, a single Gradle module (`app`), one package per domain: `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Dependencies are wired by hand in `AppContainer`.
+Kotlin package `tech.dmconsulting.dixi`, a single Gradle module (`app`), one package per domain: `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Dependencies are wired by hand in `AppContainer`.
 
 Design decisions:
 
-- **Name.** The app is called Dixi. Only the `applicationId` (`tech.dmconsulting.dixi`, fixed from the first upload to Play) and the visible texts carry that name.
-- **Package.** The `namespace` and the Kotlin packages stay `tech.dmconsulting.voxbulle`: users never see them, and moving them would touch every file for nothing. A component is therefore named `tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.X` (the short form `/.X` does not work), hence `PKG` and `NS` in `scripts/`.
-- **Old names kept.** The `Theme.Voxbulle` theme, the classes (`VoxbulleApp`, `VoxbulleTheme`…), `rootProject.name`, the Keystore alias `voxbulle_mistral_key` (renaming it would lose the Mistral key already entered), the log tags `VoxbulleProof` / `VoxbulleProbe` and the `VOXBULLE_UPLOAD_*` prefix of the upload secrets keep `voxbulle`.
+- **Name.** The app is called Dixi: the `applicationId` (`tech.dmconsulting.dixi`, fixed from the first upload to Play), the `namespace`, the Kotlin packages, the classes (`DixiApp`, `DixiTheme`…), the `Theme.Dixi` theme, `rootProject.name` and the log tags `DixiProof` / `DixiProbe`. `PKG` and `NS` in `scripts/` are both `tech.dmconsulting.dixi`.
+- **Old names kept.** Two internal names keep `voxbulle`, invisible to users: the Keystore alias `voxbulle_mistral_key` (renaming it would lose the Mistral key already entered) and the `VOXBULLE_UPLOAD_*` prefix of the upload secrets (default of `PLAY_SECRET_PREFIX` in `scripts/play-publish.sh`).
 - **Single module.** One `app` module, without the `androidApp/` + `shared/` layout of Kotlin Multiplatform: Dixi is an Android-only app and no iOS target is planned. Revisit if that changes. Versions (AGP, Kotlin, Compose BOM, Gradle, SDK) follow current stable Android defaults.
 
 ## Build
@@ -63,7 +62,7 @@ Prerequisites: a device or emulator reachable through `adb` (`ANDROID_HOME` set)
 
     bash scripts/emu-proof.sh <output-directory>
 
-The script installs the APK, grants the permissions, shows the bubble, opens Contacts, taps the bubble, then pastes the clipboard into Contacts. Results: screenshots and `logcat.txt` (tag `VoxbulleProof`) in `<output-directory>`.
+The script installs the APK, grants the permissions, shows the bubble, opens Contacts, taps the bubble, then pastes the clipboard into Contacts. Results: screenshots and `logcat.txt` (tag `DixiProof`) in `<output-directory>`.
 
 ## License
 

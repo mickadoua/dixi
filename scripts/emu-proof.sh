@@ -5,7 +5,7 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -32,7 +32,7 @@ $ADB shell am start -W -a android.intent.action.INSERT -t vnd.android.cursor.dir
 sleep 4
 $ADB shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|ResumedActivity' | tee "$OUT/top-activity.txt"
 shot 1-bubble-over-other-app
-XY=$($ADB logcat -d -s VoxbulleProof | sed -n 's/.*bubble shown at x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1)
+XY=$($ADB logcat -d -s DixiProof | sed -n 's/.*bubble shown at x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1)
 echo "bubble center: $XY"
 [ -n "$XY" ] || { $ADB logcat -d > "$OUT/logcat-full.txt"; echo "bubble not shown"; exit 2; }
 close_dialogs; sleep 1
@@ -41,7 +41,7 @@ $ADB shell input tap $XY
 sleep 2
 shot 2-listening
 $ADB shell dumpsys activity services $PKG | grep -E 'isForeground|foregroundServiceType|ServiceRecord' | tee "$OUT/fgs.txt"
-for i in $(seq 1 20); do $ADB logcat -d -s VoxbulleProof | grep -q 'copied notification posted' && break; sleep 1; done
+for i in $(seq 1 20); do $ADB logcat -d -s DixiProof | grep -q 'copied notification posted' && break; sleep 1; done
 $ADB shell cmd statusbar expand-notifications; sleep 6
 shot 3-notification
 $ADB shell dumpsys notification --noredact | grep -A3 "pkg=$PKG" > "$OUT/notifications.txt"
@@ -66,6 +66,6 @@ for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui2.xml && break; sle
 $ADB shell cat /sdcard/ui2.xml > "$OUT/ui-pasted.xml"
 grep -io 'texte de test Dixi' "$OUT/ui-pasted.xml" | head -1 | sed 's/^/PASTED: /'
 $ADB shell dumpsys appops --package $PKG > "$OUT/appops.txt"
-$ADB logcat -d -s VoxbulleProof:V ActivityManager:W AppOps:W > "$OUT/logcat.txt"
-$ADB logcat -d | grep -iE 'voxbulle|ForegroundService|while-in-use|silenc' > "$OUT/logcat-grep.txt"
-echo "--- VoxbulleProof log"; grep VoxbulleProof "$OUT/logcat.txt"
+$ADB logcat -d -s DixiProof:V ActivityManager:W AppOps:W > "$OUT/logcat.txt"
+$ADB logcat -d | grep -iE 'dixi|ForegroundService|while-in-use|silenc' > "$OUT/logcat-grep.txt"
+echo "--- DixiProof log"; grep DixiProof "$OUT/logcat.txt"

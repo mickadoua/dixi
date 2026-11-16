@@ -5,7 +5,7 @@
          probe's loopback server. The debug manifest declares the same two entries. -->
     <application android:networkSecurityConfig="@xml/probe_network_security">
 
-        <!-- adb shell am broadcast -n tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.debug.MistralProbeReceiver
+        <!-- adb shell am broadcast -n tech.dmconsulting.dixi/tech.dmconsulting.dixi.debug.MistralProbeReceiver
              DUMP: only the shell (adb) may send it, not other apps. -->
         <receiver
             android:name=".debug.MistralProbeReceiver"

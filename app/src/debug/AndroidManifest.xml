@@ -4,7 +4,7 @@
     <!-- Debug only: cleartext to 127.0.0.1 for the Mistral probe's loopback server. -->
     <application android:networkSecurityConfig="@xml/probe_network_security">
 
-        <!-- adb shell am broadcast -n tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.debug.MistralProbeReceiver
+        <!-- adb shell am broadcast -n tech.dmconsulting.dixi/tech.dmconsulting.dixi.debug.MistralProbeReceiver
              DUMP: only the shell (adb) may send it, not other apps. -->
         <receiver
             android:name=".debug.MistralProbeReceiver"

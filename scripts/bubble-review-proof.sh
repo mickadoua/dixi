@@ -7,12 +7,12 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-bubble-review-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 # Touches injected while the display is off or locked are dropped: wake and unlock first.
 wake() {
@@ -126,5 +126,5 @@ check "no crash" "! grep -q $PKG '$OUT/crash.txt'"
 $ADB shell dumpsys activity services $PKG > "$OUT/services.txt"
 check "service stopped" "! grep -q 'BubbleService' '$OUT/services.txt'"
 $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
-$ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
-echo "--- VoxbulleProof log"; tail -20 "$OUT/logcat.txt"
+$ADB logcat -d -s DixiProof:V AndroidRuntime:E > "$OUT/logcat.txt"
+echo "--- DixiProof log"; tail -20 "$OUT/logcat.txt"

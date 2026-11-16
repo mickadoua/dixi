@@ -10,13 +10,13 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 PART=${1:-a}
 OUT=${2:-dictation-proof-out}/$PART
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
 limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
@@ -76,10 +76,10 @@ notif() { $ADB shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | gr
 # Opens the shade right after the stop tap and dumps it until the action $2 shows;
 # its center goes to stdout.
 shade_action() {
-  open_shade >/dev/null; $ADB shell log -t VoxbulleProof "script: shade open"
+  open_shade >/dev/null; $ADB shell log -t DixiProof "script: shade open"
   for i in 1 2 3 4 5; do
     local c; c=$(node_center "$1" "$2"); [ -n "$c" ] && { echo "$c"; return 0; }
-    $ADB shell log -t VoxbulleProof "script: $2 not in the shade (dump $i)"
+    $ADB shell log -t DixiProof "script: $2 not in the shade (dump $i)"
     [ "$i" = 3 ] && open_shade >/dev/null
   done
   return 1
@@ -233,6 +233,6 @@ if [ "$PART" = c ]; then
   check "no crash" "sleep 2; [ \"\$(app_pid)\" = '$PID' ] && no_crash"
 fi
 
-$ADB logcat -d -s VoxbulleProof:V AndroidRuntime:E > "$OUT/logcat.txt"
-echo "--- VoxbulleProof log"; grep -E "VoxbulleProof|FATAL" "$OUT/logcat.txt" | tail -60
+$ADB logcat -d -s DixiProof:V AndroidRuntime:E > "$OUT/logcat.txt"
+echo "--- DixiProof log"; grep -E "DixiProof|FATAL" "$OUT/logcat.txt" | tail -60
 echo "emu-dictation part $PART done"

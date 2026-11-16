@@ -10,7 +10,7 @@ set -u
 PART=${1:-history}; shift
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-proof-history}
 APK=app/build/outputs/apk/debug/app-debug.apk
 HISTORY_FILE=files/datastore/dictation_history.json
