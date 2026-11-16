@@ -10,7 +10,7 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-proof-mistral-key}
 APK=${2:-app/build/outputs/apk/debug/app-debug.apk}
 FAKE_KEY=fausse-cle-de-preuve-0000000000

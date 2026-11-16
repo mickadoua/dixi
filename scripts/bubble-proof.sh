@@ -7,12 +7,12 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-bubble-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 # Center "x y" from the last log line matching $1 ("... at x=X y=Y").
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
@@ -152,5 +152,5 @@ $ADB shell cmd statusbar collapse; sleep 3
 shot 14-shown-again
 
 $ADB shell settings put system accelerometer_rotation 1
-$ADB logcat -d -s VoxbulleProof:V ActivityManager:W > "$OUT/logcat.txt"
-echo "--- VoxbulleProof log"; grep VoxbulleProof "$OUT/logcat.txt" | tail -30
+$ADB logcat -d -s DixiProof:V ActivityManager:W > "$OUT/logcat.txt"
+echo "--- DixiProof log"; grep DixiProof "$OUT/logcat.txt" | tail -30

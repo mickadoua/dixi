@@ -6,13 +6,13 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
-mark() { echo "=== $*"; $ADB shell "log -t VoxbulleProof '=== $*'"; }
+log() { $ADB logcat -d -s DixiProof; }
+mark() { echo "=== $*"; $ADB shell "log -t DixiProof '=== $*'"; }
 # Log lines since the last mark only, so each step waits for its own lines.
 since_mark() { log | python3 -c 'import sys; s = sys.stdin.read(); print(s[s.rfind("=== "):])'; }
 wait_log() { for i in $(seq 1 "$2"); do since_mark | grep -q "$1" && return 0; sleep 1; done; echo "TIMEOUT waiting for: $1"; return 1; }
@@ -104,6 +104,6 @@ open_contacts >/dev/null
 tap_until "recording refused"; sleep 1; shot E-mic-denied-toast
 $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
 
-$ADB logcat -d -s VoxbulleProof:V ActivityManager:W AppOps:W > "$OUT/logcat.txt"
-$ADB logcat -d | grep -iE 'voxbulle|ForegroundService|while-in-use|silenc' > "$OUT/logcat-grep.txt"
-echo "--- VoxbulleProof log"; grep -E "VoxbulleProof" "$OUT/logcat.txt" | sed 's/^.*VoxbulleProof: //'
+$ADB logcat -d -s DixiProof:V ActivityManager:W AppOps:W > "$OUT/logcat.txt"
+$ADB logcat -d | grep -iE 'dixi|ForegroundService|while-in-use|silenc' > "$OUT/logcat-grep.txt"
+echo "--- DixiProof log"; grep -E "DixiProof" "$OUT/logcat.txt" | sed 's/^.*DixiProof: //'

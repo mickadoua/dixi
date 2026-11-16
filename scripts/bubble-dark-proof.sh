@@ -7,12 +7,12 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-bubble-dark-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 state() { $ADB shell am broadcast -p $PKG -a $NS.debug.SET_BUBBLE_STATE --es state "$1" --el readyMs 1500 >/dev/null; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }

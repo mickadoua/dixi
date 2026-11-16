@@ -12,6 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "voxbulle-poc"
+rootProject.name = "dixi"
 include(":app")
 include(":pastetarget")

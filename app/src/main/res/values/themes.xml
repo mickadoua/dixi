@@ -1,11 +1,11 @@
 <resources>
     <!-- Window behind Compose: neon charter bg, dark only (DMC-213), so no white flash. -->
-    <style name="Theme.Voxbulle" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Dixi" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/surface</item>
     </style>
 
     <!-- Nothing but the dialogs: the app in use stays visible behind (DMC-338). -->
-    <style name="Theme.Voxbulle.Translucent" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Dixi.Translucent" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@null</item>

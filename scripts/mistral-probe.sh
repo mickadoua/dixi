@@ -6,7 +6,7 @@
 set -u
 ADB=${ADB:-$ANDROID_HOME/platform-tools/adb}
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 APK=$1; OUT=$2
 mkdir -p "$OUT"
 $ADB install -r -g "$APK" || exit 1
@@ -17,7 +17,7 @@ RUN="run-$(date +%s)-$$"
 $ADB logcat -c || echo "logcat -c failed, reading the lines of $RUN only"
 $ADB shell am broadcast -n $PKG/$NS.debug.MistralProbeReceiver --es run "$RUN"
 for i in $(seq 1 30); do
-  $ADB logcat -d -s VoxbulleProbe:* | grep -F "$RUN " > "$OUT/probe.txt"
+  $ADB logcat -d -s DixiProbe:* | grep -F "$RUN " > "$OUT/probe.txt"
   grep -q "$RUN PROBE \(PASS\|FAIL\)" "$OUT/probe.txt" && break
   sleep 1
 done

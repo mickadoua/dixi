@@ -14,7 +14,7 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
+NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 SERVICE=$PKG/$NS.paste.AutoPasteService
 PART=${1:-s}
 OUT=${2:-auto-paste-proof-out}/$PART
@@ -23,7 +23,7 @@ TEXT='Bonjour ceci est un texte de test dixi.'
 mkdir -p "$OUT"
 trap '$ADB logcat -d > "$OUT/logcat-full.txt" 2>/dev/null; $ADB logcat -b crash -d > "$OUT/logcat-crash.txt" 2>/dev/null' EXIT
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
-log() { $ADB logcat -d -s VoxbulleProof; }
+log() { $ADB logcat -d -s DixiProof; }
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 count() { log | grep -c "$1"; }
 limits() { $ADB shell am broadcast -n $PKG/$NS.recording.DebugRecordingReceiver "$@" >/dev/null; }
