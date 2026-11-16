@@ -4,7 +4,7 @@ window.SITE = {
   repo: 'https://github.com/mickadoua/dixi',
   dmcPage: { en: 'https://www.dm-consulting.tech/en/open-source/dixi', fr: 'https://www.dm-consulting.tech/fr/open-source/dixi' },
   common: { license: 'Apache-2.0', licenseUrl: 'https://github.com/mickadoua/dixi/blob/main/LICENSE' },
-  download: { build: 'https://github.com/mickadoua/dixi#build' }, // until the app is public and the APK published (DMC-586): play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.dixi', playLive: false, apk: { url: 'https://www.dm-consulting.tech/downloads/dixi.apk', sha256: '', size: '' }
+  download: { play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.dixi', playLive: false, apk: { url: 'https://www.dm-consulting.tech/downloads/dixi.apk', sha256: '4a93bb1f5dcbbf948b4572a95099ef92c16198bf8aa7af19f7b1ce6f9982632a', size: '' } }, // APK v0.1.0 built by release.yml (DMC-658); playLive: true once the Play listing is public
   shots: [{ src: 'bulle-{lang}.jpg', wide: true }, { src: 'ecoute-{lang}.jpg', wide: true }, { src: 'suggestion-{lang}.jpg', wide: true }], // Play listing screenshots (DMC-462), one per language
   i18n: {
     en: { tagline: 'Voice dictation for Android', eyebrow: 'Android app · Apache-2.0',
@@ -22,7 +22,7 @@ window.SITE = {
           ['Audio not kept.', 'Audio and text go through Mistral for transcription. Dixi never keeps the audio.'],
           ['Demo mode.', 'Without a key, the app shows sample text and sends nothing.']],
         facts: [['Platform', 'Android'], ['Transcription', 'Mistral (Voxtral)'], ['License', 'Apache-2.0']] },
-      downloadTitle: 'Get Dixi', downloadIntro: 'The Google Play listing and the signed APK are on their way. Until then, build the app from source.', buildText: 'Clone the repository and follow the build steps (Android Studio or Gradle).',
+      downloadTitle: 'Get Dixi', downloadIntro: 'Install the signed APK on an Android phone, after checking its SHA-256. The Google Play listing opens with the public release.',
       downloadNote: 'Needs the microphone, an Internet connection and permission to display over other apps. Mistral bills API usage under its own terms.' },
     fr: { tagline: 'Dictée vocale pour Android', eyebrow: 'Appli Android · Apache-2.0',
       h1: 'Parlez, le texte est <em>prêt à coller.</em>',
@@ -39,7 +39,7 @@ window.SITE = {
           ['Audio non conservé.', 'L’audio et le texte passent par Mistral pour la transcription. Dixi ne garde jamais l’audio.'],
           ['Mode démo.', 'Sans clé, l’appli affiche un texte d’exemple et n’envoie rien.']],
         facts: [['Plateforme', 'Android'], ['Transcription', 'Mistral (Voxtral)'], ['Licence', 'Apache-2.0']] },
-      downloadTitle: 'Obtenir Dixi', downloadIntro: 'La fiche Google Play et l’APK signé arrivent bientôt. D’ici là, compilez l’appli depuis les sources.', buildText: 'Clonez le dépôt et suivez les étapes de compilation (Android Studio ou Gradle).',
+      downloadTitle: 'Obtenir Dixi', downloadIntro: 'Installez l’APK signé sur un téléphone Android, après avoir vérifié sa somme SHA-256. La fiche Google Play ouvre avec la version publique.',
       downloadNote: 'Demande le micro, une connexion Internet et l’autorisation d’afficher par-dessus les autres applis. Mistral facture l’usage de l’API selon ses conditions.' }
   }
 };
