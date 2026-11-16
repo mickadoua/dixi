@@ -21,17 +21,16 @@ class EnabledServicesTest {
         assertTrue(listed("$pkg/$cls"))
     }
 
+    // Since DMC-653 the class package equals the applicationId: the short name is ours.
     @Test
     fun shortClassNameIsFound() {
-        val samePackage = "tech.dmconsulting.dixi"
-        assertTrue(isServiceListed("$samePackage/.paste.AutoPasteService", samePackage, cls))
+        assertTrue(listed("$pkg/.paste.AutoPasteService"))
     }
 
-    // Since DMC-383 the applicationId (tech.dmconsulting.dixi) differs from the class package
-    // (tech.dmconsulting.dixi): a short name is relative to the applicationId, so it is not ours.
+    // A short name is relative to the applicationId: with another class package, it is not ours.
     @Test
-    fun shortNameRelativeToTheApplicationIdIsNotOurs() {
-        assertFalse(listed("$pkg/.paste.AutoPasteService"))
+    fun shortNameRelativeToAnotherPackageIsNotOurs() {
+        assertFalse(isServiceListed("$pkg/.paste.AutoPasteService", pkg, "com.example.paste.AutoPasteService"))
     }
 
     @Test
@@ -41,9 +40,8 @@ class EnabledServicesTest {
 
     @Test
     fun anotherAppWithTheSameClassIsNotOurs() {
-        // tech.dmconsulting.dixi is the old applicationId (test installs before DMC-383).
         assertFalse(listed("tech.dmconsulting.dixi.copy/$cls"))
-        assertFalse(listed("tech.dmconsulting.dixi/$cls"))
+        assertFalse(listed("com.example.other/$cls"))
     }
 
     @Test
