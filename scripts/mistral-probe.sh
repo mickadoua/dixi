@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# DMC-161, DMC-175: runs the Mistral clients inside a minified APK against canned answers
+# Runs the Mistral clients inside a minified APK against canned answers
 # (loopback server in the app, fake key). Works with the debug APK and with the probe
-# build (release R8, not debuggable). Usage, through emu-run:
-#   emu-run phone -- scripts/mistral-probe.sh app/build/outputs/apk/probe/app-probe.apk OUT_DIR
+# build (release R8, not debuggable). Needs adb ($ANDROID_HOME) and a running emulator:
+#   scripts/mistral-probe.sh app/build/outputs/apk/probe/app-probe.apk OUT_DIR
 set -u
 ADB=${ADB:-$ANDROID_HOME/platform-tools/adb}
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 APK=$1; OUT=$2
 mkdir -p "$OUT"
 $ADB install -r -g "$APK" || exit 1

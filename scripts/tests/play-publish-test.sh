@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests de scripts/play-publish.sh (DMC-500) sans Google ni Gradle :
+# Tests de scripts/play-publish.sh sans Google ni Gradle :
 #   - refus purs : beta, production, --listing, argument inconnu, avant toute lecture de secret ;
 #   - --status contre une fausse API Play locale : jeton JWT signé (vérifié par openssl avec la
 #     clé publique), edits.insert -> tracks.list -> edits.delete, jamais edits.commit, et

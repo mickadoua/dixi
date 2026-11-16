@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Emulator proof for the floating bubble (DMC-135): 4 states over Contacts,
+# Emulator proof for the floating bubble: 4 states over Contacts,
 # tap vs drag, snap to the side, place after restart and rotation, hide zone,
-# show again from the notification. Run through emu-run:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-proof.sh <out-dir>
+# show again from the notification.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/bubble-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-bubble-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -32,11 +33,11 @@ $ADB shell settings put system accelerometer_rotation 0
 $ADB shell settings put system user_rotation 0
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
 # Contacts asks for its permissions in a window that hides every overlay
-# (Android rule, DMC-129): grant them all first.
+# (Android rule): grant them all first.
 for p in $($ADB shell dumpsys package com.google.android.contacts | sed -n 's/^ *\(android\.permission\.[A-Z_]*\): granted=false.*/\1/p' | sort -u); do
   $ADB shell pm grant com.google.android.contacts "$p" 2>/dev/null
 done
-# A cold boot on a loaded NAS can show "System UI isn't responding": let it settle.
+# A cold boot on a loaded host can show "System UI isn't responding": let it settle.
 sleep 25
 close_dialogs
 $ADB logcat -c

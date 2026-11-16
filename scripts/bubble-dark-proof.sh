@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Emulator proof for the design fixes of DMC-164: the « Masquer » zone at rest
+# Emulator proof for the design fixes of the bubble review: the « Masquer » zone at rest
 # and with the bubble over it (72 dp), and the listening halo, in light then
-# dark mode, over Contacts. Run through emu-run:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-dark-proof.sh <out-dir>
+# dark mode, over Contacts.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/bubble-dark-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-bubble-dark-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"

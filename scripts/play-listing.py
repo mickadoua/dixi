@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""DMC-567: fills the Play Console store listing through the Android Publisher API v3, from the repo.
+"""Fills the Play Console store listing through the Android Publisher API v3, from the repo.
 
 What it writes (and nothing else): store listing texts per language, listing images, contact
 details (edits.details) and, with --commit only, the data safety form (applications.dataSafety).
-No track, no release, no app deletion: those stay in play-publish.sh and its refusals (DMC-500).
+No track, no release, no app deletion: those stay in play-publish.sh and its refusals.
 
 Usage: python3 -I scripts/play-listing.py --langs en-US,fr-FR [mode] [options]
   --langs en-US,fr-FR      languages to send (required: an unreviewed translation never leaves by default)

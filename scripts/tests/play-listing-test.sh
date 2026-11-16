@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests de scripts/play-listing.py (DMC-567) sans Google :
+# Tests de scripts/play-listing.py sans Google :
 #   - refus avant tout appel : --langs absent ou invalide, paquet hors tech.dmconsulting, clé absente,
 #     texte trop long, image à la mauvaise taille, CSV de sécurité des données invalide ;
 #   - contre une fausse API Play locale qui garde un état par edit : essai à blanc (écrit dans l'edit,

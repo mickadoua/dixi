@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Emulator proof for the dictation chain (DMC-139), over Contacts, fake Voxtral.
+# Emulator proof for the dictation chain, over Contacts, fake Voxtral.
 # Part a: full dictation, timing, single dictation, notification, paste.
 # Part b: errors (nothing heard, microphone denied).
 # Part n: notification action « Voir le texte ». Part h: notification action « Masquer la bulle ».
 # (Parts stay short: the emulator is killed for lack of memory after ~5 min.)
 # Part c: microphone never granted (reinstalls the app without -g: its data is lost).
-# Run each part in its own session:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-dictation.sh a <out-dir>
+# Run each part in its own session. Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-dictation.sh a <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 PART=${1:-a}
 OUT=${2:-dictation-proof-out}/$PART
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}

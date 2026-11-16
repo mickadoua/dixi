@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Emulator proof for the DMC-162 review fixes (DMC-165): a cancelled drag over
+# Emulator proof for the bubble review fixes: a cancelled drag over
 # the cross snaps and never hides; showing the bubble without the overlay
-# permission stops the service without a crash. Run through emu-run:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/bubble-review-proof.sh <out-dir>
+# permission stops the service without a crash.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/bubble-review-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-bubble-review-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -91,7 +92,7 @@ check "cancel over the cross does not hide" "! log | grep -q 'bubble hidden'"
 
 log > "$OUT/logcat-part1.txt"; tail -8 "$OUT/logcat-part1.txt"
 $ADB shell am force-stop $PKG; sleep 2
-echo "--- 2. Notification tap without the overlay permission (review DMC-162)"
+echo "--- 2. Notification tap without the overlay permission (review fix)"
 $ADB logcat -c
 show_bubble
 $ADB shell input keyevent KEYCODE_HOME; sleep 2

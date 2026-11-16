@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Emulator proof for auto-paste (DMC-141), fake Voxtral. One short part per session:
-#   /opt/android/admin/emu/emu-run phone --wait-lock 120 -- bash scripts/emu-auto-paste.sh <part> <out-dir>
+# Emulator proof for auto-paste, fake Voxtral. One short part per session.
+# Needs adb ($ANDROID_HOME) and a debug APK:
+#   bash scripts/emu-auto-paste.sh <part> <out-dir>
 # Part s: screen 10 and screen 8 (« Non merci », then « J'accepte et j'active » opens Android's
 #         accessibility settings), switch on when back with the service on.
-# Part r: switches read again on return (Victor, DMC-166): bubble without the overlay
+# Part r: switches read again on return (found in review): bubble without the overlay
 #         permission, auto-paste with the service off.
 # Part p: dictation over Contacts, cursor in « First name »: the text is pasted, no « Texte copié ».
 # Part f: fallbacks: service off, then service on but no editable field: clipboard + notification.
@@ -13,7 +14,7 @@
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 SERVICE=$PKG/$NS.paste.AutoPasteService
 PART=${1:-s}
 OUT=${2:-auto-paste-proof-out}/$PART
@@ -181,7 +182,7 @@ done
 # First screenshots after a cold boot come out black: one throwaway pass while it settles.
 # Part s: first screenshots after a boot can come out black, one throwaway pass while it settles.
 # Parts p, f, r skip it. Run them with `--boot cold`: from the snapshot, the emulator is killed
-# for lack of memory after 3 to 4 min (5120 MB container cap, DMC-127).
+# for lack of memory after 3 to 4 min (5120 MB container cap).
 if [ "$PART" = s ]; then sleep 20; contacts; shot 0-warmup; $ADB shell input keyevent KEYCODE_HOME; else sleep 30; settle; fi
 close_dialogs
 $ADB logcat -c
