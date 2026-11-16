@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Emulator proof: bubble over another app, mic FGS started from the bubble,
-# clipboard + notification. Run through emu-run:
-#   /opt/android/admin/emu/emu-run phone -- bash scripts/emu-proof.sh <out-dir>
+# clipboard + notification.
+# Needs adb ($ANDROID_HOME) and a debug APK: bash scripts/emu-proof.sh <out-dir>
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
-NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId (DMC-383)
+NS=tech.dmconsulting.voxbulle  # class package (namespace), not the applicationId
 OUT=${1:-proof-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 mkdir -p "$OUT"
@@ -17,7 +17,7 @@ $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
 $ADB shell settings put system screen_off_timeout 600000
 $ADB shell settings put global hide_error_dialogs 1
 $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard
-# A cold boot on a loaded NAS can show "System UI isn't responding": let it settle.
+# A cold boot on a loaded host can show "System UI isn't responding": let it settle.
 sleep 25
 close_dialogs() { $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; }
 close_dialogs
