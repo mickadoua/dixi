@@ -1,70 +1,70 @@
 # Dixi
 
-App Android de dictée vocale : une bulle flottante, on parle, le texte transcrit (Voxtral, Mistral) est prêt à coller.
+Android voice dictation app: a floating bubble, you speak, and the transcribed text (Voxtral, Mistral) is ready to paste.
 
-## Règles du repo
+## Repository rules
 
-- Pas de GitHub Actions : les tests tournent en local.
-- `main` est protégée : pull request obligatoire, fusion par squash uniquement, pas de force-push ni de suppression.
-- Aucune clé dans le repo ni dans un APK : chaque utilisateur saisit sa propre clé Mistral dans l'app.
+- Tests run locally. GitHub Actions only builds the signed APK of a version tag (`.github/workflows/release.yml`).
+- `main` is protected: pull request required, squash merge only, no force-push, no deletion.
+- No key in the repository or in an APK: each user enters their own Mistral key in the app.
 
 ## Code
 
-Package Kotlin `tech.dmconsulting.voxbulle`, un seul module Gradle (`app`), un package par domaine : `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Les dépendances sont branchées à la main dans `AppContainer`.
+Kotlin package `tech.dmconsulting.voxbulle`, a single Gradle module (`app`), one package per domain: `bubble`, `recording`, `transcription`, `dictation`, `history`, `settings`, `onboarding`, `ui.theme`, `ui.navigation`. Dependencies are wired by hand in `AppContainer`.
 
-Décisions de conception :
+Design decisions:
 
-- **Nom.** L'app s'appelle Dixi. Seuls l'`applicationId` (`tech.dmconsulting.dixi`, figé dès le premier envoi sur Play) et les textes visibles portent ce nom.
-- **Package.** Le `namespace` et les packages Kotlin restent `tech.dmconsulting.voxbulle` : l'utilisateur ne les voit pas, et les déplacer toucherait chaque fichier pour rien. Un composant se nomme donc `tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.X` (forme courte `/.X` impossible), d'où `PKG` et `NS` dans `scripts/`.
-- **Anciens noms conservés.** Le thème `Theme.Voxbulle`, les classes (`VoxbulleApp`, `VoxbulleTheme`…), `rootProject.name`, l'alias Keystore `voxbulle_mistral_key` (le renommer ferait perdre la clé Mistral déjà saisie), les tags de journal `VoxbulleProof` / `VoxbulleProbe` et le préfixe `VOXBULLE_UPLOAD_*` des secrets d'envoi gardent `voxbulle`.
-- **Module unique.** Un seul module `app`, sans la structure `androidApp/` + `shared/` de Kotlin Multiplatform : Dixi est une app Android seule, aucune cible iOS n'est prévue. À revoir si cela change. Les versions (AGP, Kotlin, BOM Compose, Gradle, SDK) suivent celles de notre gabarit Android.
+- **Name.** The app is called Dixi. Only the `applicationId` (`tech.dmconsulting.dixi`, fixed from the first upload to Play) and the visible texts carry that name.
+- **Package.** The `namespace` and the Kotlin packages stay `tech.dmconsulting.voxbulle`: users never see them, and moving them would touch every file for nothing. A component is therefore named `tech.dmconsulting.dixi/tech.dmconsulting.voxbulle.X` (the short form `/.X` does not work), hence `PKG` and `NS` in `scripts/`.
+- **Old names kept.** The `Theme.Voxbulle` theme, the classes (`VoxbulleApp`, `VoxbulleTheme`…), `rootProject.name`, the Keystore alias `voxbulle_mistral_key` (renaming it would lose the Mistral key already entered), the log tags `VoxbulleProof` / `VoxbulleProbe` and the `VOXBULLE_UPLOAD_*` prefix of the upload secrets keep `voxbulle`.
+- **Single module.** One `app` module, without the `androidApp/` + `shared/` layout of Kotlin Multiplatform: Dixi is an Android-only app and no iOS target is planned. Revisit if that changes. Versions (AGP, Kotlin, Compose BOM, Gradle, SDK) follow current stable Android defaults.
 
 ## Build
 
     sh ./gradlew --no-daemon clean testDebugUnitTest assembleDebug
 
-Les fichiers n'ont pas le bit exécutable : lancez `sh ./gradlew` et `bash scripts/…`.
+The files do not have the executable bit: run `sh ./gradlew` and `bash scripts/…`.
 
-Style Kotlin (ktlint 1.8.0 par Spotless, règles dans `.editorconfig`, comme le template) :
+Kotlin style (ktlint 1.8.0 through Spotless, rules in `.editorconfig`):
 
-    sh ./gradlew --no-daemon spotlessCheck   # vérifie
-    sh ./gradlew --no-daemon spotlessApply   # corrige
+    sh ./gradlew --no-daemon spotlessCheck   # check
+    sh ./gradlew --no-daemon spotlessApply   # fix
 
-## Publier une version
+## Releasing
 
-Play prend un Android App Bundle (`.aab`) signé avec la clé d'envoi.
+Play takes an Android App Bundle (`.aab`) signed with the upload key.
 
-1. Tagger le commit : `git tag v1.2.0` (donne `versionName` 1.2.0). `versionCode` est le nombre de commits de `HEAD` : il augmente à chaque fusion sur la branche de publication.
-2. Exporter la clé d'envoi, puis construire :
+1. Tag the commit: `git tag v1.2.0` (gives `versionName` 1.2.0). `versionCode` is the number of commits in `HEAD`: it goes up with every merge to the release branch.
+2. Export the upload key, then build:
 
-       export UPLOAD_KEYSTORE_PATH=/chemin/vers/upload.jks
+       export UPLOAD_KEYSTORE_PATH=/path/to/upload.jks
        export UPLOAD_KEYSTORE_PASSWORD=...
        export UPLOAD_KEY_ALIAS=...
        export UPLOAD_KEY_PASSWORD=...
        sh ./gradlew --no-daemon bundleRelease
 
-   Sortie : `app/build/outputs/bundle/release/app-release.aab`.
+   Output: `app/build/outputs/bundle/release/app-release.aab`.
 
-En option, `VERSION_CODE` et `VERSION_NAME` remplacent les valeurs calculées (par exemple pour renvoyer le même commit avec un code plus haut).
+Optionally, `VERSION_CODE` and `VERSION_NAME` override the computed values (for example to resubmit the same commit with a higher code).
 
-Sans les quatre variables `UPLOAD_*`, le build release se fait quand même, non signé. Avec une partie seulement, le build échoue. La clé d'envoi vit hors du repo ; Play garde la clé de signature de l'app (Play App Signing). Ne jamais committer de keystore (`*.jks` et `*.keystore` sont ignorés), ni coller un mot de passe dans un ticket ou un journal.
+Without the four `UPLOAD_*` variables, the release build still works, unsigned. With only some of them, the build fails. The upload key lives outside the repository; Play keeps the app signing key (Play App Signing). Never commit a keystore (`*.jks` and `*.keystore` are ignored), and never paste a password into an issue or a log.
 
-L'envoi sur les pistes interne et fermée se fait avec `bash scripts/play-publish.sh` (Gradle Play Publisher, compte de service ; usage en tête du script). `bash scripts/play-publish.sh --status` lit l'état des pistes sans rien modifier. Les pistes beta et production et toute suppression sont refusées par le script. Tests : `bash scripts/tests/play-publish-test.sh` (fausse API Play locale, sans réseau).
+Upload to the internal and closed tracks is done with `bash scripts/play-publish.sh` (Gradle Play Publisher, service account; usage at the top of the script). `bash scripts/play-publish.sh --status` reads the state of the tracks without changing anything. The script refuses the beta and production tracks and any deletion. Tests: `bash scripts/tests/play-publish-test.sh` (local fake Play API, no network).
 
-La fiche du store (textes, images, coordonnées) et la sécurité des données passent par `python3 -I scripts/play-listing.py --langs en-US,fr-FR` (API Android Publisher ; usage en tête du script), à partir de `app/src/main/play/` : sans option, essai à blanc (edit validé puis jeté) ; `--read` et `--verify` en lecture seule ; `--commit` enregistre puis relit. `--data-safety <csv>` n'est envoyé qu'avec `--commit`. Tests : `bash scripts/tests/play-listing-test.sh`.
+The store listing (texts, images, contact details) and the data safety form go through `python3 -I scripts/play-listing.py --langs en-US,fr-FR` (Android Publisher API; usage at the top of the script), from `app/src/main/play/`. With no option it is a dry run (edit validated, then discarded); `--read` and `--verify` are read-only; `--commit` saves, then reads back. `--data-safety <csv>` is only sent with `--commit`. Tests: `bash scripts/tests/play-listing-test.sh`.
 
-## Clé Mistral
+## Mistral key
 
-L'app ne contient aucune clé : ni dans le repo, ni dans l'APK, ni dans `BuildConfig`, ni dans les ressources. Chaque utilisateur colle sa propre clé dans Réglages (écran 10). Elle est chiffrée par une clé Android Keystore (`settings/KeystoreKeyCipher`), stockée dans `noBackupFilesDir/mistral_key.bin` et exclue des sauvegardes et du transfert d'appareil (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). Sans clé, l'app utilise les faux services Voxtral (« Mode démo ») et rien ne sort du téléphone. Ne jamais committer, journaliser ni coller une clé dans un ticket.
+The app contains no key: not in the repository, not in the APK, not in `BuildConfig`, not in resources. Each user pastes their own key in Settings. It is encrypted by an Android Keystore key (`settings/KeystoreKeyCipher`), stored in `noBackupFilesDir/mistral_key.bin` and excluded from backups and device transfer (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). Without a key, the app uses fake Voxtral services ("Demo mode") and nothing leaves the phone. Never commit, log or paste a key into an issue.
 
-## Vérification sur un émulateur ou un téléphone
+## Checking on an emulator or a phone
 
-Prérequis : un appareil ou un émulateur joignable par `adb` (`ANDROID_HOME` défini) et l'APK debug construit (`assembleDebug`).
+Prerequisites: a device or emulator reachable through `adb` (`ANDROID_HOME` set) and the debug APK built (`assembleDebug`).
 
-    bash scripts/emu-proof.sh <dossier-de-sortie>
+    bash scripts/emu-proof.sh <output-directory>
 
-Le script installe l'APK, accorde les permissions, affiche la bulle, ouvre Contacts, appuie sur la bulle, puis colle le presse-papiers dans Contacts. Résultats : captures et `logcat.txt` (tag `VoxbulleProof`) dans `<dossier-de-sortie>`.
+The script installs the APK, grants the permissions, shows the bubble, opens Contacts, taps the bubble, then pastes the clipboard into Contacts. Results: screenshots and `logcat.txt` (tag `VoxbulleProof`) in `<output-directory>`.
 
-## Licence
+## License
 
-Apache-2.0, voir `LICENSE`. Les polices Inter sont sous SIL OFL 1.1 (`licenses/fonts-OFL.txt`, `NOTICE`).
+Apache-2.0, see `LICENSE`. The Inter fonts are under SIL OFL 1.1 (`licenses/fonts-OFL.txt`, `NOTICE`).
