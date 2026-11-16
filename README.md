@@ -34,11 +34,11 @@ Without a key, the app runs in demo mode: sample text, nothing leaves the phone.
 
 ## Install
 
-Dixi is not on Google Play yet, and no APK is published yet. For now, build it from source (below). Requires Android with microphone access, an Internet connection and permission to display over other apps.
+Dixi is not on Google Play yet, and no APK is published yet. For now, build it from source (below). Requires Android 8.0 (API 26) or later, with microphone access, an Internet connection and permission to display over other apps.
 
 ## Build
 
-JDK 17 or later and Android SDK 36.
+JDK 17 or later and Android SDK 37.
 
 ```sh
 sh ./gradlew --no-daemon testDebugUnitTest assembleDebug
@@ -53,3 +53,5 @@ Issues and pull requests are welcome. `main` is protected: changes go through a 
 ## License
 
 [Apache-2.0](LICENSE). Dixi is a product of [DM Consulting](https://www.dm-consulting.tech).
+
+Inter fonts: SIL OFL 1.1, see [licenses/fonts-OFL.txt](licenses/fonts-OFL.txt) and [NOTICE](NOTICE).
