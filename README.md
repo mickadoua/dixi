@@ -48,7 +48,7 @@ Kotlin style is checked with `sh ./gradlew spotlessCheck`.
 
 ## Contributing
 
-Issues and pull requests are welcome. `main` is protected: changes go through a pull request. Notes for maintainers (release, Play listing, emulator checks) are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md),.
+Issues and pull requests are welcome. `main` is protected: changes go through a pull request. Notes for maintainers (release, Play listing, emulator checks) are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## License
 
