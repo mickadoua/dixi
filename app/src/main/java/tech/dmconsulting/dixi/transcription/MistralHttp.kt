@@ -1,6 +1,8 @@
 package tech.dmconsulting.dixi.transcription
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import okhttp3.Call
@@ -52,8 +54,11 @@ object MistralHttp {
     /**
      * Runs [call] and turns its response into a result with [parse]. Network,
      * HTTP and parsing failures all come back as [VoxtralResult.Failure].
+     * Reading and closing the response touch the socket: off the main thread (DMC-775).
      */
-    suspend fun <T> execute(call: Call, parse: (String) -> VoxtralResult<T>): VoxtralResult<T> {
+    suspend fun <T> execute(call: Call, parse: (String) -> VoxtralResult<T>): VoxtralResult<T> = withContext(Dispatchers.IO) { readResponse(call, parse) }
+
+    private suspend fun <T> readResponse(call: Call, parse: (String) -> VoxtralResult<T>): VoxtralResult<T> {
         val response = try {
             call.await()
         } catch (e: InterruptedIOException) {
@@ -81,11 +86,17 @@ object MistralHttp {
         }
     }
 
-    /** HTTP status of [call], body unread; null when no answer came (network failure or timeout). */
-    suspend fun status(call: Call): Int? = try {
-        call.await().use { it.code }
-    } catch (e: IOException) {
-        null
+    /**
+     * HTTP status of [call], body unread; null when no answer came (network failure or timeout).
+     * Closing the response reads what is left of the body: off the main thread, or Android
+     * throws NetworkOnMainThreadException (« Test key » crashed on the emulator, DMC-775).
+     */
+    suspend fun status(call: Call): Int? = withContext(Dispatchers.IO) {
+        try {
+            call.await().use { it.code }
+        } catch (e: IOException) {
+            null
+        }
     }
 
     /** Suspends until [this] call answers; cancelling the coroutine cancels the call. */
