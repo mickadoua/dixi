@@ -45,8 +45,9 @@ import tech.dmconsulting.dixi.home.HomeScreen
 import tech.dmconsulting.dixi.offer.OfferScreen
 import tech.dmconsulting.dixi.onboarding.BubbleEnabledScreen
 import tech.dmconsulting.dixi.onboarding.BubbleIntroScreen
+import tech.dmconsulting.dixi.onboarding.GuidedTrialScreen
 import tech.dmconsulting.dixi.onboarding.MicPermissionScreen
-import tech.dmconsulting.dixi.onboarding.TrialScreen
+import tech.dmconsulting.dixi.onboarding.MistralKeyScreen
 import tech.dmconsulting.dixi.onboarding.WelcomeScreen
 import tech.dmconsulting.dixi.onboarding.onboardingStep
 import tech.dmconsulting.dixi.onboarding.previous
@@ -68,7 +69,7 @@ import tech.dmconsulting.dixi.ui.theme.Neon
  * [openOnTop]: a screen opened once over [start], so « Retour » leads back to it
  * (a dictation notification opens screen 10 this way).
  *
- * Onboarding (screens 1 to 5): each move replaces the whole back stack, and the
+ * Onboarding (mockups DMC-764 § 3): each move replaces the whole back stack, and the
  * back arrow leads to the step before, so a relaunch on any step behaves the same.
  * The step shown is saved; once « Terminer » or « Pas maintenant » is tapped the
  * app opens on [Screen.home].
@@ -105,6 +106,7 @@ fun DixiNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Scre
     val openDisclosure = if (Screen.autoPasteShown) ({ navController.navigate(Screen.AutoPasteDisclosure.route) }) else null
     val autoPaste = openDisclosure?.let { rememberAutoPasteToggle(container.settings, onDisclose = it) }
     val openOffer = if (Screen.offerShown) ({ navController.navigate(Screen.Offer.route) }) else null
+    val openTab: (Screen) -> Unit = { tab -> navController.navigateToTab(tab) }
     CompositionLocalProvider(LocalDemoMode provides demoMode) {
         Scaffold(
             containerColor = Neon.Bg,
@@ -130,24 +132,32 @@ fun DixiNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Scre
                                 OnboardingStep.Welcome -> WelcomeScreen(onStart = { go(Screen.MicPermission) })
 
                                 OnboardingStep.MicPermission -> MicPermissionScreen(
-                                    onGranted = { go(Screen.Trial) },
-                                    // No microphone, no trial: on to the bubble, which asks again on its first tap.
-                                    onLater = { go(Screen.BubbleIntro) },
+                                    onGranted = { go(Screen.MistralKey) },
+                                    // No microphone yet: the bubble asks again on its first tap.
+                                    onLater = { go(Screen.MistralKey) },
                                     onBack = toPrevious,
                                 )
 
-                                OnboardingStep.Trial -> TrialScreen(onContinue = { go(Screen.BubbleIntro) }, onBack = toPrevious)
+                                OnboardingStep.MistralKey -> MistralKeyScreen(
+                                    container.mistralKey,
+                                    container.keyCheck,
+                                    onContinue = { go(Screen.BubbleIntro) },
+                                    onBack = toPrevious,
+                                )
 
                                 OnboardingStep.BubbleIntro -> BubbleIntroScreen(
                                     onEnabled = {
                                         scope.launch { container.settings.update { it.copy(bubbleEnabled = true) } }
-                                        // Shown even if the user had hidden it before.
+                                        // The real bubble shows now, even if the user had hidden it before.
                                         BubbleService.show(context)
-                                        go(Screen.BubbleEnabled)
+                                        go(Screen.Trial)
                                     },
+                                    // No bubble, no trial: the home screen says « Bulle inactive ».
                                     onNotNow = finishOnboarding,
                                     onBack = toPrevious,
                                 )
+
+                                OnboardingStep.Trial -> GuidedTrialScreen(onDone = { go(Screen.BubbleEnabled) }, onBack = toPrevious)
 
                                 OnboardingStep.BubbleEnabled -> BubbleEnabledScreen(
                                     onFinish = finishOnboarding,
@@ -158,7 +168,15 @@ fun DixiNavHost(container: AppContainer, demoMode: Boolean, start: Screen = Scre
                             return@composable
                         }
                         when (screen) {
-                            Screen.Home -> HomeScreen(bubble, container.history, onOpenOffer = openOffer)
+                            Screen.Home -> HomeScreen(
+                                bubble = bubble,
+                                history = container.history,
+                                keys = container.mistralKey,
+                                autoPaste = autoPaste,
+                                onOpenSettings = { openTab(Screen.Settings) },
+                                onOpenHistory = { openTab(Screen.History) },
+                                onOpenOffer = openOffer,
+                            )
 
                             Screen.History -> HistoryScreen(
                                 history = container.history,
@@ -208,13 +226,7 @@ private fun TabBar(current: Screen, navController: NavHostController) {
             Screen.tabs.forEach { tab ->
                 NavigationBarItem(
                     selected = tab == current,
-                    onClick = {
-                        navController.navigate(tab.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+                    onClick = { navController.navigateToTab(tab) },
                     icon = { Icon(painterResource(tab.icon), contentDescription = null) },
                     label = { Text(stringResource(tab.title), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize)) },
                     colors = NavigationBarItemDefaults.colors(
@@ -227,6 +239,15 @@ private fun TabBar(current: Screen, navController: NavHostController) {
                 )
             }
         }
+    }
+}
+
+/** Opens a bottom tab, as the tab bar does: one copy of each, state kept. */
+private fun NavHostController.navigateToTab(tab: Screen) {
+    navigate(tab.route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 

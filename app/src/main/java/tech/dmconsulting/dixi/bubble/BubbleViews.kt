@@ -17,8 +17,13 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.PathParser
 import androidx.core.graphics.withClip
+import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import tech.dmconsulting.dixi.R
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.exp
+import kotlin.math.sqrt
 
 internal fun View.dp(value: Float) = value * resources.displayMetrics.density
 
@@ -30,23 +35,73 @@ internal fun View.allowBlur() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 }
 
-/** Wave bar heights in dp, 4 dp wide every 7 dp (neon charter § Bulle). */
+/** Wave bar heights in dp, 4 dp wide every 7 dp (neon charter § Bulle), drawn for a 56 dp disc. */
 private val LOW_WAVE = floatArrayOf(6f, 12f, 18f, 12f, 6f)
-private val HIGH_WAVE = floatArrayOf(14f, 26f, 34f, 26f, 14f)
 private const val CHECK_PATH = "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
 
 /** Material « priority_high »: an exclamation mark. */
 private const val ERROR_PATH = "M10 3h4v12h-4zM12 17a2 2 0 1 1 0 4a2 2 0 1 1 0-4z"
 
-/** The 56 dp disc and its content for each state. Takes the touches. */
+/** Material « mic », as res/drawable/ic_mic. */
+private const val MIC_PATH = "M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zM17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-0.49 6-3.39 6-6.92h-2z"
+
+/** The content is drawn for the charter's 56 dp disc, then scaled to the 44 dp one. */
+private const val CONTENT_SCALE = BubbleState.DISC_DP / 56f
+
+/** Voice wave, mockups DMC-764 § 2: rings up to 14 dp past the disc, smoothed over 80 ms. */
+const val WAVE_MAX_DP = 14f
+const val WAVE_SMOOTH_MS = 80f
+const val WAVE_DELAY_MS = 120L
+const val WAVE_PULSE_MS = 1_200L
+
+/** Gap between the two rings, so both show even when the voice holds steady. */
+const val WAVE_RING_GAP_DP = 4f
+
+/** Slow breath of the wave in silence: listening goes on. */
+const val WAVE_PULSE_DP = 3f
+
+/**
+ * Ring distance past the disc edge, in dp, for a voice [level] from 0 to 1. Square root:
+ * speech is quiet in linear amplitude, a normal voice must move the wave.
+ */
+fun waveOffsetDp(level: Float): Float = WAVE_MAX_DP * sqrt(level.coerceIn(0f, 1f))
+
+/** One step of the exponential smoothing from [current] toward [target], [dtMs] later. */
+fun smoothWave(current: Float, target: Float, dtMs: Long): Float = current + (target - current) * (1f - exp(-dtMs.coerceAtLeast(0) / WAVE_SMOOTH_MS))
+
+/** Extra ring distance in silence, [sinceMs] after the listening started: 0 to [WAVE_PULSE_DP] and back, fading as the voice rises. */
+fun silencePulseDp(sinceMs: Long, offsetDp: Float): Float {
+    val breath = 0.5f - 0.5f * cos(2.0 * PI * (sinceMs % WAVE_PULSE_MS) / WAVE_PULSE_MS).toFloat()
+    return WAVE_PULSE_DP * breath * (1f - offsetDp / WAVE_PULSE_DP).coerceIn(0f, 1f)
+}
+
+/**
+ * The 44 dp disc and its content for each state, in a 48 dp window that takes the touches.
+ * Tucked at the edge ([dockedSide]), the disc is centered on that window edge: half of it
+ * shows against the screen edge, at 60 %, while the whole window still takes the touches.
+ */
 class BubbleView(context: Context) : View(context) {
 
     var state: BubbleState = BubbleState.Idle
         set(value) {
             field = value
-            contentDescription = context.getString(value.description)
-            alpha = value.opacity
-            invalidate()
+            if (value != BubbleState.Listening) listeningElapsed = null
+            updateLook()
+        }
+
+    /** Side the bubble is tucked at, or null when it shows whole. */
+    var dockedSide: Side? = null
+        set(value) {
+            field = value
+            updateLook()
+        }
+
+    /** « 0:12 » while listening: TalkBack says it, nothing on screen (mockups DMC-764 § 2). */
+    var listeningElapsed: String? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            updateLook()
         }
 
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -58,64 +113,83 @@ class BubbleView(context: Context) : View(context) {
     }
     private val innerGlow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        maskFilter = BlurMaskFilter(blur(10f), BlurMaskFilter.Blur.NORMAL)
+        maskFilter = BlurMaskFilter(blur(8f), BlurMaskFilter.Blur.NORMAL)
     }
     private val bar = RectF()
     private val arc = RectF()
     private val disc = Path()
     private val check = PathParser.createPathFromPathData(CHECK_PATH)
     private val exclamation = PathParser.createPathFromPathData(ERROR_PATH)
+    private val mic = PathParser.createPathFromPathData(MIC_PATH)
 
     init {
         isClickable = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         allowBlur()
-        state = BubbleState.Idle
+        updateLook()
+    }
+
+    private fun updateLook() {
+        contentDescription = when {
+            dockedSide != null -> context.getString(R.string.bubble_docked)
+            listeningElapsed != null -> context.getString(R.string.bubble_listening_elapsed, listeningElapsed)
+            else -> context.getString(state.description)
+        }
+        alpha = if (dockedSide != null) BubbleState.DOCKED_OPACITY else state.opacity
+        invalidate()
     }
 
     // Taps come from BubbleOverlay's touch listener, TalkBack from here.
     override fun performClick(): Boolean = super.performClick()
 
     override fun onDraw(canvas: Canvas) {
-        val r = width / 2f
+        val r = dp(BubbleState.DISC_DP / 2f)
+        val cx = when (dockedSide) {
+            Side.Left -> 0f
+            Side.Right -> width.toFloat()
+            null -> width / 2f
+        }
+        val cy = height / 2f
         fill.color = color(state.fill)
-        canvas.drawCircle(r, r, r, fill)
+        canvas.drawCircle(cx, cy, r, fill)
         val outline = color(state.outline)
         if (state.fill != state.outline) {
-            // Inner glow (inset 0 0 10 dp at 25 %), kept inside the disc.
+            // Inner glow (inset 0 0 8 dp at 25 %), kept inside the disc.
             disc.rewind()
-            disc.addCircle(r, r, r, Path.Direction.CW)
+            disc.addCircle(cx, cy, r, Path.Direction.CW)
             canvas.withClip(disc) {
-                innerGlow.strokeWidth = dp(4f)
+                innerGlow.strokeWidth = dp(3f)
                 innerGlow.color = ColorUtils.setAlphaComponent(color(state.glowColor), 64)
-                drawCircle(r, r, r, innerGlow)
+                drawCircle(cx, cy, r, innerGlow)
             }
         }
         // 2 dp outline on the disc edge.
         stroke.strokeWidth = dp(2f)
         stroke.color = outline
-        canvas.drawCircle(r, r, r - dp(1f), stroke)
+        canvas.drawCircle(cx, cy, r - dp(1f), stroke)
         val content = color(state.content)
-        when (state) {
-            BubbleState.Idle -> drawWave(canvas, LOW_WAVE, content, glow = true)
-            BubbleState.Listening -> drawWave(canvas, HIGH_WAVE, content, glow = false)
-            BubbleState.Processing -> drawSpinner(canvas, content)
-            BubbleState.Ready -> drawIcon(canvas, check, content)
-            BubbleState.Error -> drawIcon(canvas, exclamation, content)
+        canvas.withScale(CONTENT_SCALE, CONTENT_SCALE, cx, cy) {
+            when (state) {
+                BubbleState.Idle -> drawWave(this, cx, cy, content)
+                BubbleState.Listening -> drawIcon(this, cx, cy, mic, content, glow = false)
+                BubbleState.Processing -> drawSpinner(this, cx, cy, content)
+                BubbleState.Ready -> drawIcon(this, cx, cy, check, content, glow = true)
+                BubbleState.Error -> drawIcon(this, cx, cy, exclamation, content, glow = true)
+            }
         }
     }
 
     private fun color(res: Int) = ContextCompat.getColor(context, res)
 
     /** 5 bars, 4 dp wide every 7 dp, centered. Neon bars glow (0 0 6 dp at 90 %). */
-    private fun drawWave(canvas: Canvas, heights: FloatArray, color: Int, glow: Boolean) {
-        val left = (width - dp(32f)) / 2f
+    private fun drawWave(canvas: Canvas, cx: Float, cy: Float, color: Int) {
+        val left = cx - dp(16f)
         ink.color = color
         glowInk.color = ColorUtils.setAlphaComponent(color, 230)
-        listOfNotNull(glowInk.takeIf { glow }, ink).forEach { paint ->
-            heights.forEachIndexed { i, h ->
+        listOf(glowInk, ink).forEach { paint ->
+            LOW_WAVE.forEachIndexed { i, h ->
                 val x = left + dp(7f * i)
-                val y = (height - dp(h)) / 2f
+                val y = cy - dp(h) / 2f
                 bar.set(x, y, x + dp(4f), y + dp(h))
                 canvas.drawRoundRect(bar, dp(2f), dp(2f), paint)
             }
@@ -123,9 +197,9 @@ class BubbleView(context: Context) : View(context) {
     }
 
     /** 30 dp ring, 4 dp stroke: a faint track and a turning half, still if animations are off. */
-    private fun drawSpinner(canvas: Canvas, color: Int) {
-        val inset = (width - dp(30f)) / 2f + dp(2f)
-        arc.set(inset, inset, width - inset, height - inset)
+    private fun drawSpinner(canvas: Canvas, cx: Float, cy: Float, color: Int) {
+        val radius = dp(13f)
+        arc.set(cx - radius, cy - radius, cx + radius, cy + radius)
         stroke.strokeWidth = dp(4f)
         stroke.strokeCap = Paint.Cap.BUTT
         stroke.color = ColorUtils.setAlphaComponent(color, 46)
@@ -138,15 +212,15 @@ class BubbleView(context: Context) : View(context) {
         if (spins) postInvalidateOnAnimation()
     }
 
-    /** 28 dp icon from a 24-unit Material path: the check, or the error mark. */
-    private fun drawIcon(canvas: Canvas, icon: Path, color: Int) {
+    /** 28 dp icon from a 24-unit Material path: the microphone, the check or the error mark. */
+    private fun drawIcon(canvas: Canvas, cx: Float, cy: Float, icon: Path, color: Int, glow: Boolean) {
         val size = dp(28f)
         val scale = size / 24f
         ink.color = color
         glowInk.color = ColorUtils.setAlphaComponent(color, 230)
-        canvas.withTranslation((width - size) / 2f, (height - size) / 2f) {
+        canvas.withTranslation(cx - size / 2f, cy - size / 2f) {
             scale(scale, scale)
-            drawPath(icon, glowInk)
+            if (glow) drawPath(icon, glowInk)
             drawPath(icon, ink)
         }
     }
@@ -157,29 +231,53 @@ class BubbleView(context: Context) : View(context) {
 }
 
 /**
- * Drawn behind the disc in a window that takes no touch: the neon glow of the
- * state and, when listening, the two halo rings (8 and 18 dp) that follow the voice.
+ * Drawn behind the disc in a window that takes no touch: the neon glow of the state and,
+ * when listening, the voice wave (mockups DMC-764 § 2): two rings whose distance follows
+ * the voice, the second 120 ms behind at 40 %, a slow breath in silence, magenta near
+ * the time limit. With animations off, one still ring instead.
  */
 class BubbleBackdropView(context: Context) : View(context) {
 
-    private val discRadius = dp(28f)
+    private val discRadius = dp(BubbleState.DISC_DP / 2f)
 
     var state: BubbleState = BubbleState.Idle
+        set(value) {
+            if (value == BubbleState.Listening && field != BubbleState.Listening) {
+                listeningSinceMs = SystemClock.uptimeMillis()
+                smoothed = 0f
+                lastFrameMs = 0L
+                trail.clear()
+            }
+            if (value != BubbleState.Listening) nearLimit = false
+            field = value
+            invalidate()
+        }
+
+    /** Voice level, 0 to 1: the target of the wave. */
+    var voiceLevel = 0f
+        set(value) {
+            field = value.coerceIn(0f, 1f)
+        }
+
+    /** Less than 10 s before the time limit: the wave turns magenta. */
+    var nearLimit = false
         set(value) {
             field = value
             invalidate()
         }
 
-    /** Voice level, 0 to 1: the halo rings thicken with it. */
-    var voiceLevel = 0f
-        set(value) {
-            field = value.coerceIn(0f, 1f)
-            if (state == BubbleState.Listening) invalidate()
-        }
-
     private val glow = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(2f)
+    }
     private val glowFilters = HashMap<Float, BlurMaskFilter>()
+    private var listeningSinceMs = 0L
+    private var lastFrameMs = 0L
+    private var smoothed = 0f
+
+    /** Recent ring distances (time, dp): the second ring reads the one from 120 ms ago. */
+    private val trail = ArrayDeque<Pair<Long, Float>>()
 
     init {
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -195,14 +293,30 @@ class BubbleBackdropView(context: Context) : View(context) {
             glow.color = ColorUtils.setAlphaComponent(color, (layer.alpha * 255).toInt())
             canvas.drawCircle(c, c, discRadius, glow)
         }
-        if (state == BubbleState.Listening) {
-            // Rings 8 and 18 dp from the disc, 70 % and 30 %; 2 dp thick in silence, up to 4 dp loud.
-            halo.strokeWidth = dp(2f) + dp(2f) * voiceLevel
-            listOf(8f to 179, 18f to 77).forEach { (gap, alpha) ->
-                halo.color = ColorUtils.setAlphaComponent(color, alpha)
-                canvas.drawCircle(c, c, discRadius + dp(gap), halo)
-            }
+        if (state == BubbleState.Listening) drawWave(canvas, c)
+    }
+
+    private fun drawWave(canvas: Canvas, c: Float) {
+        val neon = ContextCompat.getColor(context, if (nearLimit) R.color.bubble_magenta else R.color.bubble_orange)
+        val edge = discRadius + dp(1f)
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            ring.color = ColorUtils.setAlphaComponent(neon, 217)
+            canvas.drawCircle(c, c, edge + dp(6f), ring)
+            return
         }
+        val now = SystemClock.uptimeMillis()
+        val dt = if (lastFrameMs == 0L) 16L else (now - lastFrameMs).coerceAtMost(100L)
+        lastFrameMs = now
+        smoothed = smoothWave(smoothed, waveOffsetDp(voiceLevel), dt)
+        val offset = smoothed + silencePulseDp(now - listeningSinceMs, smoothed)
+        trail.addLast(now to offset)
+        while (trail.size > 1 && trail[1].first <= now - WAVE_DELAY_MS) trail.removeFirst()
+        val behind = trail.first().second
+        ring.color = ColorUtils.setAlphaComponent(neon, 217)
+        canvas.drawCircle(c, c, edge + dp(offset), ring)
+        ring.color = ColorUtils.setAlphaComponent(neon, 102)
+        canvas.drawCircle(c, c, edge + dp(behind + WAVE_RING_GAP_DP), ring)
+        postInvalidateOnAnimation()
     }
 }
 
@@ -291,59 +405,5 @@ class HideZoneView(context: Context) : View(context) {
     companion object {
         /** Room under the disc for its glow. */
         const val GLOW_DP = 32f
-    }
-}
-
-/**
- * The hidden bubble in edge mode: a 20 × 56 dp half-pill against the screen
- * [side], orange outline and glow, 85 %. Its window is 48 dp wide: the touch
- * target. A tap shows the bubble again.
- */
-class EdgeTabView(context: Context) : View(context) {
-
-    var side: Side = Side.Right
-        set(value) {
-            field = value
-            invalidate()
-        }
-
-    private val orange = ContextCompat.getColor(context, R.color.bubble_orange)
-    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.bubble_disc) }
-    private val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = dp(2f)
-        color = orange
-    }
-    private val glow = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val near = BlurMaskFilter(blur(10f), BlurMaskFilter.Blur.OUTER)
-    private val far = BlurMaskFilter(blur(22f), BlurMaskFilter.Blur.OUTER)
-    private val tab = Path()
-
-    init {
-        isClickable = true
-        alpha = 0.85f
-        contentDescription = context.getString(R.string.bubble_edge)
-        allowBlur()
-    }
-
-    override fun performClick(): Boolean = super.performClick()
-
-    override fun onDraw(canvas: Canvas) {
-        val w = dp(20f)
-        val h = dp(56f)
-        val top = (height - h) / 2f
-        val r = h / 2f
-        // Rounded on the screen side only: wider than the view, the flat end stays off screen.
-        val left = if (side == Side.Right) width - w else -r
-        val right = if (side == Side.Right) width + r else w
-        tab.rewind()
-        tab.addRoundRect(RectF(left, top, right, top + h), r, r, Path.Direction.CW)
-        listOf(near to 0.7f, far to 0.35f).forEach { (filter, a) ->
-            glow.maskFilter = filter
-            glow.color = ColorUtils.setAlphaComponent(orange, (a * 255).toInt())
-            canvas.drawPath(tab, glow)
-        }
-        canvas.drawPath(tab, fill)
-        canvas.drawPath(tab, outline)
     }
 }

@@ -8,6 +8,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -37,19 +38,37 @@ class MistralKeyCheckTest {
     }
 
     @Test
-    fun refusedKey() = runTest {
-        listOf(401, 403).forEach { code ->
+    fun eachRefusalHasItsCause() = runTest {
+        // Léa's table (DMC-765): 401 invalid, 403 no access, 429 limited.
+        listOf(401 to KeyCheck.Invalid, 403 to KeyCheck.NoAccess, 429 to KeyCheck.RateLimited).forEach { (code, expected) ->
             server.answer(code, """{"message":"Unauthorized"}""")
-            assertEquals("HTTP $code", KeyCheck.Rejected, check.check(TEST_KEY))
+            val result = check.check(TEST_KEY)
+            assertEquals("HTTP $code", expected, result)
+            assertTrue("HTTP $code is shown under « Key refused »", result.refused)
         }
     }
 
     @Test
-    fun serviceTrouble() = runTest {
-        listOf(429, 500, 503).forEach { code ->
+    fun onlyInvalidOrNoAccessMarksTheKeyRejected() {
+        assertEquals(setOf(KeyCheck.Invalid, KeyCheck.NoAccess), KeyCheck.entries.filter { it.rejectsKey }.toSet())
+    }
+
+    @Test
+    fun serviceTroubleIsNotARefusal() = runTest {
+        listOf(500, 503).forEach { code ->
             server.answer(code)
-            assertEquals("HTTP $code", KeyCheck.Unavailable, check.check(TEST_KEY))
+            val result = check.check(TEST_KEY)
+            assertEquals("HTTP $code", KeyCheck.Unavailable, result)
+            assertFalse(result.refused)
         }
+    }
+
+    @Test
+    fun statusesWithoutAnAnswer() {
+        assertEquals(KeyCheck.NoConnection, KeyCheck.forStatus(null))
+        assertEquals(KeyCheck.NoConnection, KeyCheck.forStatus(408))
+        assertEquals(KeyCheck.Valid, KeyCheck.forStatus(200))
+        assertEquals(KeyCheck.Unavailable, KeyCheck.forStatus(404))
     }
 
     @Test

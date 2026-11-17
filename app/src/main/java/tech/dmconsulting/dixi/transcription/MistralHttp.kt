@@ -81,6 +81,13 @@ object MistralHttp {
         }
     }
 
+    /** HTTP status of [call], body unread; null when no answer came (network failure or timeout). */
+    suspend fun status(call: Call): Int? = try {
+        call.await().use { it.code }
+    } catch (e: IOException) {
+        null
+    }
+
     /** Suspends until [this] call answers; cancelling the coroutine cancels the call. */
     private suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
         continuation.invokeOnCancellation { cancel() }

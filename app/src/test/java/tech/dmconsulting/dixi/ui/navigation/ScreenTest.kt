@@ -6,7 +6,7 @@ import org.junit.Test
 class ScreenTest {
     @Test
     fun screensFollowTheMockupNumbers() {
-        assertEquals(listOf(1, 2, 3, 4, 5, 8, 9, 10, 12, 13), Screen.entries.map { it.number })
+        assertEquals(listOf(1, 2, 14, 4, 3, 5, 8, 9, 10, 12, 13), Screen.entries.map { it.number })
     }
 
     @Test

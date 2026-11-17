@@ -153,4 +153,24 @@ class BubbleControllerTest {
         controller.setVoiceLevel(3f)
         assertEquals(listOf(0f, 0.4f, 1f), levels)
     }
+
+    @Test
+    fun aLongPressCancelsOnlyWhileListening() {
+        assertFalse(controller.longPressCancels)
+        controller.setState(BubbleState.Listening)
+        assertTrue(controller.longPressCancels)
+        controller.setState(BubbleState.Processing)
+        assertFalse(controller.longPressCancels)
+    }
+
+    @Test
+    fun theBubbleTucksAwayOnlyBetweenDictations() {
+        assertTrue(controller.canDock)
+        listOf(BubbleState.Listening, BubbleState.Processing).forEach {
+            controller.setState(it)
+            assertFalse("no tucking in $it", controller.canDock)
+        }
+        controller.setState(BubbleState.Ready)
+        assertTrue(controller.canDock)
+    }
 }

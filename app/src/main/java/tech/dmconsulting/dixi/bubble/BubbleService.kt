@@ -18,7 +18,6 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -30,7 +29,6 @@ import tech.dmconsulting.dixi.MainActivity
 import tech.dmconsulting.dixi.R
 import tech.dmconsulting.dixi.dictation.DictationController
 import tech.dmconsulting.dixi.dictation.DictationOutput
-import tech.dmconsulting.dixi.dictation.DictationPanel
 import tech.dmconsulting.dixi.dictation.DictationRecorder
 import tech.dmconsulting.dixi.history.copyToClipboard
 import tech.dmconsulting.dixi.paste.AutoPasteService
@@ -39,16 +37,18 @@ import tech.dmconsulting.dixi.recording.MicrophoneRecorder
 import tech.dmconsulting.dixi.recording.Recorder
 import tech.dmconsulting.dixi.recording.RecorderState
 import tech.dmconsulting.dixi.recording.RecordingError
+import tech.dmconsulting.dixi.recording.RecordingLimits
 import tech.dmconsulting.dixi.recording.formatDuration
 import tech.dmconsulting.dixi.transcription.VoxtralError
 import tech.dmconsulting.dixi.transcription.VoxtralResult
 import tech.dmconsulting.dixi.ui.navigation.Screen
 
 /**
- * Shows the floating bubble. A tap starts a dictation, a second tap stops it
- * (5 min max, see [Recorder]); the text is copied and notified, or pasted with auto-paste
- * (see [DictationController]).
- * Dropped on the hide zone, the bubble hides until its notification (or [show]) brings it back.
+ * Shows the floating bubble. A tap starts a dictation, a second tap stops it, a long press
+ * cancels it (5 min max, see [Recorder]); the text is copied and notified, or pasted with
+ * auto-paste (see [DictationController]). Tucked at the edge, it stays half shown
+ * ([BubbleOverlay]). Dropped on the hide zone, it hides until its notification (or [show])
+ * brings it back.
  */
 class BubbleService :
     Service(),
@@ -94,10 +94,13 @@ class BubbleService :
     private lateinit var store: BubblePositionStore
     private lateinit var overlay: BubbleOverlay
     private var debugReceiver: BroadcastReceiver? = null
+    private var listeningSinceMs = 0L
     private val levelRunnable = object : Runnable {
         override fun run() {
             // Only a real recording moves the wave: the debug proof sets its own levels.
             if (recorder.state.value != RecorderState.Idle) controller.setVoiceLevel(recorder.voiceLevel() / 32_767f)
+            val elapsed = SystemClock.elapsedRealtime() - listeningSinceMs
+            overlay.setListening(elapsed, nearLimit = elapsed >= RecordingLimits.current().maxMs - NEAR_LIMIT_MS)
             handler.postDelayed(this, LEVEL_MS)
         }
     }
@@ -109,15 +112,9 @@ class BubbleService :
         createChannels()
         recorder.onFinished = dictation::onRecordingFinished
         store = BubblePositionStore(this)
-        overlay = BubbleOverlay(
-            this, controller, store, onTap = ::onBubbleTap, onHide = ::hide,
-            onCancel = { dictation.cancel() },
-            onFinish = { dictation.finish() },
-            onRedo = { dictation.redo() },
-            onValidate = { dictation.validate(it) },
-        )
+        overlay = BubbleOverlay(this, controller, store, onTap = ::onBubbleTap, onHide = ::hide, onCancel = { dictation.cancel() })
         controller.onStateChanged = ::onStateChanged
-        controller.onVoiceLevel = { overlay.setVoiceLevel(it, SystemClock.elapsedRealtime()) }
+        controller.onVoiceLevel = overlay::setVoiceLevel
         registerDebugReceiver()
     }
 
@@ -136,12 +133,11 @@ class BubbleService :
         }
         if (intent?.action == ACTION_SHOW) {
             store.hidden = false
-            overlay.removeEdge()
             NotificationManagerCompat.from(this).cancel(NOTIF_HIDDEN)
         }
         if (store.hidden) {
             Log.i(TAG, "bubble is hidden: not shown")
-            if (store.hideToEdge) showEdge() else stopSelf()
+            stopSelf()
         } else {
             try {
                 overlay.show()
@@ -176,36 +172,9 @@ class BubbleService :
         overlay.remove()
         BubbleVisibility.set(false)
         store.hidden = true
-        if (store.hideToEdge) {
-            showEdge()
-        } else {
-            notifyHidden()
-            stopSelf()
-        }
-    }
-
-    /** Edge mode: the tab stays at the side; a tap on it shows the bubble again. */
-    private fun showEdge() {
-        try {
-            overlay.showEdge(onShowBubble = ::unhide)
-        } catch (e: RuntimeException) {
-            Log.e(TAG, "bubble edge FAILED: notification instead", e)
-            notifyHidden()
-            stopSelf()
-        }
-    }
-
-    private fun unhide() {
-        Log.i(TAG, "bubble shown from the edge")
-        store.hidden = false
-        overlay.removeEdge()
-        try {
-            overlay.show()
-            BubbleVisibility.set(true)
-        } catch (e: RuntimeException) {
-            Log.e(TAG, "bubble show FAILED", e)
-            stopSelf()
-        }
+        // Hiding cuts the bubble; tucking it at the edge is the way to keep it half shown (DMC-768).
+        notifyHidden()
+        stopSelf()
     }
 
     private fun onBubbleTap() {
@@ -216,8 +185,10 @@ class BubbleService :
     private fun onStateChanged(state: BubbleState) {
         Log.i(TAG, "bubble state $state")
         overlay.render(state)
+        BubbleEvents.setState(state)
         handler.removeCallbacks(levelRunnable)
         if (state == BubbleState.Listening) {
+            listeningSinceMs = SystemClock.elapsedRealtime()
             handler.post(levelRunnable)
         } else {
             controller.setVoiceLevel(0f)
@@ -226,6 +197,7 @@ class BubbleService :
 
     override fun copy(text: String, stoppedAtMs: Long) {
         copyToClipboard(this, text)
+        BubbleEvents.copied(text)
         Log.i(TAG, "clipboard set ${SystemClock.elapsedRealtime() - stoppedAtMs} ms after stop demo=$demoDictation")
     }
 
@@ -239,13 +211,20 @@ class BubbleService :
         return pasted
     }
 
-    override fun showPanel(panel: DictationPanel) {
-        overlay.showPanel(panel, SystemClock.elapsedRealtime())
-    }
-
     override fun showError(message: Int) {
         Log.i(TAG, "dictation error: ${getString(message)}")
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        overlay.errorMessage = message
+        BubbleEvents.failed(message)
+    }
+
+    override fun openKeySettings() {
+        Log.i(TAG, "key refused: opening the key settings")
+        // Allowed from the background: the app shows an overlay window.
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .putExtra(MainActivity.EXTRA_OPEN_SETTINGS, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        )
     }
 
     override fun askMicrophone() {
@@ -359,8 +338,9 @@ class BubbleService :
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.hasExtra("panel")) {
-                    showDebugPanel(intent)
+                if (intent.hasExtra("level")) {
+                    // Debug proof of the wave: a voice level from 0 to 1 while listening.
+                    overlay.setVoiceLevel(intent.getFloatExtra("level", 0f))
                     return
                 }
                 val state = intent.getStringExtra("state")?.let { name -> BubbleState.entries.find { it.name == name } }
@@ -374,26 +354,6 @@ class BubbleService :
         }
         ContextCompat.registerReceiver(this, receiver, IntentFilter(ACTION_DEBUG_STATE), ContextCompat.RECEIVER_EXPORTED)
         debugReceiver = receiver
-    }
-
-    /**
-     * Debug proof: « panel » = Listening, Processing, Suggestion or None; « text » for the
-     * suggestion, « mark » to mark the word at that offset; « levels » (floats, 0 to 1) fill the wave.
-     */
-    private fun showDebugPanel(intent: Intent) {
-        val now = SystemClock.elapsedRealtime()
-        val panel = when (intent.getStringExtra("panel")) {
-            "Listening" -> DictationPanel.Listening(now - intent.getLongExtra("elapsedMs", 0))
-            "Processing" -> DictationPanel.Processing
-            "Suggestion" -> DictationPanel.Suggestion(intent.getStringExtra("text").orEmpty())
-            else -> DictationPanel.None
-        }
-        Log.i(TAG, "debug panel $panel")
-        if (panel is DictationPanel.Listening) controller.setState(BubbleState.Listening)
-        overlay.showPanel(panel, now)
-        intent.getFloatArrayExtra("levels")?.forEach { overlay.setVoiceLevel(it, now) }
-        val mark = intent.getIntExtra("mark", -1)
-        if (mark >= 0) overlay.markSuggestionWord(mark)
     }
 
     private fun createChannels() {
@@ -425,7 +385,7 @@ class BubbleService :
         }
 
         /**
-         * The main screen's « Touchez, parlez » button: same as a tap on the bubble
+         * The home screen's « Dicter ici » button: same as a tap on the bubble
          * (start or stop). Needs the overlay permission, like the bubble itself.
          */
         const val ACTION_DICTATE = "tech.dmconsulting.dixi.action.DICTATE"
@@ -439,6 +399,9 @@ class BubbleService :
         private const val CHANNEL_BUBBLE = "bubble"
         private const val NOTIF_HIDDEN = 3
         private const val LEVEL_MS = 100L
+
+        /** The wave turns magenta 10 s before the time limit (mockups DMC-764 § 2). */
+        private const val NEAR_LIMIT_MS = 10_000L
         private const val CHANNEL_COPIED = "copied"
         private const val NOTIF_COPIED = 2
         private const val COPIED_TIMEOUT_MS = 6_000L

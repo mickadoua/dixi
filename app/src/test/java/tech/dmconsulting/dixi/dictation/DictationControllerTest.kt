@@ -2,8 +2,8 @@ package tech.dmconsulting.dixi.dictation
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -60,8 +60,8 @@ class DictationControllerTest {
         val texts = mutableListOf<String>()
         val notified = mutableListOf<Long>()
         val errors = mutableListOf<Int>()
-        val panels = mutableListOf<DictationPanel>()
-        var suggestedAt = -1L
+        var copiedAt = -1L
+        var keySettingsOpened = 0
         var pastes = 0
         var pasteMs = 0L
         var pasteResult: () -> Boolean = { false }
@@ -75,6 +75,7 @@ class DictationControllerTest {
 
         override fun copy(text: String, stoppedAtMs: Long) {
             texts += text
+            copiedAt = scope.testScheduler.currentTime
         }
 
         override fun notifyCopied(recordingMs: Long) {
@@ -85,9 +86,8 @@ class DictationControllerTest {
             errors += message
         }
 
-        override fun showPanel(panel: DictationPanel) {
-            panels += panel
-            if (panel is DictationPanel.Suggestion) suggestedAt = scope.testScheduler.currentTime
+        override fun openKeySettings() {
+            keySettingsOpened++
         }
 
         override fun askMicrophone() {
@@ -141,49 +141,43 @@ class DictationControllerTest {
         return RecordingOutcome.Success(RecordingResult(file, durationMs = 4_000, maxAmplitude = 3_000))
     }
 
+    private val cleanText = "Bonjour ceci est un texte de test dixi."
+
+    private fun dictate() {
+        recorder.nextOutcome = recorded()
+        controller.onTap()
+        controller.onTap()
+    }
+
     @Test
-    fun fullDictationCopiesTheCleanTextAndAddsItToTheHistory() {
+    fun fullDictationCopiesTheCleanTextRightAwayAndAddsItToTheHistory() {
         val outcome = recorded()
         recorder.nextOutcome = outcome
         controller.onTap()
         controller.onTap()
         scope.advanceUntilIdle()
 
-        val text = "Bonjour ceci est un texte de test dixi."
-        assertEquals(DictationPanel.Suggestion(text), output.panels.last())
-        assertTrue("nothing copied before « Valider »", output.texts.isEmpty())
-        controller.validate(text)
-        scope.advanceUntilIdle()
-
-        assertEquals(DictationPanel.None, output.panels.last())
-        assertEquals(
-            listOf(BubbleState.Listening, BubbleState.Processing, BubbleState.Ready),
-            states,
-        )
-        assertEquals(listOf(text), output.texts)
+        // No suggestion to confirm any more (DMC-768): the text leaves as soon as it is ready.
+        assertEquals(listOf(BubbleState.Listening, BubbleState.Processing, BubbleState.Ready), states)
+        assertEquals(listOf(cleanText), output.texts)
         assertEquals(listOf(4_000L), output.notified)
-        assertEquals(listOf(Dictation(text, at)), history.entries.value)
+        assertEquals(listOf(Dictation(cleanText, at)), history.entries.value)
         assertFalse(outcome.result.file.exists())
         assertTrue(output.errors.isEmpty())
     }
 
     @Test
-    fun withTheFakeServiceTheTextIsReadyWithinThreeSecondsOfTheStop() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
+    fun withTheFakeServiceTheTextIsCopiedWithinThreeSecondsOfTheStop() {
+        dictate()
         scope.advanceUntilIdle()
 
-        val afterStop = output.suggestedAt
-        assertEquals(FakeTranscriber.DEFAULT_DELAY_MS, afterStop)
-        assertTrue(afterStop <= 3_000)
+        assertEquals(FakeTranscriber.DEFAULT_DELAY_MS, output.copiedAt)
+        assertTrue(output.copiedAt <= 3_000)
     }
 
     @Test
     fun aTapWhileProcessingIsIgnored() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
+        dictate()
         assertEquals(BubbleState.Processing, bubble.state)
 
         controller.onTap()
@@ -197,20 +191,18 @@ class DictationControllerTest {
 
     @Test
     fun aLateRecordingWhileProcessingIsDeletedNotTranscribed() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
+        dictate()
         val late = RecordingOutcome.Success(RecordingResult(cacheDir.newFile("dictation-2.m4a"), 4_000, 3_000))
         controller.onRecordingFinished(late)
         scope.advanceUntilIdle()
 
         assertFalse(late.result.file.exists())
         assertEquals(1, transcriber.received.size)
-        assertTrue(output.panels.last() is DictationPanel.Suggestion)
+        assertEquals(1, output.texts.size)
     }
 
     @Test
-    fun noNetworkShowsTheErrorCopiesNothingAndDeletesTheAudio() {
+    fun noNetworkShowsItsShortCauseCopiesNothingAndDeletesTheAudio() {
         transcriber = FakeTranscriber(VoxtralResult.Failure(VoxtralError.NoConnection))
         val outcome = recorded()
         recorder.nextOutcome = outcome
@@ -219,23 +211,63 @@ class DictationControllerTest {
         scope.advanceUntilIdle()
 
         assertEquals(BubbleState.Error, bubble.state)
-        assertEquals(listOf(R.string.error_no_connection), output.errors)
+        assertEquals(listOf(R.string.bubble_error_no_network), output.errors)
         assertTrue(output.texts.isEmpty())
         assertTrue(history.entries.value.isEmpty())
         assertFalse(outcome.result.file.exists())
     }
 
     @Test
-    fun nothingHeardShowsTheErrorAndCopiesNothing() {
+    fun nothingHeardShowsItsShortCauseAndCopiesNothing() {
         recorder.nextOutcome = RecordingOutcome.Failure(RecordingError.NothingHeard)
         controller.onTap()
         controller.onTap()
         scope.advanceUntilIdle()
 
         assertEquals(listOf(BubbleState.Listening, BubbleState.Error), states)
-        assertEquals(listOf(R.string.error_nothing_heard), output.errors)
+        assertEquals(listOf(R.string.bubble_error_nothing_heard), output.errors)
         assertTrue(output.texts.isEmpty())
         assertTrue(transcriber.received.isEmpty())
+    }
+
+    @Test
+    fun aBlankTranscriptionIsNothingHeard() {
+        transcriber = FakeTranscriber(VoxtralResult.Success("   "))
+        dictate()
+        scope.advanceUntilIdle()
+
+        assertEquals(BubbleState.Error, bubble.state)
+        assertTrue(output.texts.isEmpty())
+        assertTrue(history.entries.value.isEmpty())
+    }
+
+    @Test
+    fun aTapOnARefusedKeyOpensTheKeySettingsInsteadOfANewDictation() {
+        transcriber = FakeTranscriber(VoxtralResult.Failure(VoxtralError.InvalidKey))
+        dictate()
+        scope.advanceUntilIdle()
+        assertEquals(listOf(R.string.bubble_error_key_refused), output.errors)
+
+        controller.onTap()
+
+        assertEquals(1, output.keySettingsOpened)
+        assertEquals(1, recorder.starts)
+        // Once opened, the next tap dictates again.
+        recorder.nextOutcome = RecordingOutcome.Cancelled
+        controller.onTap()
+        assertEquals(2, recorder.starts)
+    }
+
+    @Test
+    fun aTapOnAnotherErrorStartsANewDictation() {
+        transcriber = FakeTranscriber(VoxtralResult.Failure(VoxtralError.NoConnection))
+        dictate()
+        scope.advanceUntilIdle()
+
+        controller.onTap()
+
+        assertEquals(0, output.keySettingsOpened)
+        assertEquals(BubbleState.Listening, bubble.state)
     }
 
     @Test
@@ -302,25 +334,7 @@ class DictationControllerTest {
     }
 
     @Test
-    fun theListeningPanelShowsWithTheRecording() {
-        controller.onTap()
-
-        assertEquals(listOf(DictationPanel.Listening(0)), output.panels)
-    }
-
-    @Test
-    fun terminerIsATapOnTheBubble() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.finish()
-
-        assertEquals(1, recorder.stops)
-        assertEquals(BubbleState.Processing, bubble.state)
-        assertEquals(DictationPanel.Processing, output.panels.last())
-    }
-
-    @Test
-    fun annulerDeletesTheAudioAndGoesBackToRest() {
+    fun cancelDeletesTheAudioAndGoesBackToRest() {
         val outcome = recorded()
         recorder.nextOutcome = outcome
         controller.onTap()
@@ -331,81 +345,18 @@ class DictationControllerTest {
         assertEquals(0, recorder.stops)
         assertFalse(outcome.result.file.exists())
         assertEquals(listOf(BubbleState.Listening, BubbleState.Idle), states)
-        assertEquals(DictationPanel.None, output.panels.last())
         assertTrue(transcriber.received.isEmpty())
         assertTrue(output.texts.isEmpty())
     }
 
     @Test
-    fun validerCopiesTheCorrectedText() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        controller.validate("Bonjour, à jeudi.")
+    fun cancelOutsideListeningDoesNothing() {
+        dictate()
+        controller.cancel()
         scope.advanceUntilIdle()
 
-        assertEquals(listOf("Bonjour, à jeudi."), output.texts)
-        assertEquals(listOf(Dictation("Bonjour, à jeudi.", at)), history.entries.value)
-        assertEquals(BubbleState.Ready, bubble.state)
-
-        controller.validate("again")
-        assertEquals("a second « Valider » does nothing", 1, output.texts.size)
-    }
-
-    @Test
-    fun validerIgnoresABlankText() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        val suggestion = output.panels.last()
-        controller.validate("  \n ")
-        scope.advanceUntilIdle()
-
-        assertTrue(output.texts.isEmpty())
-        assertTrue(history.entries.value.isEmpty())
-        assertEquals("the suggestion stays open", suggestion, output.panels.last())
-
-        controller.validate("Bonjour.")
-        scope.advanceUntilIdle()
-        assertEquals(listOf("Bonjour."), output.texts)
-    }
-
-    @Test
-    fun refaireDropsTheSuggestionAndListensAgain() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        controller.redo()
-
-        assertEquals(2, recorder.starts)
-        assertEquals(BubbleState.Listening, bubble.state)
-        assertTrue(output.texts.isEmpty())
-        assertTrue(history.entries.value.isEmpty())
-        assertTrue(output.panels.last() is DictationPanel.Listening)
-    }
-
-    @Test
-    fun aTapWhileTheSuggestionWaitsDoesNothing() {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        controller.onTap()
-
-        assertEquals(1, recorder.starts)
-        assertTrue(output.panels.last() is DictationPanel.Suggestion)
-    }
-
-    @Test
-    fun anErrorClosesThePanel() {
-        recorder.nextOutcome = RecordingOutcome.Failure(RecordingError.NothingHeard)
-        controller.onTap()
-        controller.onTap()
-
-        assertEquals(DictationPanel.None, output.panels.last())
+        assertEquals(0, recorder.cancels)
+        assertEquals(listOf(cleanText), output.texts)
     }
 
     @Test
@@ -419,7 +370,6 @@ class DictationControllerTest {
 
         assertEquals(listOf(BubbleState.Listening, BubbleState.Processing, BubbleState.Error), states)
         assertEquals(listOf(R.string.error_service_unavailable), output.errors)
-        assertEquals(DictationPanel.None, output.panels.last())
         assertTrue(output.texts.isEmpty())
         assertFalse(outcome.result.file.exists())
 
@@ -432,15 +382,11 @@ class DictationControllerTest {
     @Test
     fun aHistoryThatThrowsKeepsTheCopiedText() {
         historyThrows = IOException("disk full")
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        controller.validate("Bonjour")
+        dictate()
         scope.advanceUntilIdle()
 
         assertEquals(BubbleState.Ready, bubble.state)
-        assertEquals(listOf("Bonjour"), output.texts)
+        assertEquals(listOf(cleanText), output.texts)
         assertEquals(1, output.notified.size)
         assertTrue(output.errors.isEmpty())
     }
@@ -452,18 +398,20 @@ class DictationControllerTest {
         assertEquals(R.string.error_recording_failed, RecordingError.StartFailed.message)
     }
 
-    private fun suggestion(): String {
-        recorder.nextOutcome = recorded()
-        controller.onTap()
-        controller.onTap()
-        scope.advanceUntilIdle()
-        return (output.panels.last() as DictationPanel.Suggestion).text
+    @Test
+    fun theCommonErrorsHaveAShortCauseNextToTheBubble() {
+        assertEquals(R.string.bubble_error_key_refused, VoxtralError.InvalidKey.bubbleMessage)
+        assertEquals(R.string.bubble_error_no_network, VoxtralError.NoConnection.bubbleMessage)
+        assertEquals(R.string.bubble_error_nothing_heard, VoxtralError.NothingHeard.bubbleMessage)
+        assertEquals(R.string.error_rate_limited, VoxtralError.RateLimited.bubbleMessage)
+        assertEquals(R.string.bubble_error_nothing_heard, RecordingError.NothingHeard.bubbleMessage)
+        assertEquals(R.string.error_recording_failed, RecordingError.StartFailed.bubbleMessage)
     }
 
     @Test
     fun autoPasteOffEndsRightAway() {
-        val text = suggestion()
-        controller.validate(text)
+        dictate()
+        scope.advanceTimeBy(FakeTranscriber.DEFAULT_DELAY_MS + 1)
 
         assertEquals(1, output.pastes)
         assertEquals(BubbleState.Ready, states.last())
@@ -473,26 +421,24 @@ class DictationControllerTest {
     @Test
     fun pastedTextIsCopiedTooButNotNotified() {
         output.pasteResult = { true }
-        val text = suggestion()
-        controller.validate(text)
+        dictate()
         scope.advanceUntilIdle()
 
-        assertEquals("copied first: the paste takes it from the clipboard", listOf(text), output.texts)
+        assertEquals("copied first: the paste takes it from the clipboard", listOf(cleanText), output.texts)
         assertEquals(BubbleState.Ready, states.last())
         assertTrue("« Texte copié » only when not pasted", output.notified.isEmpty())
-        assertEquals(listOf(text), history.entries.value.map { it.text })
+        assertEquals(listOf(cleanText), history.entries.value.map { it.text })
     }
 
     @Test
     fun bubbleStaysProcessingWhileItPastes() {
         output.pasteMs = 1_000
         output.pasteResult = { true }
-        val text = suggestion()
-        controller.validate(text)
-        scope.runCurrent()
+        dictate()
+        scope.advanceTimeBy(FakeTranscriber.DEFAULT_DELAY_MS + 1)
 
+        assertEquals(1, output.pastes)
         assertEquals(BubbleState.Processing, states.last())
-        assertEquals(DictationPanel.None, output.panels.last())
         controller.onTap()
         assertEquals("a tap does nothing during the paste", 1, recorder.starts)
 
@@ -505,13 +451,12 @@ class DictationControllerTest {
     fun missedPasteFallsBackToTheCopiedNotification() {
         output.pasteMs = 1_000
         output.pasteResult = { false }
-        val text = suggestion()
-        controller.validate(text)
-        scope.runCurrent()
+        dictate()
+        scope.advanceTimeBy(FakeTranscriber.DEFAULT_DELAY_MS + 1)
         assertTrue("not before the paste is tried", output.notified.isEmpty())
 
         scope.advanceUntilIdle()
-        assertEquals(listOf(text), output.texts)
+        assertEquals(listOf(cleanText), output.texts)
         assertEquals(BubbleState.Ready, states.last())
         assertEquals(listOf(4_000L), output.notified)
     }
@@ -519,8 +464,7 @@ class DictationControllerTest {
     @Test
     fun failingPasteFallsBackToTheCopiedNotification() {
         output.pasteResult = { throw IllegalStateException("settings unreadable") }
-        val text = suggestion()
-        controller.validate(text)
+        dictate()
         scope.advanceUntilIdle()
 
         assertEquals(BubbleState.Ready, states.last())

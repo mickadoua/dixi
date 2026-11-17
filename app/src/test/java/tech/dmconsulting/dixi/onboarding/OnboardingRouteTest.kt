@@ -10,13 +10,13 @@ import tech.dmconsulting.dixi.ui.navigation.Screen
 class OnboardingRouteTest {
     @Test
     fun firstLaunchOpensOnWelcome() {
-        assertEquals(Screen.Welcome, startScreen(AppSettings(), overlayGranted = false))
+        assertEquals(Screen.Welcome, startScreen(AppSettings(), overlayGranted = false, hasKey = false))
     }
 
     @Test
     fun resumesOnTheStepLeft() {
         OnboardingStep.entries.forEach { step ->
-            assertEquals(step.screen, startScreen(AppSettings(onboardingStep = step), overlayGranted = true))
+            assertEquals(step.screen, startScreen(AppSettings(onboardingStep = step), overlayGranted = true, hasKey = true))
         }
     }
 
@@ -24,20 +24,32 @@ class OnboardingRouteTest {
     fun neverReplaysOnceDone() {
         OnboardingStep.entries.forEach { step ->
             val settings = AppSettings(onboardingDone = true, onboardingStep = step)
-            assertEquals(Screen.home, startScreen(settings, overlayGranted = false))
-            assertEquals(Screen.home, startScreen(settings, overlayGranted = true))
+            assertEquals(Screen.home, startScreen(settings, overlayGranted = false, hasKey = false))
+            assertEquals(Screen.home, startScreen(settings, overlayGranted = true, hasKey = true))
         }
     }
 
     @Test
-    fun bubbleReadyWithoutOverlayPermissionGoesBackToScreen4() {
-        val settings = AppSettings(onboardingStep = OnboardingStep.BubbleEnabled)
-        assertEquals(Screen.BubbleIntro, startScreen(settings, overlayGranted = false))
+    fun trialOrReadyWithoutOverlayPermissionGoesBackToTheBubbleStep() {
+        listOf(OnboardingStep.Trial, OnboardingStep.BubbleEnabled).forEach { step ->
+            assertEquals(Screen.BubbleIntro, startScreen(AppSettings(onboardingStep = step), overlayGranted = false, hasKey = true))
+        }
     }
 
     @Test
-    fun stepsMatchScreens1To5InOrder() {
-        assertEquals(listOf(1, 2, 3, 4, 5), OnboardingStep.entries.map { it.screen.number })
+    fun everyStepAfterTheKeyNeedsTheKey() {
+        listOf(OnboardingStep.BubbleIntro, OnboardingStep.Trial, OnboardingStep.BubbleEnabled).forEach { step ->
+            assertEquals(Screen.MistralKey, startScreen(AppSettings(onboardingStep = step), overlayGranted = true, hasKey = false))
+        }
+        assertEquals(Screen.MicPermission, startScreen(AppSettings(onboardingStep = OnboardingStep.MicPermission), overlayGranted = false, hasKey = false))
+    }
+
+    @Test
+    fun keyBeforeTheBubbleThenTheGuidedTrial() {
+        assertEquals(
+            listOf(Screen.Welcome, Screen.MicPermission, Screen.MistralKey, Screen.BubbleIntro, Screen.Trial, Screen.BubbleEnabled),
+            OnboardingStep.entries.map { it.screen },
+        )
         OnboardingStep.entries.forEach { assertEquals(it, it.screen.onboardingStep) }
         assertNull(Screen.History.onboardingStep)
     }
@@ -45,16 +57,12 @@ class OnboardingRouteTest {
     @Test
     fun backLeadsToTheStepBefore() {
         assertNull(OnboardingStep.Welcome.previous)
-        assertEquals(OnboardingStep.Welcome, OnboardingStep.MicPermission.previous)
-        assertEquals(OnboardingStep.MicPermission, OnboardingStep.Trial.previous)
-        assertEquals(OnboardingStep.Trial, OnboardingStep.BubbleIntro.previous)
-        assertEquals(OnboardingStep.BubbleIntro, OnboardingStep.BubbleEnabled.previous)
+        OnboardingStep.entries.drop(1).forEach { assertEquals(OnboardingStep.entries[it.ordinal - 1], it.previous) }
     }
 
     @Test
-    fun noOverlayPermissionBeforeTheTrial() {
-        // The journey reaches screen 4 (overlay permission) only from screen 3 or from « Plus tard ».
-        val toBubbleIntro = Screen.entries.filter { Screen.BubbleIntro in it.links }
-        assertEquals(listOf(Screen.MicPermission, Screen.Trial), toBubbleIntro)
+    fun theGuidedTrialComesOnlyAfterTheOverlayPermission() {
+        assertEquals(listOf(Screen.BubbleIntro), Screen.entries.filter { Screen.Trial in it.links })
+        assertEquals(listOf(Screen.MicPermission), Screen.entries.filter { Screen.MistralKey in it.links })
     }
 }

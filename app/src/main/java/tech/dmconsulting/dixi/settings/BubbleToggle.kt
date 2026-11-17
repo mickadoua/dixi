@@ -17,8 +17,11 @@ import tech.dmconsulting.dixi.bubble.BubbleService
 import tech.dmconsulting.dixi.bubble.BubbleSwitch
 import tech.dmconsulting.dixi.bubble.BubbleVisibility
 
-/** The « Afficher la bulle » switch, shared by the main screen and the settings. */
-class BubbleToggle(val shown: Boolean?, val set: (Boolean) -> Unit)
+/**
+ * The « Afficher la bulle » switch, shared by the home screen and the settings.
+ * [permitted]: Android lets the app draw over other apps.
+ */
+class BubbleToggle(val shown: Boolean?, val permitted: Boolean, val set: (Boolean) -> Unit)
 
 /**
  * What the switch shows: the bubble really on screen, saved setting or not (the
@@ -54,7 +57,7 @@ fun rememberBubbleToggle(settingsStore: SettingsStore): BubbleToggle {
         if (canShowBubble) setBubble(true)
     }
 
-    return BubbleToggle(bubbleSwitchState(settings != null, bubbleVisible, canShowBubble)) { shown ->
+    return BubbleToggle(bubbleSwitchState(settings != null, bubbleVisible, canShowBubble), canShowBubble) { shown ->
         when {
             !shown -> setBubble(false)
             BubbleSwitch.canShow(context) -> setBubble(true)
