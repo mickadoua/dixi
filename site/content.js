@@ -4,7 +4,7 @@ window.SITE = {
   repo: 'https://github.com/mickadoua/dixi',
   dmcPage: { en: 'https://www.dm-consulting.tech/en/open-source/dixi', fr: 'https://www.dm-consulting.tech/fr/open-source/dixi' },
   common: { license: 'Apache-2.0', licenseUrl: 'https://github.com/mickadoua/dixi/blob/main/LICENSE' },
-  download: { play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.dixi', playLive: false, apk: { url: 'https://www.dm-consulting.tech/downloads/dixi.apk', sha256: '4a93bb1f5dcbbf948b4572a95099ef92c16198bf8aa7af19f7b1ce6f9982632a', size: '' } }, // APK v0.1.0 built by release.yml (DMC-658); playLive: true once the Play listing is public
+  download: { play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.dixi', playLive: false, apk: { url: 'https://www.dm-consulting.tech/downloads/dixi.apk', sha256: '4a93bb1f5dcbbf948b4572a95099ef92c16198bf8aa7af19f7b1ce6f9982632a', size: '', version: '0.1.0', versionCode: 38, builtOn: '2026-11-16' } }, // APK v0.1.0 built by release.yml (DMC-658), versionCode read in the APK; playLive: true once the Play listing is public
   shots: [{ src: 'bulle-{lang}.jpg', wide: true }, { src: 'ecoute-{lang}.jpg', wide: true }, { src: 'suggestion-{lang}.jpg', wide: true }], // Play listing screenshots (DMC-462), one per language
   i18n: {
     en: { tagline: 'Voice dictation for Android', eyebrow: 'Android app · Apache-2.0',
