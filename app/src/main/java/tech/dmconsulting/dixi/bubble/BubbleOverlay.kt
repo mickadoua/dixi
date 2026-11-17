@@ -105,7 +105,8 @@ class BubbleOverlay(
     }
 
     init {
-        bubble.setOnClickListener { onTap() }
+        // TalkBack calls performClick() directly: the half-bubble only comes back there too.
+        bubble.setOnClickListener { if (docked) undock(animate = true) else onTap() }
         bubble.setOnTouchListener(::onTouch)
         ViewCompat.addAccessibilityAction(bubble, context.getString(R.string.bubble_action_hide)) { _, _ ->
             controller.hideIfAllowed(onHide)
@@ -284,8 +285,8 @@ class BubbleOverlay(
                 )
                 hideHideZone()
                 when (release) {
-                    // The half-bubble only comes back: no dictation by mistake.
-                    Release.Click -> if (docked) undock(animate = true) else view.performClick()
+                    // The click listener brings the half-bubble back instead of dictating.
+                    Release.Click -> view.performClick()
 
                     Release.Hide -> {
                         Log.i(TAG, "bubble dropped on hide zone")
