@@ -27,30 +27,34 @@ import tech.dmconsulting.dixi.transcription.VoxtralTranscriber
  * Manual dependency injection: one instance per process, held by [DixiApp].
  * The app passes the DataStore-backed [history] and [settings] and the encrypted
  * [mistralKey]; tests keep the in-memory ones.
- * The app ships without any Mistral key (DMC-227): each user pastes their own in
- * screen 10. Without one, Voxtral is faked (« Mode démo ») and nothing leaves the phone.
+ * The app ships without any Mistral key (DMC-227): each user pastes their own in the
+ * onboarding, which cannot end without one, and can keep several in screen 10 (DMC-766).
+ * Without any key, dictations fail with « No key ». [demoMode] (debug builds only,
+ * `BuildConfig.DEMO_MODE`): Voxtral is faked instead (« Mode démo ») and nothing leaves the phone.
  */
 class AppContainer(
     val mistralKey: MistralKeyStore = InMemoryMistralKeyStore(),
     val history: DictationHistory = InMemoryDictationHistory(),
     val settings: SettingsStore = InMemorySettingsStore(),
     mistralBaseUrl: HttpUrl = MistralHttp.defaultBaseUrl,
+    /** Fakes without a key, for internal tests. Never on in a release build. */
+    val demoMode: Boolean = false,
     /** Raw text of a demo dictation, in the phone language. */
     demoRawText: () -> String = { FakeTranscriber.SAMPLE_RAW_TEXT },
 ) {
 
-    /** True without a saved key: dictations use the fakes and screens show « Mode démo ». */
-    val usesFakeVoxtral: Boolean get() = mistralKey.status.value == KeyStatus.None
+    /** True in [demoMode] without a saved key: dictations use the fakes and screens show « Mode démo ». */
+    val usesFakeVoxtral: Boolean get() = demoMode && mistralKey.status.value == KeyStatus.None
 
     private val httpClient by lazy { MistralHttp.newClient() }
 
-    private val demoTranscriber = FakeTranscriber { VoxtralResult.Success(demoRawText()) }
+    private val demoTranscriber = FakeTranscriber { VoxtralResult.Success(demoRawText()) }.takeIf { demoMode }
 
     val transcriber: Transcriber = KeyedTranscriber(mistralKey, demoTranscriber) { key ->
         VoxtralTranscriber(key, httpClient, mistralBaseUrl)
     }
 
-    val textCleaner: TextCleaner = KeyedTextCleaner(mistralKey, FakeTextCleaner()) { key ->
+    val textCleaner: TextCleaner = KeyedTextCleaner(mistralKey, FakeTextCleaner().takeIf { demoMode }) { key ->
         VoxtralTextCleaner(key, httpClient, mistralBaseUrl)
     }
 

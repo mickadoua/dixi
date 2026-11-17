@@ -259,6 +259,19 @@ class DictationControllerTest {
     }
 
     @Test
+    fun withoutKeyTheBubbleSaysSoAndATapOpensTheKeySettings() {
+        transcriber = FakeTranscriber(VoxtralResult.Failure(VoxtralError.NoKey))
+        dictate()
+        scope.advanceUntilIdle()
+        assertEquals(listOf(R.string.bubble_error_no_key), output.errors)
+
+        controller.onTap()
+
+        assertEquals(1, output.keySettingsOpened)
+        assertEquals(1, recorder.starts)
+    }
+
+    @Test
     fun aTapOnAnotherErrorStartsANewDictation() {
         transcriber = FakeTranscriber(VoxtralResult.Failure(VoxtralError.NoConnection))
         dictate()
@@ -401,6 +414,7 @@ class DictationControllerTest {
     @Test
     fun theCommonErrorsHaveAShortCauseNextToTheBubble() {
         assertEquals(R.string.bubble_error_key_refused, VoxtralError.InvalidKey.bubbleMessage)
+        assertEquals(R.string.bubble_error_no_key, VoxtralError.NoKey.bubbleMessage)
         assertEquals(R.string.bubble_error_no_network, VoxtralError.NoConnection.bubbleMessage)
         assertEquals(R.string.bubble_error_nothing_heard, VoxtralError.NothingHeard.bubbleMessage)
         assertEquals(R.string.error_rate_limited, VoxtralError.RateLimited.bubbleMessage)

@@ -18,6 +18,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -79,7 +80,11 @@ class BubbleService :
                 demoDictation = app.container.usesFakeVoxtral
                 app.container.transcription.run(audio).also {
                     // A Failure prints only its VoxtralError: never the key.
-                    if (it == VoxtralResult.Failure(VoxtralError.InvalidKey)) notifyKeyRefused()
+                    when (it) {
+                        VoxtralResult.Failure(VoxtralError.InvalidKey) -> notifyKey(R.string.notif_key_refused_title, R.string.notif_key_refused_body)
+                        VoxtralResult.Failure(VoxtralError.NoKey) -> notifyKey(R.string.notif_no_key_title, R.string.notif_no_key_body)
+                        else -> Unit
+                    }
                 }
             },
             history = app.container.history,
@@ -282,20 +287,20 @@ class BubbleService :
         }
     }
 
-    /** Mistral refused the saved key: say so, tapping opens screen 10. */
-    private fun notifyKeyRefused() {
+    /** Mistral refused the active key, or there is none: say so, tapping opens screen 10. */
+    private fun notifyKey(@StringRes title: Int, @StringRes body: Int) {
         val notification = NotificationCompat.Builder(this, CHANNEL_COPIED)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle(getString(R.string.notif_key_refused_title))
-            .setContentText(getString(R.string.notif_key_refused_body))
+            .setContentTitle(getString(title))
+            .setContentText(getString(body))
             .setContentIntent(openSettingsIntent())
             .setAutoCancel(true)
             .build()
         try {
             NotificationManagerCompat.from(this).notify(NOTIF_COPIED, notification)
-            Log.i(TAG, "key refused notification posted")
+            Log.i(TAG, "key notification posted")
         } catch (e: SecurityException) {
-            Log.e(TAG, "key refused notification FAILED", e)
+            Log.e(TAG, "key notification FAILED", e)
         }
     }
 

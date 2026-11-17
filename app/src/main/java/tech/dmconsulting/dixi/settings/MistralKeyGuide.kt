@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -66,19 +72,39 @@ fun MistralKeysLink(modifier: Modifier = Modifier) {
     }
 }
 
-/** Léa's five steps to create a key, with the plan and phone note under step 1. */
+/**
+ * One step of the guide to create a key. [shot]: a capture of Mistral's console for this step,
+ * shown under its text; none yet, the slot is ready for them (DMC-766). [note]: smaller line under it.
+ */
+data class KeyGuideStep(@StringRes val text: Int, @StringRes val note: Int? = null, @DrawableRes val shot: Int? = null)
+
+/** Léa's five steps (DMC-765), with the plan and phone note under step 1. */
+val keyGuideSteps = listOf(
+    KeyGuideStep(R.string.key_guide_step1, note = R.string.key_guide_step1_note),
+    KeyGuideStep(R.string.key_guide_step2),
+    KeyGuideStep(R.string.key_guide_step3),
+    KeyGuideStep(R.string.key_guide_step4),
+    KeyGuideStep(R.string.key_guide_step5),
+)
+
 @Composable
-fun MistralKeySteps() {
+fun MistralKeySteps(steps: List<KeyGuideStep> = keyGuideSteps) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.key_guide_step1), style = MaterialTheme.typography.bodyLarge)
-        Text(
-            stringResource(R.string.key_guide_step1_note),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Neon.TextMuted,
-            modifier = Modifier.padding(start = 16.dp),
-        )
-        listOf(R.string.key_guide_step2, R.string.key_guide_step3, R.string.key_guide_step4, R.string.key_guide_step5)
-            .forEach { Text(stringResource(it), style = MaterialTheme.typography.bodyLarge) }
+        steps.forEach { step ->
+            Text(stringResource(step.text), style = MaterialTheme.typography.bodyLarge)
+            step.note?.let {
+                Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = Neon.TextMuted, modifier = Modifier.padding(start = 16.dp))
+            }
+            step.shot?.let {
+                // The step text above says the same: the capture is decoration for TalkBack.
+                Image(
+                    painterResource(it),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(MaterialTheme.shapes.medium),
+                )
+            }
+        }
     }
 }
 
@@ -111,8 +137,9 @@ fun KeyCheckResult(check: KeyCheck, modifier: Modifier = Modifier) {
 }
 
 /**
- * The pasted key and its test, for the onboarding step. The key is saved only once Mistral
- * accepts it. remember, not rememberSaveable: the key must not go into the saved instance state.
+ * The pasted key and its test, for the onboarding step and « Add a key » in screen 10. The key
+ * is saved, as the active key, only once Mistral accepts it. remember, not rememberSaveable:
+ * the key must not go into the saved instance state.
  */
 @Stable
 class KeyTest(private val keys: MistralKeyStore, private val keyCheck: MistralKeyCheck, private val scope: CoroutineScope) {
@@ -132,7 +159,8 @@ class KeyTest(private val keys: MistralKeyStore, private val keyCheck: MistralKe
         problem = null
     }
 
-    fun test() {
+    /** Tests the pasted key; if Mistral accepts it, saves it under [name] as the active key. */
+    fun test(name: String) {
         val key = MistralKey.normalize(input)
         if (key == null) {
             problem = R.string.key_format_invalid
@@ -145,7 +173,7 @@ class KeyTest(private val keys: MistralKeyStore, private val keyCheck: MistralKe
             val check = keyCheck.check(key)
             if (check == KeyCheck.Valid) {
                 problem = try {
-                    keys.save(key)
+                    keys.add(name, key)
                     input = ""
                     null
                 } catch (e: IOException) {

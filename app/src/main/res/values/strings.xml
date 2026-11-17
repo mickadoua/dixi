@@ -149,34 +149,44 @@
     <string name="error_timeout">The service is taking too long to answer. Try again.</string>
     <string name="error_audio_too_long">Dictation too long. Split it into shorter ones.</string>
     <string name="error_invalid_key">Key refused, check it in Settings.</string>
+    <string name="error_no_key">No Mistral key. Add one in Settings.</string>
     <string name="error_rate_limited">Too many dictations at once. Try again in a minute.</string>
     <string name="error_service_unavailable">Service unavailable. Try again in a few minutes.</string>
 
-    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <!-- Screen 10, the user's own Mistral keys (DMC-227, several since DMC-766). A key itself is never shown.
+         Provisional texts until Léa's (DMC-766). -->
     <string name="key_section">Mistral API key</string>
-    <string name="key_status_none">No key · demo mode, nothing is sent</string>
-    <string name="key_status_saved">Key saved</string>
-    <string name="key_status_rejected">Key refused by Mistral. Check it or paste another one.</string>
+    <string name="key_status_none">No key: add one to dictate.</string>
+    <string name="key_default_name">Key %1$d</string>
+    <string name="key_state_active">Active · used for dictations</string>
+    <string name="key_state_idle">Not in use · tap to use it</string>
+    <string name="key_state_refused">Refused by Mistral</string>
+    <string name="key_activated">Dixi now uses “%1$s”.</string>
+    <string name="key_test_active">Test the active key</string>
+    <string name="key_add">Add a key</string>
+    <string name="key_name_field">Name (optional)</string>
+    <string name="key_added">Key added and active.</string>
+    <string name="key_delete_one">Delete %1$s</string>
     <string name="key_field">Paste your key here</string>
-    <string name="key_save">Save</string>
     <string name="key_test">Test key</string>
-    <string name="key_delete">Delete the key</string>
-    <string name="key_saved">Key saved. Tap “Test the key” to check it.</string>
     <string name="key_format_invalid">This text does not look like a key: paste it without spaces or line breaks.</string>
     <string name="key_save_failed">The key could not be saved. Try again.</string>
-    <string name="key_deleted">Key deleted. Dictations now use demo mode.</string>
+    <string name="key_deleted">Key “%1$s” deleted.</string>
     <string name="key_check_running">Testing…</string>
     <string name="key_check_valid">Key valid</string>
-    <string name="key_delete_title">Delete the key?</string>
-    <string name="key_delete_body">Dictations will use demo mode until you paste a key.</string>
+    <string name="key_delete_title">Delete “%1$s”?</string>
+    <string name="key_delete_body">This key is removed from this phone. Your Mistral account does not change.</string>
+    <string name="key_delete_last_body">It is your only key: Dixi cannot dictate until you add another one.</string>
     <string name="key_delete_confirm">Delete</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">Demo mode: sample text. Tap to add your Mistral key in Settings.</string>
     <string name="notif_key_refused_title">Key refused</string>
     <string name="notif_key_refused_body">Check it in Settings.</string>
+    <string name="notif_no_key_title">No Mistral key</string>
+    <string name="notif_no_key_body">Add one in Settings.</string>
 
-    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <!-- Debug builds without a Mistral key: transcription is faked (DMC-137, DMC-227, DMC-766). -->
     <string name="demo_mode">Demo mode</string>
     <string name="demo_mode_description">Demo mode: simulated transcription, nothing is sent.</string>
     <!-- Message next to the bubble after a dictation (mockup 01). -->
@@ -242,6 +252,7 @@
     <string name="bubble_action_dock">Tuck the bubble at the edge</string>
     <string name="bubble_action_cancel">Cancel the dictation</string>
     <string name="bubble_error_key_refused">Key refused</string>
+    <string name="bubble_error_no_key">No key</string>
     <string name="bubble_error_no_network">No network</string>
     <string name="bubble_error_nothing_heard">Nothing heard</string>
     <string name="home_bubble_permission">Display not allowed</string>
