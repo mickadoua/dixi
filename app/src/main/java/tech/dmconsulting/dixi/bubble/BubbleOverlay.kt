@@ -432,6 +432,7 @@ class BubbleOverlay(
         hideZoneShown = false
     }
 
+    @SuppressLint("RtlHardcoded")
     private fun params(side: Int, touchable: Boolean, height: Int = side) = WindowManager.LayoutParams(
         side,
         height,
@@ -442,7 +443,8 @@ class BubbleOverlay(
             (if (touchable) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE),
         PixelFormat.TRANSLUCENT,
     ).apply {
-        gravity = Gravity.TOP or Gravity.START
+        // x is measured from the left edge (BubbleGeometry), also in Arabic (RTL).
+        gravity = Gravity.TOP or Gravity.LEFT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
