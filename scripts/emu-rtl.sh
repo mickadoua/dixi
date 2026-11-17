@@ -18,6 +18,19 @@ log() { $ADB logcat -d -s DixiProof; }
 wake() { $ADB shell input keyevent KEYCODE_WAKEUP; $ADB shell wm dismiss-keyguard; sleep 1; }
 wait_log() { for _ in $(seq 1 "${2:-20}"); do log | grep -q "$1" && return 0; sleep 2; done; echo "no log line: $1"; return 1; }
 check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; fi; }
+# Just after a snapshot boot Android's own load is very high (48 measured on 17/11):
+# the app hits an ANR, hide_error_dialogs kills it, and the drag lands on the launcher.
+# Waits until the emulator's 1-minute load is under 4 (at most 3 minutes).
+settle() {
+  local l i
+  for i in $(seq 1 36); do
+    l=$($ADB shell cat /proc/loadavg | cut -d' ' -f1)
+    [ "${l%%.*}" -lt 4 ] 2>/dev/null && { echo "emulator load $l"; return 0; }
+    sleep 5
+  done
+  echo "emulator load still $l"
+}
+alive() { [ -n "$($ADB shell pidof $PKG)" ]; }
 read -r W H <<< "$($ADB shell wm size | sed -n 's/.*: \([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)"
 center() { log | grep "$1" | sed -n 's/.* x=\([0-9]*\) y=\([0-9]*\).*/\1 \2/p' | tail -1; }
 # Drags the bubble from its last logged center to x=$1 at the same height, then lifts.
@@ -46,6 +59,7 @@ $ADB shell settings put system accelerometer_rotation 0
 wake
 $ADB logcat -c
 
+settle
 # Throwaway first launch: just after a boot the first screenshots come out black.
 $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; sleep 8
 $ADB exec-out screencap -p > "$OUT/warmup.png"
@@ -63,6 +77,8 @@ $ADB logcat -c
 wake; $ADB shell am start -W -n $PKG/$NS.MainActivity --ez showBubble true >/dev/null
 check "bubble shown" "wait_log 'bubble shown' 15"
 $ADB shell input keyevent KEYCODE_HOME; sleep 3
+settle
+check "app still running before the drag" "alive"
 shot 3-bubble
 drag_to_x $((W - 2))
 check "docked at the right edge after a drag to the right" "wait_log 'bubble docked side=Right' 10"
