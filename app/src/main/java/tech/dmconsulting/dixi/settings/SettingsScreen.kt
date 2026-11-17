@@ -67,7 +67,7 @@ val DictationLanguage.label: Int
  * Screen 10 (neon mockup 06, DMC-213): offer card, bubble, auto-paste (DMC-141, through
  * screen 8), language, Mistral key (DMC-227), history, privacy, about. A tab: no back arrow.
  * [onOpenOffer]: null while the offer screen is hidden, and its card with it.
- * [autoPaste]: null while auto-paste is hidden (every build but debug, DMC-572).
+ * [autoPaste]: null while auto-paste is hidden ([Screen.autoPasteShown]).
  */
 @Composable
 fun SettingsScreen(

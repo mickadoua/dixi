@@ -79,8 +79,8 @@
     <string name="settings_about_summary">Version %1$s</string>
 
     <!--
-        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). Debug only
-        until Play accepts the accessibility service (v1.1, DMC-572): founder to approve before then.
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Provisional text until the final wording (Léa, DMC-765).
         The service label and description below are part of it: Android shows them in its settings.
     -->
     <string name="disclosure_title">Paste straight into the field</string>
