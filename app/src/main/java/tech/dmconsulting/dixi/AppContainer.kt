@@ -34,7 +34,7 @@ class AppContainer(
     val mistralKey: MistralKeyStore = InMemoryMistralKeyStore(),
     val history: DictationHistory = InMemoryDictationHistory(),
     val settings: SettingsStore = InMemorySettingsStore(),
-    mistralBaseUrl: HttpUrl = MistralHttp.defaultBaseUrl,
+    mistralBaseUrl: HttpUrl = MistralHttp.debugBaseUrl ?: MistralHttp.defaultBaseUrl,
     /** Raw text of a demo dictation, in the phone language. */
     demoRawText: () -> String = { FakeTranscriber.SAMPLE_RAW_TEXT },
 ) {
