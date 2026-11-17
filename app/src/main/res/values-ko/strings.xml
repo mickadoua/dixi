@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">환영합니다</string>
+    <string name="screen_mic_permission">마이크 권한</string>
+    <string name="screen_trial">버블 체험</string>
+    <string name="screen_bubble_intro">버블 소개</string>
+    <string name="screen_bubble_enabled">버블 켜짐</string>
+    <string name="screen_auto_paste_disclosure">자동 붙여넣기</string>
+    <string name="screen_history">기록</string>
+    <string name="screen_settings">설정</string>
+
+    <!-- Common. -->
+    <string name="action_back">뒤로</string>
+    <string name="action_cancel">취소</string>
+    <string name="text_copied">텍스트 복사됨</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi에 마이크가 필요합니다</string>
+    <string name="mic_body">음성을 텍스트로 바꾸기 위해서입니다. 오디오는 받아쓰기를 위해 전송된 뒤 삭제되며 보관되지 않습니다.</string>
+    <string name="mic_allow">마이크 허용</string>
+    <string name="mic_later">나중에</string>
+    <string name="mic_open_settings">설정 열기</string>
+    <string name="trial_title">버블 체험</string>
+    <string name="trial_skip">건너뛰기</string>
+    <string name="bubble_intro_preview">엄지손가락이 닿는 곳에서 모든 앱에 표시됩니다.</string>
+    <string name="bubble_intro_title">앱 위에 뜨는 버블</string>
+    <string name="bubble_intro_step_tap">버블을 탭해 받아쓰기</string>
+    <string name="bubble_intro_step_stop">다시 탭하면 중지</string>
+    <string name="bubble_intro_step_copied">정리된 텍스트가 복사됩니다</string>
+    <string name="bubble_intro_system">Android에서 “다른 앱 위에 표시” 허용을 요청합니다.</string>
+    <string name="bubble_intro_open">설정 열기</string>
+    <string name="bubble_intro_not_now">나중에</string>
+    <string name="bubble_intro_refused">설정이 켜지지 않았습니다</string>
+    <string name="bubble_enabled_title">Dixi가 준비되었습니다</string>
+    <string name="bubble_enabled_body">버블이 화면에 유지됩니다. 어느 앱에서든 탭해서 받아쓰세요.</string>
+    <string name="bubble_enabled_note">필요 없을 때는 가장자리에 붙여 두고, 탭하면 다시 나옵니다.</string>
+    <string name="bubble_enabled_finish">완료</string>
+    <string name="bubble_enabled_auto_paste">자동 붙여넣기 켜기</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">최근 받아쓰기 20개, 텍스트만 저장됩니다. 오디오는 보관되지 않습니다.</string>
+    <string name="history_empty">아직 받아쓰기가 없습니다.</string>
+    <string name="history_today">오늘</string>
+    <string name="history_yesterday">어제</string>
+    <string name="history_copy">텍스트 복사</string>
+    <string name="history_copy_action">복사</string>
+    <string name="history_clear_all">모두 지우기</string>
+    <string name="history_clear_title">기록을 지울까요?</string>
+    <string name="history_clear_body">이 휴대전화에 저장된 받아쓰기가 삭제됩니다. 되돌릴 수 없습니다.</string>
+    <string name="history_clear_confirm">지우기</string>
+    <string name="history_open_settings">설정</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">버블 표시</string>
+    <string name="settings_bubble_summary">다른 앱 위에 표시</string>
+    <string name="settings_auto_paste">자동 붙여넣기</string>
+    <string name="settings_language">언어</string>
+    <string name="settings_language_auto">자동 감지 (FR, EN)</string>
+    <string name="settings_language_french">프랑스어</string>
+    <string name="settings_language_english">영어</string>
+    <string name="settings_clear_history">기록 지우기</string>
+    <string name="settings_clear_history_summary">최근 받아쓰기 20개, 텍스트만</string>
+    <string name="settings_privacy">개인정보</string>
+    <string name="settings_privacy_summary">오디오는 받아쓰기를 위해 Mistral로 전송됩니다. Dixi는 오디오를 보관하지 않습니다.</string>
+    <string name="settings_about">정보</string>
+    <string name="settings_about_summary">버전 %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">자동 붙여넣기</string>
+    <string name="disclosure_optional">선택 사항: 끄면 텍스트가 복사되고 직접 붙여 넣습니다.</string>
+    <string name="disclosure_accept">동의하고 켜기</string>
+    <string name="disclosure_decline">나중에</string>
+    <string name="auto_paste_service_label">Dixi · 자동 붙여넣기</string>
+    <string name="auto_paste_service_description">방금 받아쓴 텍스트를 입력 중인 필드에 붙여 넣습니다. 그 필드가 텍스트를 받는지만 확인하고 내용은 읽지 않습니다. 데이터를 수집하지 않습니다.</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">홈</string>
+    <string name="screen_offer">요금제</string>
+    <string name="home_bubble_on">버블 켜짐</string>
+    <string name="home_bubble_off">버블 꺼짐</string>
+    <string name="home_bubble_on_body">버블을 탭해 어느 앱에서든 받아쓰세요.</string>
+    <string name="home_bubble_off_body">켜면 어느 앱에서든 받아쓸 수 있습니다.</string>
+    <string name="home_last_dictation">최근 받아쓰기</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">말하면 Dixi가 깔끔하게 써 줍니다. 모든 앱에서.</string>
+    <string name="welcome_no_account">계정을 만들 필요가 없습니다.</string>
+    <string name="welcome_start">시작하기</string>
+    <string name="welcome_step">%2$d단계 중 %1$d단계</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">내 요금제</string>
+    <string name="offer_free">무료</string>
+    <string name="offer_current">현재 요금제</string>
+    <string name="offer_upgrade">유료 요금제로 업그레이드</string>
+    <string name="offer_label">요금제 변경</string>
+    <string name="offer_title">요금제 선택</string>
+    <string name="offer_paid">유료</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">버블</string>
+    <string name="settings_section_dictation">받아쓰기</string>
+    <string name="settings_section_other">데이터 및 정보</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi, 받아쓰기 준비됨</string>
+    <string name="bubble_listening">Dixi, 녹음 중</string>
+    <string name="bubble_processing">Dixi, 텍스트 변환 중</string>
+    <string name="bubble_ready">Dixi, 텍스트 복사됨</string>
+    <string name="bubble_error">Dixi, 받아쓰기 실패</string>
+    <string name="bubble_hide_zone">버블 숨기기</string>
+    <string name="bubble_hide_zone_label">여기에 놓으면 숨김</string>
+    <string name="bubble_action_hide">버블 숨기기</string>
+    <string name="channel_bubble">버블</string>
+    <string name="notif_bubble_hidden_title">버블 숨김</string>
+    <string name="notif_bubble_hidden_body">탭하면 버블이 표시됩니다.</string>
+    <string name="channel_dictation">받아쓰기</string>
+    <string name="channel_copied">텍스트 복사됨</string>
+    <string name="notif_recording">녹음 중</string>
+    <string name="notif_recording_body">버블을 탭하면 중지됩니다.</string>
+    <string name="notif_recording_warning">30초 후 자동으로 중지됩니다.</string>
+    <string name="notif_recording_stop">중지</string>
+    <string name="error_nothing_heard">아무것도 들리지 않았습니다. 다시 시도하세요.</string>
+    <string name="error_mic_denied">Dixi에 마이크가 필요합니다. 설정에서 허용하세요.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">마이크 허용</string>
+    <string name="mic_ask_body">Dixi는 버블을 탭했을 때만 듣고, 받아쓴 내용을 텍스트로 씁니다. 알림에는 녹음 진행 상태와 “텍스트 복사됨”이 표시됩니다.</string>
+    <string name="mic_ask_continue">계속</string>
+    <string name="action_later">나중에</string>
+    <string name="mic_settings_title">마이크 권한 거부됨</string>
+    <string name="mic_settings_body">받아쓰려면 Dixi 설정을 열고 권한 › 마이크 › 허용을 선택하세요.</string>
+    <string name="mic_settings_open">설정 열기</string>
+    <string name="error_recording_failed">마이크가 시작되지 않았습니다. 다시 시도하세요.</string>
+    <string name="notif_copied_title">텍스트 복사됨</string>
+    <string name="notif_copied_body">필드를 길게 눌러 붙여 넣으세요.</string>
+    <string name="notif_copied_show_text">텍스트 보기</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">연결되지 않았습니다. 잠시 후 다시 시도하세요.</string>
+    <string name="error_timeout">서비스 응답이 너무 오래 걸립니다. 다시 시도하세요.</string>
+    <string name="error_audio_too_long">받아쓰기가 너무 깁니다. 더 짧게 나누어 주세요.</string>
+    <string name="error_invalid_key">키가 거부되었습니다. 설정에서 확인하세요.</string>
+    <string name="error_rate_limited">한꺼번에 너무 많이 받아썼습니다. 1분 뒤 다시 시도하세요.</string>
+    <string name="error_service_unavailable">서비스를 사용할 수 없습니다. 몇 분 뒤 다시 시도하세요.</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Mistral API 키</string>
+    <string name="key_status_none">키 없음 · 데모 모드, 아무것도 전송되지 않음</string>
+    <string name="key_status_saved">키 저장됨</string>
+    <string name="key_status_rejected">Mistral이 키를 거부했습니다. 확인하거나 다른 키를 붙여 넣으세요.</string>
+    <string name="key_field">여기에 키 붙여 넣기</string>
+    <string name="key_save">저장</string>
+    <string name="key_test">키 테스트</string>
+    <string name="key_delete">키 삭제</string>
+    <string name="key_saved">키가 저장되었습니다. “키 테스트”를 탭해 확인하세요.</string>
+    <string name="key_format_invalid">키처럼 보이지 않는 텍스트입니다. 공백이나 줄 바꿈 없이 붙여 넣으세요.</string>
+    <string name="key_save_failed">키를 저장하지 못했습니다. 다시 시도하세요.</string>
+    <string name="key_deleted">키가 삭제되었습니다. 이제 받아쓰기는 데모 모드로 작동합니다.</string>
+    <string name="key_check_running">테스트 중…</string>
+    <string name="key_check_valid">유효한 키</string>
+    <string name="key_delete_title">키를 삭제할까요?</string>
+    <string name="key_delete_body">키를 붙여 넣을 때까지 받아쓰기는 데모 모드로 작동합니다.</string>
+    <string name="key_delete_confirm">삭제</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">데모 모드: 샘플 텍스트입니다. 탭해서 설정에서 Mistral 키를 추가하세요.</string>
+    <string name="notif_key_refused_title">키 거부됨</string>
+    <string name="notif_key_refused_body">설정에서 확인하세요.</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">데모 모드</string>
+    <string name="demo_mode_description">데모 모드: 모의 변환이며 아무것도 전송되지 않습니다.</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">텍스트 복사됨</string>
+    <string name="toast_pasted">텍스트 붙여넣음</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">M월 d일</string>
+    <string name="history_date_day_month_year">yyyy년 M월 d일</string>
+    <string name="history_date_time">a h:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Mistral 키 추가</string>
+    <string name="key_guide_intro">Dixi는 사용자 본인의 Mistral 키로 음성을 텍스트로 바꿉니다. 2분 정도 걸립니다.</string>
+    <string name="key_guide_step1">1. console.mistral.ai를 열고 로그인하거나 계정을 만드세요.</string>
+    <string name="key_guide_step1_note">Mistral이 먼저 요금제 선택과 전화번호 인증을 요청할 수 있습니다.</string>
+    <string name="key_guide_step2">2. 메뉴에서 API Keys를 여세요.</string>
+    <string name="key_guide_step3">3. Create new key를 탭하고 이름(예: “Dixi”)을 정한 뒤 확인하세요.</string>
+    <string name="key_guide_step4">4. 키를 복사하세요. Mistral은 키를 한 번만 보여 줍니다.</string>
+    <string name="key_guide_step5">5. Dixi로 돌아와 아래에 붙여 넣으세요.</string>
+    <string name="key_guide_link">Mistral API Keys 페이지 열기</string>
+    <string name="key_check_valid_body">Mistral이 이 키를 승인했습니다. 계속 진행할 수 있습니다.</string>
+    <string name="key_check_refused">키 거부됨</string>
+    <string name="key_cause_invalid">Mistral이 이 키를 인식하지 못합니다. 공백 없이 전체를 복사했는지 확인하거나 새 키를 만드세요.</string>
+    <string name="key_cause_no_access">이 키에는 API 접근 권한이 없습니다. Mistral 요금제가 활성 상태인지 확인하세요.</string>
+    <string name="key_cause_rate_limited">Mistral이 지금 이 키의 사용을 제한하고 있습니다. 1분 기다린 뒤 다시 테스트하세요.</string>
+    <string name="key_cause_no_network">네트워크에 연결되어 있지 않습니다. 온라인 상태에서 다시 테스트하세요.</string>
+    <string name="key_cause_unavailable">Mistral이 응답하지 않습니다. 몇 분 뒤 다시 테스트하세요.</string>
+    <string name="key_continue">계속</string>
+    <string name="key_storage_note">키는 이 휴대전화에 암호화되어 저장됩니다. Dixi는 키를 표시하거나 백업하지 않습니다.</string>
+    <string name="disclosure_intro">받아쓴 텍스트를 입력 중인 필드에 붙여 넣기 위해 Dixi는 Android 접근성 서비스 API를 사용합니다. 켜기 전에 어떤 일을 하는지 확인하세요.</string>
+    <string name="disclosure_reads_title">읽는 정보</string>
+    <string name="disclosure_reads">받아쓰기 직후, 입력 중인 필드만 확인합니다. 텍스트를 입력할 수 있는지, 비밀번호 필드인지, 어느 앱의 필드인지입니다. 필드 안의 텍스트나 화면의 다른 내용은 절대 읽지 않습니다.</string>
+    <string name="disclosure_does_title">하는 일</string>
+    <string name="disclosure_does">방금 받아쓴 텍스트를 그 필드에 붙여 넣습니다. 받아쓰기 사이에는 아무것도 하지 않습니다.</string>
+    <string name="disclosure_does_not_title">하지 않는 일</string>
+    <string name="disclosure_does_not">데이터를 수집, 저장, 전송하지 않습니다. 이 서비스를 통해 어떤 데이터도 휴대전화 밖으로 나가지 않습니다. 비밀번호 필드에는 절대 붙여 넣지 않습니다.</string>
+    <string name="disclosure_voice_note">자동 붙여넣기를 사용하지 않을 때와 마찬가지로, 텍스트를 만들기 위해 음성은 Mistral로 전송됩니다.</string>
+    <string name="disclosure_stop_title">끄는 방법</string>
+    <string name="disclosure_stop">언제든지 Dixi 설정에서 자동 붙여넣기를 끄거나, Android 설정 › 접근성 › Dixi · 자동 붙여넣기에서 끌 수 있습니다.</string>
+    <string name="disclosure_next_step">Android 접근성 설정이 열립니다. “Dixi · 자동 붙여넣기”를 선택해 켜세요.</string>
+    <string name="settings_auto_paste_on">켜짐 · 입력 중인 필드에 붙여 넣음</string>
+    <string name="settings_auto_paste_off">꺼짐 · 텍스트가 복사되고 직접 붙여 넣음</string>
+    <string name="screen_mistral_key">Mistral 키</string>
+    <string name="trial_field_hint">받아쓴 텍스트가 여기에 나타납니다</string>
+    <string name="trial_hint_tap">버블을 탭하고 말하세요</string>
+    <string name="trial_hint_speak">말한 뒤 다시 탭해 마치세요</string>
+    <string name="trial_it_works">됐습니다. 모든 앱에서 작동합니다.</string>
+    <string name="trial_hint_dock">버블을 가장자리로 끌어 붙여 두세요</string>
+    <string name="trial_hint_undock">탭하면 다시 나옵니다</string>
+    <string name="trial_retry">버블을 탭해 다시 해 보세요.</string>
+    <string name="bubble_docked">Dixi, 가장자리에 붙어 있음. 탭하면 다시 나옵니다.</string>
+    <string name="bubble_listening_elapsed">Dixi, 듣는 중, %1$s</string>
+    <string name="bubble_action_dock">버블을 가장자리에 붙이기</string>
+    <string name="bubble_action_cancel">받아쓰기 취소</string>
+    <string name="bubble_error_key_refused">키 거부됨</string>
+    <string name="bubble_error_no_network">네트워크 없음</string>
+    <string name="bubble_error_nothing_heard">들리지 않음</string>
+    <string name="home_bubble_permission">표시 허용 안 됨</string>
+    <string name="home_bubble_permission_body">버블을 표시하려면 “다른 앱 위에 표시”를 허용하세요.</string>
+    <string name="home_key_active">키 사용 중</string>
+    <string name="home_key_refused">키 거부됨</string>
+    <string name="home_key_none">키 없음</string>
+    <string name="home_key_change">키 변경</string>
+    <string name="home_key_check">키 확인</string>
+    <string name="home_key_add">키 추가</string>
+    <string name="home_auto_paste_off">자동 붙여넣기: 꺼짐</string>
+    <string name="home_auto_paste_turn_on">켜기</string>
+    <string name="home_last_dictation_empty">첫 받아쓰기가 여기에 표시됩니다.</string>
+    <string name="home_all_history">전체 기록</string>
+    <string name="home_dictate_here">여기에 받아쓰기</string>
+</resources>

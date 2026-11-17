@@ -101,10 +101,11 @@ android {
         buildConfig = true
     }
 
-    // Default language English (res/values), French in res/values-fr (DMC-463): a phone in
-    // any other language sees English, like the en-US store listing. res/resources.properties
-    // names English for the unqualified folder, so Android 13+ lists both in the per-app
-    // language setting.
+    // Default language English (res/values), French in res/values-fr (DMC-463) and the 11
+    // other languages of the Play listing in res/values-xx (DMC-776): a phone in any other
+    // language sees English, like the en-US store listing. res/resources.properties names
+    // English for the unqualified folder, so Android 13+ lists all 13 in the per-app language
+    // setting.
     androidResources {
         generateLocaleConfig = true
     }
