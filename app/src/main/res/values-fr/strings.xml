@@ -19,6 +19,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi a besoin du micro</string>
     <string name="mic_body">Pour transformer votre voix en texte. L\'audio est envoyé pour transcription puis supprimé : jamais conservé.</string>
+    <string name="mic_notifications_note">Android demande ensuite les notifications : elles montrent l\'enregistrement en cours et « Texte copié ».</string>
     <string name="mic_allow">Autoriser le micro</string>
     <string name="mic_later">Plus tard</string>
     <string name="mic_open_settings">Ouvrir les réglages</string>

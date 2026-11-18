@@ -1,7 +1,10 @@
 package tech.dmconsulting.dixi.permissions
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 
 /**
@@ -16,6 +19,17 @@ fun shouldAskNotifications(sdk: Int, micGranted: Boolean, notificationsGranted: 
  * Asked before, on an earlier flow: not shown a second time.
  */
 fun shouldAskNotificationsAfterMic(sdk: Int, notificationsGranted: Boolean, askedBefore: Boolean) = sdk >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted && !askedBefore
+
+/**
+ * Onboarding, step Micro, and the bubble's microphone flow: right after the microphone, so the
+ * first tap on the bubble dictates instead of opening Android's notification window (DMC-785).
+ */
+fun Context.needsNotificationsAfterMic() = shouldAskNotificationsAfterMic(
+    sdk = Build.VERSION.SDK_INT,
+    notificationsGranted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED,
+    askedBefore = NotificationAskStore(this).asked,
+)
 
 /** Whether Android's notification request was already shown, kept across updates. */
 class NotificationAskStore(context: Context) {
