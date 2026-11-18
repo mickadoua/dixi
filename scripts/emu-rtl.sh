@@ -7,13 +7,15 @@
 # finger, not the layout direction. So must the hint card of the guided trial.
 # Part 3 needs the debug fake Mistral (files/fake-mistral, PR #66) to get past the
 # key step; without it, it is skipped. Needs adb ($ANDROID_HOME) and a debug APK:
-#   bash scripts/emu-rtl.sh <out-dir> [locale]
+#   bash scripts/emu-rtl.sh <out-dir> [locale] [parts, default 123]
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
 NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-rtl-proof-out}
 LOCALE=${2:-ar}
+PARTS=${3:-123}
+part() { case "$PARTS" in *"$1"*) return 0 ;; esac; return 1; }
 APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
@@ -63,6 +65,7 @@ wake
 $ADB logcat -c
 
 settle
+if part 1 || part 2; then
 # Throwaway first launch: just after a boot the first screenshots come out black.
 $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; sleep 8
 $ADB exec-out screencap -p > "$OUT/warmup.png"
@@ -96,7 +99,9 @@ $ADB logcat -d -s DixiProof > "$OUT/app-log-right.txt"
 $ADB shell "input motionevent DOWN $((W - 80)) ${DY:-1200}; input motionevent MOVE $((W / 2)) ${DY:-1200}; input motionevent MOVE 2 ${DY:-1200}; input motionevent UP 2 ${DY:-1200}"
 check "docked at the left edge after a drag to the left" "wait_log 'bubble docked side=Left' 10"
 sleep 2; shot 6-docked-left
+fi
 
+if part 3; then
 echo "--- 3. Guided trial: the hint card beside the bubble"
 BOTTOM="540 2220"  # lowest 56 dp button
 ABOVE="540 2052"   # the 56 dp button above it
@@ -122,6 +127,7 @@ $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
 $ADB shell cmd locale set-app-locales $PKG --locales "$LOCALE"
 $ADB shell "run-as $PKG sh -c 'mkdir -p files; echo ok > files/fake-mistral'"
 $ADB logcat -c
+settle
 wake; $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; sleep 6
 if ! wait_log 'fake mistral on http://127.0.0.1' 5; then
   echo "SKIP part 3: this build has no fake Mistral"
@@ -130,7 +136,8 @@ else
   wait_log 'onboarding step MicPermission' && tap $ABOVE  # microphone already granted (-g)
   wait_log 'onboarding step MistralKey'
   tap $(node_xy EDITABLE)
-  for k in dixi fake rtlp roof 0000 0000; do $ADB shell input text $k; sleep 1; done
+  # The fake accepts only « dixi-fake-… » keys. No chunk starts with « - » (read as an option).
+  for k in dixi- fake- rtl-p roof- 0000; do $ADB shell input text $k; sleep 1; done
   $ADB shell input keyevent KEYCODE_ENTER
   check "fake key accepted" "wait_log 'key test Valid'"
   $ADB shell dumpsys input_method | grep -q 'mInputShown=true' && $ADB shell input keyevent KEYCODE_BACK
@@ -149,6 +156,7 @@ else
   sleep 3; shot 8-trial-bubble-left
   read -r AX _ <<< "$(node_xy '◂')"
   check "card arrow ◂ on the left half, toward the bubble (x=${AX:-none})" "[ -n \"${AX:-}\" ] && [ \"$AX\" -lt $((W / 2)) ]"
+fi
 fi
 
 $ADB logcat -d -b all > "$OUT/logcat.txt"
