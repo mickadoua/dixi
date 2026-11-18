@@ -140,8 +140,9 @@ else
   for k in dixi- fake- rtl-p roof- 0000; do $ADB shell input text $k; sleep 1; done
   $ADB shell input keyevent KEYCODE_ENTER
   check "fake key accepted" "wait_log 'key test Valid'"
-  $ADB shell dumpsys input_method | grep -q 'mInputShown=true' && $ADB shell input keyevent KEYCODE_BACK
-  sleep 2; tap $BOTTOM
+  # « Continue » found by its text: BACK to close the keyboard would leave the step.
+  CONTINUE=$(sed -n 's:.*name="key_continue">\(.*\)</string>.*:\1:p' "app/src/main/res/values-$LOCALE/strings.xml")
+  sleep 2; tap $(node_xy "$CONTINUE")
   wait_log 'onboarding step BubbleIntro' && tap $ABOVE  # overlay already allowed
   check "guided trial" "wait_log 'guided trial step Tap'"
   settle
