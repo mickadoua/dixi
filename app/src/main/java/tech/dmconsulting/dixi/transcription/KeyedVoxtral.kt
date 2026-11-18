@@ -3,6 +3,7 @@ package tech.dmconsulting.dixi.transcription
 import tech.dmconsulting.dixi.settings.DictationLanguage
 import tech.dmconsulting.dixi.settings.MistralKeyStore
 import java.io.File
+import java.io.IOException
 
 /**
  * Picks the service at each call (DMC-227): the real one with the user's active key.
@@ -16,7 +17,7 @@ class KeyedTranscriber(
 ) : Transcriber {
     override suspend fun transcribe(audio: File, language: DictationLanguage): VoxtralResult<String> {
         val key = keys.key() ?: return fake?.transcribe(audio, language) ?: NO_KEY
-        return real(key).transcribe(audio, language).also { keys.noteRefusal(it) }
+        return real(key).transcribe(audio, language).also { keys.noteRefusal(key, it) }
     }
 }
 
@@ -28,12 +29,21 @@ class KeyedTextCleaner(
 ) : TextCleaner {
     override suspend fun clean(rawText: String, language: DictationLanguage): VoxtralResult<String> {
         val key = keys.key() ?: return fake?.clean(rawText, language) ?: NO_KEY
-        return real(key).clean(rawText, language).also { keys.noteRefusal(it) }
+        return real(key).clean(rawText, language).also { keys.noteRefusal(key, it) }
     }
 }
 
 private val NO_KEY = VoxtralResult.Failure(VoxtralError.NoKey)
 
-private suspend fun MistralKeyStore.noteRefusal(result: VoxtralResult<*>) {
-    if (result == VoxtralResult.Failure(VoxtralError.InvalidKey)) markRejected()
+/**
+ * Marks [key] as refused, unless another key became active during the call. A disk error only
+ * loses the « Clé refusée » mark: the dictation still gets its result.
+ */
+private suspend fun MistralKeyStore.noteRefusal(key: String, result: VoxtralResult<*>) {
+    if (result != VoxtralResult.Failure(VoxtralError.InvalidKey) || key() != key) return
+    try {
+        markRejected()
+    } catch (e: IOException) {
+        // Marked again at the next refusal.
+    }
 }

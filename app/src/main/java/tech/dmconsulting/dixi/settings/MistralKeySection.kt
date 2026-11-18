@@ -40,6 +40,7 @@ import tech.dmconsulting.dixi.R
 import tech.dmconsulting.dixi.transcription.KeyCheck
 import tech.dmconsulting.dixi.transcription.MistralKeyCheck
 import tech.dmconsulting.dixi.ui.theme.Dimens
+import java.io.IOException
 
 /** What a saved key's row says under its name. */
 @get:StringRes
@@ -84,6 +85,16 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
         }
     }
 
+    /** Runs a change of the saved keys. A disk error shows a line instead of crashing the app. */
+    suspend fun saved(change: suspend () -> Unit): Boolean = try {
+        change()
+        true
+    } catch (e: IOException) {
+        check = null
+        line = Line(R.string.key_change_failed)
+        false
+    }
+
     fun testActive() {
         testing = true
         check = null
@@ -91,12 +102,16 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
         scope.launch {
             val key = keys.key()
             val result = if (key == null) null else keyCheck.check(key)
-            when {
-                result == KeyCheck.Valid -> keys.markAccepted()
-                result?.rejectsKey == true -> keys.markRejected()
+            val ok = saved {
+                when {
+                    result == KeyCheck.Valid -> keys.markAccepted()
+                    result?.rejectsKey == true -> keys.markRejected()
+                }
             }
-            check = result
-            line = if (result == null) Line(R.string.key_status_none) else null
+            if (ok) {
+                check = result
+                line = if (result == null) Line(R.string.key_status_none) else null
+            }
             testing = false
         }
     }
@@ -125,9 +140,10 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
                 entry,
                 onActivate = {
                     scope.launch {
-                        keys.activate(entry.id)
-                        check = null
-                        line = Line(R.string.key_activated, entry.name)
+                        if (saved { keys.activate(entry.id) }) {
+                            check = null
+                            line = Line(R.string.key_activated, entry.name)
+                        }
                     }
                 },
                 onDelete = { toDelete = entry },
@@ -168,11 +184,13 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
                     modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
                 ) { Text(stringResource(if (adding.testing) R.string.key_check_running else R.string.key_test)) }
                 if (entries.isNotEmpty()) {
+                    // Not during the test: a key Mistral accepts is saved and made active even if the form is closed.
                     TextButton(
                         onClick = {
                             addOpen = false
                             adding.edit("")
                         },
+                        enabled = !adding.testing,
                         modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
@@ -207,10 +225,11 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
                 TextButton(onClick = {
                     toDelete = null
                     scope.launch {
-                        keys.delete(entry.id)
-                        check = null
-                        line = Line(R.string.key_deleted, entry.name)
-                        if (keys.entries.value.isEmpty()) addOpen = true
+                        if (saved { keys.delete(entry.id) }) {
+                            check = null
+                            line = Line(R.string.key_deleted, entry.name)
+                            if (keys.entries.value.isEmpty()) addOpen = true
+                        }
                     }
                 }) { Text(stringResource(R.string.key_delete_confirm)) }
             },

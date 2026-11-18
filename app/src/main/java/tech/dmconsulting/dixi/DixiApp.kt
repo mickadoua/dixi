@@ -17,7 +17,7 @@ class DixiApp : Application() {
                 dir = File(noBackupFilesDir, MISTRAL_KEYS_DIR),
                 cipher = KeystoreKeyCipher(),
                 legacyFile = File(noBackupFilesDir, LEGACY_MISTRAL_KEY_FILE),
-                legacyName = getString(R.string.key_default_name, 1),
+                defaultName = { getString(R.string.key_default_name, it) },
             ),
             history = DataStoreDictationHistory.create(dataStoreFile("dictation_history.json")),
             settings = DataStoreSettingsStore.create(dataStoreFile("settings.preferences_pb")),

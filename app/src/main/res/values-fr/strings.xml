@@ -19,6 +19,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi a besoin du micro</string>
     <string name="mic_body">Pour transformer votre voix en texte. L\'audio est envoyé pour transcription puis supprimé : jamais conservé.</string>
+    <string name="mic_notifications_note">Android demande ensuite les notifications : elles montrent l\'enregistrement en cours et « Texte copié ».</string>
     <string name="mic_allow">Autoriser le micro</string>
     <string name="mic_later">Plus tard</string>
     <string name="mic_open_settings">Ouvrir les réglages</string>
@@ -171,6 +172,7 @@
     <string name="key_test">Tester la clé</string>
     <string name="key_format_invalid">Ce texte ne ressemble pas à une clé : collez-la sans espace ni retour à la ligne.</string>
     <string name="key_save_failed">La clé n\'a pas pu être enregistrée. Réessayez.</string>
+    <string name="key_change_failed">Le changement n\'a pas pu être enregistré. Réessayez.</string>
     <string name="key_deleted">Clé « %1$s » supprimée.</string>
     <string name="key_check_running">Test en cours…</string>
     <string name="key_check_valid">Clé valide</string>

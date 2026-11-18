@@ -26,7 +26,7 @@ class FileMistralKeyStoreTest {
         legacy = File(folder.root, "no_backup/mistral_key.bin")
     }
 
-    private fun store(cipher: KeyCipher = XorCipher()) = FileMistralKeyStore(dir, cipher, legacy, legacyName = "Key 1")
+    private fun store(cipher: KeyCipher = XorCipher()) = FileMistralKeyStore(dir, cipher, legacy, defaultName = { "Key $it" })
 
     /** Everything written under no_backup/, as text. */
     private fun disk(): String = folder.root.walk().filter { it.isFile }.joinToString("\n") { String(it.readBytes(), Charsets.ISO_8859_1) }
@@ -140,6 +140,17 @@ class FileMistralKeyStoreTest {
     }
 
     @Test
+    fun anUndecryptableKeyOnAFullDiskIsForgottenWithoutThrowing() = runTest {
+        store().add("Perso", KEY)
+        val store = store(FailingCipher())
+        // keys.json cannot be rewritten: its temporary file is a directory.
+        File(dir, "keys.json.tmp").mkdirs()
+
+        assertNull(store.key())
+        assertEquals(KeyStatus.None, store.status.value)
+    }
+
+    @Test
     fun filesWithoutAnEntryAreDeletedAndEntriesWithoutAFileDropped() = runTest {
         val store = store()
         store.add("Perso", KEY)
@@ -155,14 +166,35 @@ class FileMistralKeyStoreTest {
     }
 
     @Test
-    fun aDamagedIndexMeansNoKeyAndNoFileLeft() = runTest {
-        store().add("Perso", KEY)
+    fun aDamagedIndexKeepsTheKeysUnderDefaultNames() = runTest {
+        val first = store()
+        first.add("Perso", KEY)
+        first.add("Pro", KEY_2)
+        val ids = first.entries.value.map { it.id }
+        File(dir, ids[0] + ".bin").setLastModified(1_000_000L)
+        File(dir, ids[1] + ".bin").setLastModified(2_000_000L)
         File(dir, "keys.json").writeText("{not json")
 
         val store = store()
 
-        assertEquals(KeyStatus.None, store.status.value)
-        assertEquals(0, dir.listFiles()!!.count { it.name.endsWith(".bin") })
+        assertEquals(listOf("Key 1" to ids[0], "Key 2" to ids[1]), store.entries.value.map { it.name to it.id })
+        assertEquals(KEY_2, store.key())
+        // Still there at the next start, and written by the next change.
+        assertEquals(KEY_2, store().key())
+        store.activate(ids[0])
+        assertEquals(KEY, store().key())
+    }
+
+    @Test
+    fun aKeyMovedInWithoutItsIndexIsKept() = runTest {
+        // Killed between the rename of the old key and the first keys.json.
+        dir.mkdirs()
+        File(dir, "moved.bin").writeBytes(XorCipher().encrypt(KEY.toByteArray()))
+
+        val store = store()
+
+        assertEquals(listOf(KeyEntry("moved", "Key 1", active = true, rejected = false)), store.entries.value)
+        assertEquals(KEY, store.key())
     }
 
     @Test
