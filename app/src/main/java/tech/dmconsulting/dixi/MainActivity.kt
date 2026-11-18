@@ -57,7 +57,11 @@ class MainActivity : ComponentActivity() {
                 var start by rememberSaveable { mutableStateOf(fixedStart?.name) }
                 LaunchedEffect(Unit) {
                     if (start == null) {
-                        start = startScreen(container.settings.settings.first(), BubbleSwitch.canShow(this@MainActivity)).name
+                        start = startScreen(
+                            container.settings.settings.first(),
+                            overlayGranted = BubbleSwitch.canShow(this@MainActivity),
+                            hasKey = container.mistralKey.status.value != KeyStatus.None,
+                        ).name
                     }
                 }
                 Screen.entries.firstOrNull { it.name == start }?.let {

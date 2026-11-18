@@ -9,12 +9,17 @@ enum class DictationLanguage(val code: String?) {
     English("en"),
 }
 
-/** Onboarding screens 1 to 5, in order. The app reopens on the last one shown until it is done. */
+/**
+ * Onboarding steps, in order (mockups DMC-764 § 3): the Mistral key before the bubble, then
+ * the guided trial with the real bubble, then « Dixi est prêt ». The app reopens on the last
+ * one shown until it is done. Saved by name: [Trial] is now the guided trial, after the bubble.
+ */
 enum class OnboardingStep {
     Welcome,
     MicPermission,
-    Trial,
+    MistralKey,
     BubbleIntro,
+    Trial,
     BubbleEnabled,
 }
 

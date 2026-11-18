@@ -39,7 +39,7 @@ import tech.dmconsulting.dixi.ui.theme.Neon
 
 /** Onboarding screen 1 (neon mockup 08, DMC-213). [step]: this screen's dot among [steps]. */
 @Composable
-fun WelcomeScreen(onStart: () -> Unit, step: Int = 0, steps: Int = 4) {
+fun WelcomeScreen(onStart: () -> Unit, step: Int = 0, steps: Int = ONBOARDING_STEPS + 1) {
     Box(
         Modifier
             .fillMaxSize()

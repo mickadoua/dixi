@@ -30,20 +30,6 @@ interface DictationRecorder {
     fun cancel()
 }
 
-/** The panel next to the bubble (mockups 09 and 10). */
-sealed interface DictationPanel {
-    data object None : DictationPanel
-
-    /** « Je vous écoute », since [startedAtMs] on the elapsedMs clock. */
-    data class Listening(val startedAtMs: Long) : DictationPanel
-
-    /** « Je mets en texte… », after « Terminer ». */
-    data object Processing : DictationPanel
-
-    /** The final text, to correct, then « Valider » or « Refaire ». */
-    data class Suggestion(val text: String) : DictationPanel
-}
-
 /** What the user sees and gets at the end of a dictation. */
 interface DictationOutput {
     /** Puts [text] in the clipboard. [stoppedAtMs]: end of the recording, on the elapsedMs clock. */
@@ -58,9 +44,11 @@ interface DictationOutput {
     /** « Texte copié », with the length of the recording. */
     fun notifyCopied(recordingMs: Long)
 
+    /** The short cause next to the bubble (« Clé refusée », « Pas de réseau »…). */
     fun showError(@StringRes message: Int)
 
-    fun showPanel(panel: DictationPanel)
+    /** A tap on a « key refused » error: the app opens on the key settings (mockups DMC-764 § 2). */
+    fun openKeySettings()
 
     /** No microphone permission yet: explain, then ask Android (DMC-338). */
     fun askMicrophone()
@@ -74,9 +62,10 @@ interface DictationOutput {
 
 /**
  * One dictation, from the bubble tap to the clipboard, or the focused field with auto-paste (brief § 3):
- * repos → écoute → traitement → suggestion → texte prêt (or error) → repos. The bubble
- * and the panel follow. « Terminer » is a tap on the bubble; « Annuler » deletes the audio.
- * The bubble stays in « traitement » while the suggestion waits: a tap does nothing.
+ * repos → écoute → traitement → texte prêt (or error) → repos. Everything shows on the bubble
+ * (mockups DMC-764 § 2): first tap starts, second tap stops, a long press cancels and deletes
+ * the audio. The text is copied (and pasted) as soon as it is ready: no suggestion to confirm.
+ * A tap on an error starts again, or opens the key settings when Mistral refused the key.
  * One dictation at a time. The audio file is deleted after the transcription, success or not.
  */
 class DictationController(
@@ -90,15 +79,20 @@ class DictationController(
     private val now: () -> Instant = Instant::now,
 ) {
 
-    /** The suggestion shown, with what [validate] needs. */
-    private var pending: Pending? = null
-
-    private class Pending(val stoppedAtMs: Long, val durationMs: Long)
+    /** The error shown is a refused key: a tap opens its settings instead of a new dictation. */
+    private var keyRefused = false
 
     fun onTap() {
         when (bubble.tapAction()) {
-            TapAction.Start -> start()
+            TapAction.Start -> if (bubble.state == BubbleState.Error && keyRefused) {
+                keyRefused = false
+                output.openKeySettings()
+            } else {
+                start()
+            }
+
             TapAction.Stop -> recorder.stop()
+
             TapAction.None -> Unit
         }
     }
@@ -116,33 +110,61 @@ class DictationController(
             return
         }
         bubble.setState(BubbleState.Listening)
-        output.showPanel(DictationPanel.Listening(elapsedMs()))
     }
 
-    /** « Terminer »: same as a tap on the bubble while listening. */
-    fun finish() {
-        if (bubble.state == BubbleState.Listening) onTap()
-    }
-
-    /** « Annuler »: stops the recording, deletes the audio, back to rest. */
+    /** Long press while listening: stops the recording, deletes the audio, back to rest. */
     fun cancel() {
         if (bubble.state != BubbleState.Listening) return
         recorder.cancel()
-        output.showPanel(DictationPanel.None)
         bubble.setState(BubbleState.Idle)
     }
 
+    /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
+    fun onRecordingFinished(outcome: RecordingOutcome) {
+        if (bubble.state != BubbleState.Listening) {
+            // Not ours to transcribe: a dictation is already processed.
+            if (outcome is RecordingOutcome.Success) outcome.result.file.delete()
+            return
+        }
+        when (outcome) {
+            is RecordingOutcome.Failure -> fail(outcome.error.bubbleMessage)
+            RecordingOutcome.Cancelled -> bubble.setState(BubbleState.Idle)
+            is RecordingOutcome.Success -> process(outcome)
+        }
+    }
+
+    private fun process(outcome: RecordingOutcome.Success) {
+        val stoppedAt = elapsedMs()
+        val recording = outcome.result
+        bubble.setState(BubbleState.Processing)
+        scope.launch {
+            val result = try {
+                transcribe(recording.file)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Settings or storage failed (not the network): the bubble must not crash.
+                VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
+            } finally {
+                recording.file.delete()
+            }
+            when (result) {
+                is VoxtralResult.Failure -> fail(result.error.bubbleMessage, keyRefused = result.error == VoxtralError.InvalidKey)
+
+                is VoxtralResult.Success -> {
+                    val text = result.value.text
+                    if (text.isBlank()) fail(R.string.bubble_error_nothing_heard) else deliver(text, stoppedAt, recording.durationMs)
+                }
+            }
+        }
+    }
+
     /**
-     * « Valider »: copies [text], the suggestion as the user corrected it, then pastes it if
-     * auto-paste is on; « Texte copié » only when it was not pasted. A blank text does nothing.
-     * The bubble stays in « traitement » during the paste (about 1 s at most).
+     * Copies [text], then pastes it if auto-paste is on; « Texte copié » only when it was not
+     * pasted. The bubble stays in « traitement » during the paste (about 1 s at most).
      */
-    fun validate(text: String) {
-        if (text.isBlank()) return
-        val done = pending ?: return
-        pending = null
-        output.showPanel(DictationPanel.None)
-        output.copy(text, done.stoppedAtMs)
+    private fun deliver(text: String, stoppedAtMs: Long, durationMs: Long) {
+        output.copy(text, stoppedAtMs)
         // Undispatched: with auto-paste off, the end is immediate, as before DMC-141.
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val pasted = try {
@@ -153,7 +175,7 @@ class DictationController(
                 false
             }
             bubble.setState(BubbleState.Ready)
-            if (!pasted) output.notifyCopied(done.durationMs)
+            if (!pasted) output.notifyCopied(durationMs)
         }
         val at = now()
         scope.launch {
@@ -167,67 +189,26 @@ class DictationController(
         }
     }
 
-    /** « Refaire »: drops the suggestion and listens again. */
-    fun redo() {
-        if (pending == null) return
-        pending = null
-        output.showPanel(DictationPanel.None)
-        bubble.setState(BubbleState.Idle)
-        start()
-    }
-
-    /** Any end of recording: tap, « Arrêter » in the notification, 5 min limit. */
-    fun onRecordingFinished(outcome: RecordingOutcome) {
-        if (bubble.state != BubbleState.Listening) {
-            // Not ours to transcribe: a dictation is already processed.
-            if (outcome is RecordingOutcome.Success) outcome.result.file.delete()
-            return
-        }
-        when (outcome) {
-            is RecordingOutcome.Failure -> fail(outcome.error.message)
-
-            RecordingOutcome.Cancelled -> {
-                output.showPanel(DictationPanel.None)
-                bubble.setState(BubbleState.Idle)
-            }
-
-            is RecordingOutcome.Success -> process(outcome)
-        }
-    }
-
-    private fun process(outcome: RecordingOutcome.Success) {
-        val stoppedAt = elapsedMs()
-        val recording = outcome.result
-        bubble.setState(BubbleState.Processing)
-        output.showPanel(DictationPanel.Processing)
-        scope.launch {
-            val result = try {
-                transcribe(recording.file)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Settings or storage failed (not the network): the bubble must not crash.
-                VoxtralResult.Failure(VoxtralError.ServiceUnavailable)
-            } finally {
-                recording.file.delete()
-            }
-            when (result) {
-                is VoxtralResult.Failure -> fail(result.error.message)
-
-                is VoxtralResult.Success -> {
-                    pending = Pending(stoppedAt, recording.durationMs)
-                    output.showPanel(DictationPanel.Suggestion(result.value.text))
-                }
-            }
-        }
-    }
-
-    private fun fail(@StringRes message: Int) {
-        output.showPanel(DictationPanel.None)
+    private fun fail(@StringRes message: Int, keyRefused: Boolean = false) {
+        this.keyRefused = keyRefused
         output.showError(message)
         bubble.setState(BubbleState.Error)
     }
 }
+
+/** Short cause next to the bubble for the common errors (mockups DMC-764 § 2), else the full message. */
+@get:StringRes
+val VoxtralError.bubbleMessage: Int
+    get() = when (this) {
+        VoxtralError.InvalidKey -> R.string.bubble_error_key_refused
+        VoxtralError.NoConnection -> R.string.bubble_error_no_network
+        VoxtralError.NothingHeard -> R.string.bubble_error_nothing_heard
+        else -> message
+    }
+
+@get:StringRes
+val RecordingError.bubbleMessage: Int
+    get() = if (this == RecordingError.NothingHeard) R.string.bubble_error_nothing_heard else message
 
 @get:StringRes
 val RecordingError.message: Int

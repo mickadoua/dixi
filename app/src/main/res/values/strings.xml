@@ -4,7 +4,7 @@
     <!-- Screens, named like the designs (DMC-121). -->
     <string name="screen_welcome">Welcome</string>
     <string name="screen_mic_permission">Microphone permission</string>
-    <string name="screen_trial">Try it</string>
+    <string name="screen_trial">Try the bubble</string>
     <string name="screen_bubble_intro">About the bubble</string>
     <string name="screen_bubble_enabled">Bubble on</string>
     <string name="screen_auto_paste_disclosure">Auto-paste</string>
@@ -17,22 +17,13 @@
     <string name="text_copied">Text copied</string>
 
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
-    <string name="onboarding_step">Step %1$d of 3</string>
     <string name="mic_title">Dixi needs the microphone</string>
     <string name="mic_body">To turn your voice into text. The audio is sent for transcription, then deleted: never kept.</string>
     <string name="mic_allow">Allow the microphone</string>
     <string name="mic_later">Later</string>
     <string name="mic_open_settings">Open settings</string>
-    <string name="trial_top">Try it</string>
-    <string name="trial_title">Say a sentence</string>
-    <string name="trial_hint">Tap the microphone, speak, then tap again to stop.</string>
-    <string name="trial_hint_stop">I\'m listening. Tap to stop.</string>
-    <string name="trial_start">Start dictation</string>
-    <string name="trial_stop">Stop dictation</string>
-    <string name="trial_processing">Cleaning up the text…</string>
-    <string name="trial_copy">Copy</string>
-    <string name="trial_continue">Continue</string>
-    <string name="trial_skip">Skip the trial</string>
+    <string name="trial_title">Try the bubble</string>
+    <string name="trial_skip">Skip</string>
     <string name="bubble_intro_preview">It stays within thumb\'s reach, in all your apps.</string>
     <string name="bubble_intro_title">A bubble over your apps</string>
     <string name="bubble_intro_step_tap">Tap the bubble to dictate</string>
@@ -42,9 +33,9 @@
     <string name="bubble_intro_open">Open the setting</string>
     <string name="bubble_intro_not_now">Not now</string>
     <string name="bubble_intro_refused">Setting not turned on</string>
-    <string name="bubble_enabled_title">The bubble is ready</string>
-    <string name="bubble_enabled_body">Open WhatsApp or your email, tap the bubble, speak.</string>
-    <string name="bubble_enabled_note">The text is copied. A notification confirms it.</string>
+    <string name="bubble_enabled_title">Dixi is ready</string>
+    <string name="bubble_enabled_body">The bubble stays on your screen. Tap it in any app to dictate.</string>
+    <string name="bubble_enabled_note">Tuck it against the edge when you don’t need it, tap it to bring it back.</string>
     <string name="bubble_enabled_finish">Done</string>
     <string name="bubble_enabled_auto_paste">Turn on auto-paste</string>
 
@@ -65,8 +56,6 @@
     <string name="settings_bubble">Show the bubble</string>
     <string name="settings_bubble_summary">Over your other apps</string>
     <string name="settings_auto_paste">Auto-paste</string>
-    <string name="settings_auto_paste_summary">Accessibility · off</string>
-    <string name="settings_auto_paste_summary_on">Accessibility · on</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_auto">Automatic detection (FR, EN)</string>
     <string name="settings_language_french">French</string>
@@ -80,30 +69,23 @@
 
     <!--
         Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
-        again (DMC-767). Provisional text until the final wording (Léa, DMC-765).
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
         The service label and description below are part of it: Android shows them in its settings.
     -->
-    <string name="disclosure_title">Paste straight into the field</string>
-    <string name="disclosure_body">Dixi uses Android’s accessibility service only to paste the dictated text into the field where you are typing.</string>
-    <string name="disclosure_point_no_reading">We do not read your screen content.</string>
-    <string name="disclosure_point_no_data">We collect no data through this service.</string>
-    <string name="disclosure_point_off_anytime">You can turn it off at any time.</string>
+    <string name="disclosure_title">Auto-paste</string>
     <string name="disclosure_optional">Optional: without it, the text is copied and you paste it yourself.</string>
-    <string name="disclosure_accept">I agree, turn it on</string>
-    <string name="disclosure_decline">No thanks</string>
+    <string name="disclosure_accept">Agree and turn on</string>
+    <string name="disclosure_decline">Not now</string>
     <string name="auto_paste_service_label">Dixi · auto-paste</string>
-    <string name="auto_paste_service_description">Pastes the text you just dictated into the field where you are typing, right after the dictation. Does not read your screen content and collects no data.</string>
+    <string name="auto_paste_service_description">Pastes the text you just dictated into the field where you are typing. Reads only whether that field accepts text, never its content. Collects no data.</string>
 
     <!-- Main screen, neon design 05 (DMC-213). -->
     <string name="screen_home">Home</string>
     <string name="screen_offer">Plan</string>
-    <string name="home_bubble_on">● Bubble on</string>
+    <string name="home_bubble_on">Bubble on</string>
     <string name="home_bubble_off">Bubble off</string>
-    <string name="home_bubble_on_body">Ready to dictate in all your apps</string>
-    <string name="home_bubble_off_body">Turn it on to dictate in all your apps</string>
-    <string name="home_dictate_title">Tap, speak</string>
-    <string name="home_dictate_body">Try it here, or from the bubble in any app.</string>
-    <string name="home_dictate_action">Dictate</string>
+    <string name="home_bubble_on_body">Tap the bubble to dictate in any app.</string>
+    <string name="home_bubble_off_body">Turn it on to dictate in any app.</string>
     <string name="home_last_dictation">Last dictation</string>
 
     <!-- Onboarding screen 1, neon design 08. -->
@@ -126,10 +108,6 @@
 
     <!-- Settings sections, neon design 06. -->
     <string name="settings_section_bubble">Bubble</string>
-    <string name="settings_hide_mode">Hide the bubble</string>
-    <string name="settings_hide_mode_summary">Edge strip, or notification</string>
-    <string name="settings_hide_mode_edge">Edge strip</string>
-    <string name="settings_hide_mode_notification">Notification</string>
     <string name="settings_section_dictation">Dictation</string>
     <string name="settings_section_other">Data and info</string>
 
@@ -142,7 +120,6 @@
     <string name="bubble_hide_zone">Hide the bubble</string>
     <string name="bubble_hide_zone_label">Drop here to hide</string>
     <string name="bubble_action_hide">Hide the bubble</string>
-    <string name="bubble_edge">Show the bubble</string>
     <string name="channel_bubble">Bubble</string>
     <string name="notif_bubble_hidden_title">Bubble hidden</string>
     <string name="notif_bubble_hidden_body">Tap to show the bubble.</string>
@@ -180,20 +157,16 @@
     <string name="key_status_none">No key · demo mode, nothing is sent</string>
     <string name="key_status_saved">Key saved</string>
     <string name="key_status_rejected">Key refused by Mistral. Check it or paste another one.</string>
-    <string name="key_help">Create a key at console.mistral.ai, then paste it here. It stays encrypted on this phone. It is never shown and never backed up.</string>
-    <string name="key_field">Paste the key</string>
+    <string name="key_field">Paste your key here</string>
     <string name="key_save">Save</string>
-    <string name="key_test">Test the key</string>
+    <string name="key_test">Test key</string>
     <string name="key_delete">Delete the key</string>
     <string name="key_saved">Key saved. Tap “Test the key” to check it.</string>
     <string name="key_format_invalid">This text does not look like a key: paste it without spaces or line breaks.</string>
     <string name="key_save_failed">The key could not be saved. Try again.</string>
     <string name="key_deleted">Key deleted. Dictations now use demo mode.</string>
     <string name="key_check_running">Testing…</string>
-    <string name="key_check_valid">Valid key: Mistral accepts it.</string>
-    <string name="key_check_rejected">Mistral rejected this key (error 401 or 403).</string>
-    <string name="key_check_no_connection">No network. Try again once you are online.</string>
-    <string name="key_check_unavailable">Mistral service unavailable. Try again in a few minutes.</string>
+    <string name="key_check_valid">Key valid</string>
     <string name="key_delete_title">Delete the key?</string>
     <string name="key_delete_body">Dictations will use demo mode until you paste a key.</string>
     <string name="key_delete_confirm">Delete</string>
@@ -205,21 +178,8 @@
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">Demo mode</string>
-    <string name="trial_raw">You said (raw)</string>
-    <string name="trial_clean">Dixi text</string>
     <string name="demo_mode_description">Demo mode: simulated transcription, nothing is sent.</string>
-    <!-- Panel next to the bubble: designs 09 and 10, v1 without live text (DMC-234). -->
-    <string name="panel_listening">● Listening</string>
-    <string name="panel_processing">Writing it out…</string>
-    <string name="panel_suggestion">Suggestion</string>
-    <string name="panel_cancel">Cancel</string>
-    <string name="panel_finish">Done</string>
-    <string name="panel_redo">Redo</string>
-    <string name="panel_validate">Confirm</string>
-    <string name="panel_correct_hint">Tap a word to fix it.</string>
-    <string name="panel_validate_hint">“Confirm” inserts the text in the field (or copies it).</string>
-    <string name="panel_wave_description">Microphone level</string>
-    <string name="panel_elapsed_description">Recording time: %1$s</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
     <string name="toast_copied">Text copied</string>
     <string name="toast_pasted">Text pasted</string>
 
@@ -237,4 +197,64 @@
         <item>Meeting notes: the client approves the quote. Next step, send the signed contract and plan the kick-off meeting with the whole team next week.</item>
         <item>Remember to chase the supplier about Monday\'s delivery.</item>
     </string-array>
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Add your Mistral key</string>
+    <string name="key_guide_intro">Dixi uses your own Mistral key to turn your voice into text. It takes about two minutes.</string>
+    <string name="key_guide_step1">1. Open console.mistral.ai and sign in, or create an account.</string>
+    <string name="key_guide_step1_note">Mistral may first ask you to choose a plan and confirm your phone number.</string>
+    <string name="key_guide_step2">2. In the menu, open API Keys.</string>
+    <string name="key_guide_step3">3. Tap Create new key, name it (for example “Dixi”), then confirm.</string>
+    <string name="key_guide_step4">4. Copy the key. Mistral shows it only once.</string>
+    <string name="key_guide_step5">5. Come back to Dixi and paste it below.</string>
+    <string name="key_guide_link">Open the Mistral API Keys page</string>
+    <string name="key_check_valid_body">Mistral accepts this key. You can continue.</string>
+    <string name="key_check_refused">Key refused</string>
+    <string name="key_cause_invalid">Mistral does not recognise this key. Check that you copied all of it, with no spaces, or create a new one.</string>
+    <string name="key_cause_no_access">This key has no access to the API. Check that your Mistral plan is active.</string>
+    <string name="key_cause_rate_limited">Mistral is limiting this key for now. Wait a minute, then test again.</string>
+    <string name="key_cause_no_network">No network. Test again once you are online.</string>
+    <string name="key_cause_unavailable">Mistral is not responding. Test again in a few minutes.</string>
+    <string name="key_continue">Continue</string>
+    <string name="key_storage_note">Your key stays encrypted on this phone. Dixi never shows it and never backs it up.</string>
+    <string name="disclosure_intro">To paste your dictated text into the field where you are typing, Dixi uses Android’s Accessibility Service API. Read what it does before you turn it on.</string>
+    <string name="disclosure_reads_title">What it reads</string>
+    <string name="disclosure_reads">Only the field you are typing in, right after a dictation: whether it accepts text, whether it is a password field, and which app it belongs to. It never reads the text in the field or anything else on your screen.</string>
+    <string name="disclosure_does_title">What it does</string>
+    <string name="disclosure_does">It pastes the text you just dictated into that field. It does nothing between dictations.</string>
+    <string name="disclosure_does_not_title">What it does not do</string>
+    <string name="disclosure_does_not">It collects no data, stores nothing and sends nothing: no data leaves your phone through this service. It never pastes into a password field.</string>
+    <string name="disclosure_voice_note">Your voice is still sent to Mistral to make the text, as it is without auto-paste.</string>
+    <string name="disclosure_stop_title">How to stop it</string>
+    <string name="disclosure_stop">Turn off Auto-paste in Dixi’s settings at any time, or in Android Settings › Accessibility › Dixi · auto-paste.</string>
+    <string name="disclosure_next_step">Android will open its accessibility settings. Choose “Dixi · auto-paste” and turn it on.</string>
+    <string name="settings_auto_paste_on">On · pastes into the field you are typing in</string>
+    <string name="settings_auto_paste_off">Off · the text is copied, you paste it</string>
+    <string name="screen_mistral_key">Mistral key</string>
+    <string name="trial_field_hint">Your text will arrive here</string>
+    <string name="trial_hint_tap">Tap the bubble to speak</string>
+    <string name="trial_hint_speak">Speak, then tap again to finish</string>
+    <string name="trial_it_works">There. It works in all your apps.</string>
+    <string name="trial_hint_dock">Drag the bubble to the edge to tuck it away</string>
+    <string name="trial_hint_undock">Tap it to bring it back</string>
+    <string name="trial_retry">Tap the bubble to try again.</string>
+    <string name="bubble_docked">Dixi, tucked at the edge. Tap to bring it back.</string>
+    <string name="bubble_listening_elapsed">Dixi, listening, %1$s</string>
+    <string name="bubble_action_dock">Tuck the bubble at the edge</string>
+    <string name="bubble_action_cancel">Cancel the dictation</string>
+    <string name="bubble_error_key_refused">Key refused</string>
+    <string name="bubble_error_no_network">No network</string>
+    <string name="bubble_error_nothing_heard">Nothing heard</string>
+    <string name="home_bubble_permission">Display not allowed</string>
+    <string name="home_bubble_permission_body">Allow “Display over other apps” to show the bubble.</string>
+    <string name="home_key_active">Key active</string>
+    <string name="home_key_refused">Key refused</string>
+    <string name="home_key_none">No key</string>
+    <string name="home_key_change">Change key</string>
+    <string name="home_key_check">Check the key</string>
+    <string name="home_key_add">Add a key</string>
+    <string name="home_auto_paste_off">Auto-paste: off</string>
+    <string name="home_auto_paste_turn_on">Turn on</string>
+    <string name="home_last_dictation_empty">Your first dictation will appear here.</string>
+    <string name="home_all_history">All history</string>
+    <string name="home_dictate_here">Dictate here</string>
 </resources>

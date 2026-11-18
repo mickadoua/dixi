@@ -2,6 +2,7 @@ package tech.dmconsulting.dixi.bubble
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -93,21 +94,58 @@ class BubbleGeometryTest {
         assertFalse(g.isOverHideTarget(180f + 35f, 600f + 35f, 180f, 600f, 48f)) // 49.5 px away
     }
 
+    /** 1080 px phone at 2.625: 48 dp bubble window (126 px), 8 dp margin (21 px). Dock distance 16 dp = 42 px. */
+    private val g = BubbleGeometry(1080, 2400, 126, 21, BubbleGeometry.Insets(0, 72, 0, 144))
+    private val dock = 42
+
     @Test
-    fun thePanelSitsAboveTheBubbleWhenThereIsRoom() {
-        val g = BubbleGeometry(1080, 2400, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
-        assertEquals(1680 - 12 - 800, g.panelTop(bubbleY = 1680, panelHeight = 800, gap = 12))
+    fun aBubbleAtRestOrMovedAlongTheSideNeverTucks() {
+        assertNull(g.dockSide(g.xFor(Side.Right), dock))
+        assertNull(g.dockSide(g.xFor(Side.Left), dock))
+        assertNull(g.dockSide(500, dock))
     }
 
     @Test
-    fun thePanelGoesBelowABubbleNearTheTop() {
-        val g = BubbleGeometry(1080, 2400, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
-        assertEquals(300 + 168 + 12, g.panelTop(bubbleY = 300, panelHeight = 800, gap = 12))
+    fun droppedWithItsCenterNearAnEdgeItTucksThere() {
+        // Center 30 px from the right edge, then 23 px from the left one.
+        assertEquals(Side.Right, g.dockSide(1080 - 63 - 30, dock))
+        assertEquals(Side.Left, g.dockSide(-40, dock))
+        assertEquals("exactly at the limit", Side.Right, g.dockSide(1080 - 63 - dock, dock))
+        assertNull(g.dockSide(1080 - 63 - dock - 1, dock))
     }
 
     @Test
-    fun aPanelTooTallForBothSidesStaysOnScreen() {
-        val g = BubbleGeometry(1080, 1200, 168, 24, BubbleGeometry.Insets(0, 72, 0, 144))
-        assertEquals(1200 - 144 - 24 - 900, g.panelTop(bubbleY = 400, panelHeight = 900, gap = 12))
+    fun theTuckedBubbleIsHalfHiddenAndItsWindowStaysOnScreen() {
+        assertEquals(1080 - 63, g.halfHiddenX(Side.Right))
+        assertEquals(-63, g.halfHiddenX(Side.Left))
+        assertEquals(1080 - 126, g.dockedX(Side.Right))
+        assertEquals(0, g.dockedX(Side.Left))
+    }
+
+    @Test
+    fun aSideCutoutMovesTheEdge() {
+        val cutout = BubbleGeometry(2400, 1080, 126, 21, BubbleGeometry.Insets(100, 0, 0, 0))
+        assertEquals(100, cutout.dockedX(Side.Left))
+        assertEquals(100 - 63, cutout.halfHiddenX(Side.Left))
+        assertEquals(Side.Left, cutout.dockSide(100 - 63 + 10, dock))
+    }
+
+    @Test
+    fun aDragGoesHalfPastTheEdgesAtMost() {
+        assertEquals(-63, g.clampDragX(-500))
+        assertEquals(1080 - 63, g.clampDragX(5_000))
+        assertEquals(400, g.clampDragX(400))
+    }
+
+    @Test
+    fun aFastSidewaysFlingTucksTheBubble() {
+        assertEquals(Side.Right, flingSide(3_000f, 500f, minVelocity = 2_625f))
+        assertEquals(Side.Left, flingSide(-3_000f, -200f, minVelocity = 2_625f))
+    }
+
+    @Test
+    fun aSlowOrVerticalFlingDoesNot() {
+        assertNull(flingSide(1_000f, 0f, minVelocity = 2_625f))
+        assertNull(flingSide(3_000f, 2_500f, minVelocity = 2_625f))
     }
 }

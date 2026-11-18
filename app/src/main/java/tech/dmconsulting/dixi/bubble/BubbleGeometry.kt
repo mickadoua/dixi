@@ -1,5 +1,6 @@
 package tech.dmconsulting.dixi.bubble
 
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 enum class Side { Left, Right }
@@ -56,14 +57,41 @@ class BubbleGeometry(
         return dx * dx + dy * dy <= radius * radius
     }
 
+    /** Screen edges the bubble can tuck behind: inside the bars and the cutout. */
+    val leftEdge: Int get() = insets.left
+    val rightEdge: Int get() = screenWidth - insets.right
+
+    /** Dragging lets the bubble go half past an edge, to tuck it away. */
+    fun clampDragX(x: Int): Int = x.coerceIn(leftEdge - bubbleSize / 2, maxOf(leftEdge, rightEdge - bubbleSize / 2))
+
     /**
-     * Top of the panel card for a bubble at [bubbleY]: just above the bubble
-     * (mockup 09), or just below when there is no room above. [gap] between them.
+     * Side to tuck the bubble at when dropped with its left edge at [x]: its center within
+     * [dockDistance] of an edge (mockups DMC-764 § 1, « lâchée à moins de 16 dp du bord »).
+     * At rest the center is margin + radius from the edge (30 dp): moving it up or down the
+     * side never tucks it.
      */
-    fun panelTop(bubbleY: Int, panelHeight: Int, gap: Int): Int {
-        val above = bubbleY - gap - panelHeight
-        if (above >= minY) return above
-        val below = bubbleY + bubbleSize + gap
-        return below.coerceAtMost(maxOf(minY, screenHeight - insets.bottom - margin - panelHeight))
+    fun dockSide(x: Int, dockDistance: Int): Side? {
+        val center = x + bubbleSize / 2
+        return when {
+            center - leftEdge <= dockDistance -> Side.Left
+            rightEdge - center <= dockDistance -> Side.Right
+            else -> null
+        }
     }
+
+    /** Left edge of the bubble window whose center sits on the [side] edge: half of it hidden. */
+    fun halfHiddenX(side: Side): Int = if (side == Side.Left) leftEdge - bubbleSize / 2 else rightEdge - bubbleSize / 2
+
+    /** Left edge of the tucked bubble window, fully on screen against the [side] edge: it takes the touches. */
+    fun dockedX(side: Side): Int = if (side == Side.Left) leftEdge else rightEdge - bubbleSize
+}
+
+/**
+ * Side of a fling that tucks the bubble away: fast enough ([minVelocity], px/s) and
+ * mostly sideways. Null for a slow or vertical gesture.
+ */
+fun flingSide(velocityX: Float, velocityY: Float, minVelocity: Float): Side? = when {
+    abs(velocityX) < minVelocity || abs(velocityX) < abs(velocityY) * 1.5f -> null
+    velocityX < 0 -> Side.Left
+    else -> Side.Right
 }

@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import tech.dmconsulting.dixi.BuildConfig
 import tech.dmconsulting.dixi.R
-import tech.dmconsulting.dixi.bubble.BubblePositionStore
 import tech.dmconsulting.dixi.history.ClearHistoryDialog
 import tech.dmconsulting.dixi.history.DictationHistory
 import tech.dmconsulting.dixi.transcription.MistralKeyCheck
@@ -83,10 +82,6 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var chooseLanguage by rememberSaveable { mutableStateOf(false) }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
-    var chooseHideMode by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
-    val bubbleStore = remember { BubblePositionStore(context) }
-    var hideToEdge by remember { mutableStateOf(bubbleStore.hideToEdge) }
     val current = settings ?: return
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -108,18 +103,12 @@ fun SettingsScreen(
             checked = bubble.shown == true,
             onCheckedChange = bubble.set,
         )
-        SettingRow(
-            title = R.string.settings_hide_mode,
-            summary = stringResource(R.string.settings_hide_mode_summary),
-            value = stringResource(if (hideToEdge) R.string.settings_hide_mode_edge else R.string.settings_hide_mode_notification),
-            onClick = { chooseHideMode = true },
-        )
 
         Section(R.string.settings_section_dictation)
         if (autoPaste != null) {
             SwitchRow(
                 title = R.string.settings_auto_paste,
-                summary = stringResource(if (autoPaste.on == true) R.string.settings_auto_paste_summary_on else R.string.settings_auto_paste_summary),
+                summary = stringResource(if (autoPaste.on == true) R.string.settings_auto_paste_on else R.string.settings_auto_paste_off),
                 checked = autoPaste.on == true,
                 onCheckedChange = autoPaste.set,
             )
@@ -155,20 +144,6 @@ fun SettingsScreen(
                 scope.launch { settingsStore.update { it.copy(language = language) } }
             },
             onDismiss = { chooseLanguage = false },
-        )
-    }
-
-    if (chooseHideMode) {
-        ChoiceDialog(
-            title = R.string.settings_hide_mode,
-            options = listOf(true to R.string.settings_hide_mode_edge, false to R.string.settings_hide_mode_notification),
-            selected = hideToEdge,
-            onSelect = { edge ->
-                chooseHideMode = false
-                bubbleStore.hideToEdge = edge
-                hideToEdge = edge
-            },
-            onDismiss = { chooseHideMode = false },
         )
     }
 

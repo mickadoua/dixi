@@ -4,11 +4,12 @@ import tech.dmconsulting.dixi.settings.AppSettings
 import tech.dmconsulting.dixi.settings.OnboardingStep
 import tech.dmconsulting.dixi.ui.navigation.Screen
 
-/** Onboarding screen of each step (mockups, screens 1 to 5). */
+/** Onboarding screen of each step (mockups DMC-764 § 3). */
 val OnboardingStep.screen: Screen
     get() = when (this) {
         OnboardingStep.Welcome -> Screen.Welcome
         OnboardingStep.MicPermission -> Screen.MicPermission
+        OnboardingStep.MistralKey -> Screen.MistralKey
         OnboardingStep.Trial -> Screen.Trial
         OnboardingStep.BubbleIntro -> Screen.BubbleIntro
         OnboardingStep.BubbleEnabled -> Screen.BubbleEnabled
@@ -23,12 +24,17 @@ val OnboardingStep.previous: OnboardingStep?
     get() = OnboardingStep.entries.getOrNull(ordinal - 1)
 
 /**
- * First screen at launch: the home screen once the onboarding is done, else the
- * step left last time. Screen 5 says « La bulle est prête »: if the user took the
- * overlay permission back since, they go back to screen 4.
+ * First screen at launch: the home screen once the onboarding is done, else the step left
+ * last time. The key is needed for every step after its own: without one ([hasKey]), back to
+ * the key step. The guided trial and « Dixi est prêt » need the bubble: if the user took the
+ * overlay permission back since, back to the bubble step.
  */
-fun startScreen(settings: AppSettings, overlayGranted: Boolean): Screen = when {
-    settings.onboardingDone -> Screen.home
-    settings.onboardingStep == OnboardingStep.BubbleEnabled && !overlayGranted -> Screen.BubbleIntro
-    else -> settings.onboardingStep.screen
+fun startScreen(settings: AppSettings, overlayGranted: Boolean, hasKey: Boolean): Screen {
+    val step = settings.onboardingStep
+    return when {
+        settings.onboardingDone -> Screen.home
+        step > OnboardingStep.MistralKey && !hasKey -> Screen.MistralKey
+        step > OnboardingStep.BubbleIntro && !overlayGranted -> Screen.BubbleIntro
+        else -> step.screen
+    }
 }

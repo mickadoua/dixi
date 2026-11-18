@@ -10,22 +10,25 @@ import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import androidx.annotation.StringRes
+import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import tech.dmconsulting.dixi.R
-import tech.dmconsulting.dixi.dictation.DictationPanel
 import tech.dmconsulting.dixi.recording.MicrophoneRecorder
 
 /**
- * The bubble windows: the disc (takes touches, never the focus), its shadow and
- * halo behind (no touch), and the hide zone while dragging. Drag moves the
- * bubble; on release it snaps to the nearest side, or hides over the cross.
- * During a dictation, the panel (mockups 09 and 10) over a dimmed screen; after it,
- * the « Texte copié » toast next to the bubble.
+ * The bubble windows: the disc (takes touches, never the focus), its glow and voice wave
+ * behind (no touch), and the hide zone while dragging. Drag moves the bubble; on release
+ * it snaps to the nearest side, hides over the cross, or tucks half behind the edge when
+ * dropped against it or flung at it (mockups DMC-764 § 1). Everything shows on the bubble:
+ * no panel, no dimmed screen during a dictation (§ 2). A long press while listening
+ * cancels. After the dictation, « Texte copié » or the cause of the error next to it.
  */
 class BubbleOverlay(
     private val context: Context,
@@ -33,16 +36,15 @@ class BubbleOverlay(
     private val store: BubblePositionStore,
     private val onTap: () -> Unit,
     private val onHide: () -> Unit,
-    onCancel: () -> Unit = {},
-    onFinish: () -> Unit = {},
-    onRedo: () -> Unit = {},
-    onValidate: (String) -> Unit = {},
+    private val onCancel: () -> Unit = {},
 ) {
     private val windowManager = context.getSystemService(WindowManager::class.java)
     private val density = context.resources.displayMetrics.density
-    private val size = px(56f)
 
-    /** Room around the disc in the backdrop window: glow and halo rings. */
+    /** The bubble window: the 48 dp touch target around the 44 dp disc. */
+    private val size = px(BubbleState.TOUCH_DP)
+
+    /** Room around the bubble window in the backdrop window: glow and voice wave. */
     private val glow = px(BubbleState.GLOW_MARGIN_DP)
     private val margin = px(8f)
     private val hideZoneWidth = px(240f)
@@ -54,35 +56,17 @@ class BubbleOverlay(
     /** Disc bottom 52 dp above the navigation bar, as before the neon pass. */
     private val hideZoneBottom = px(52f - HideZoneView.GLOW_DP)
 
+    /** Dropped with its center this close to an edge, the bubble tucks away. */
+    private val dockDistance = px(16f)
+    private val flingVelocity = 1_000f * density
+
     private val bubble = BubbleView(context)
     private val backdrop = BubbleBackdropView(context)
     private val hideZone = HideZoneView(context)
-    private val edgeTab = EdgeTabView(context)
-    private val edgeWidth = px(48f)
-    private val edgeParams = params(edgeWidth, touchable = true, height = size + px(32f))
-    private var edgeShown = false
     private val bubbleParams = params(size, touchable = true)
     private val backdropParams = params(size + 2 * glow, touchable = false)
     private val hideZoneParams = params(hideZoneWidth, touchable = false, height = hideZoneHeight)
-    private val panelGlow = px(PANEL_GLOW_DP)
-    private val panelSide = px(12f)
-    private val scrim = View(context).apply {
-        setBackgroundColor(context.getColor(R.color.panel_scrim))
-        visibility = View.GONE
-    }
-    private val scrimParams = params(WindowManager.LayoutParams.MATCH_PARENT, touchable = false).apply {
-        height = WindowManager.LayoutParams.MATCH_PARENT
-        // Android 12+ lets touches through an overlay at 80 % at most.
-        alpha = 0.8f
-    }
-    private val panel = PanelView(context, onCancel, onFinish, onRedo, onValidate)
-    private val panelParams = params(0, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT).apply {
-        flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-        softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
-    }
-    private var panelShown = false
-    private var listeningSinceMs = 0L
-    private val toast = CopiedToastView(context)
+    private val toast = BubbleToastView(context)
 
     // Touchable: Android 12+ draws a non-touchable overlay at 80 % at most, and the toast must be opaque.
     private val toastParams = params(WindowManager.LayoutParams.WRAP_CONTENT, touchable = true, height = WindowManager.LayoutParams.WRAP_CONTENT)
@@ -90,23 +74,52 @@ class BubbleOverlay(
 
     /** The last text went straight into the field (auto-paste, DMC-141): « Texte collé ». */
     var toastPasted = false
+
+    /** Cause of the last error, shown next to the bubble while it is in error. */
+    @StringRes
+    var errorMessage: Int? = null
+
     private val tracker = TapDragTracker(ViewConfiguration.get(context).scaledTouchSlop.toFloat())
+    private var velocity: VelocityTracker? = null
 
     private var geometry = geometry()
     private var shown = false
     private var hideZoneShown = false
     private var ignoreGesture = false
+    private var longPressed = false
     private var startX = 0
     private var startY = 0
     private var downRawX = 0f
     private var downRawY = 0f
     private var snapAnimator: ValueAnimator? = null
+    private var state = controller.state
+
+    /** Tucked at the saved side, half hidden. */
+    val docked: Boolean get() = bubble.dockedSide != null
+
+    private val longPress = Runnable {
+        if (!controller.longPressCancels) return@Runnable
+        longPressed = true
+        Log.i(TAG, "bubble long press: cancel")
+        onCancel()
+    }
 
     init {
-        bubble.setOnClickListener { onTap() }
+        // TalkBack calls performClick() directly: the half-bubble only comes back there too.
+        bubble.setOnClickListener { if (docked) undock(animate = true) else onTap() }
         bubble.setOnTouchListener(::onTouch)
         ViewCompat.addAccessibilityAction(bubble, context.getString(R.string.bubble_action_hide)) { _, _ ->
             controller.hideIfAllowed(onHide)
+        }
+        ViewCompat.addAccessibilityAction(bubble, context.getString(R.string.bubble_action_dock)) { _, _ ->
+            if (!controller.canDock || docked) return@addAccessibilityAction false
+            dock(store.position.side, animate = false)
+            true
+        }
+        ViewCompat.addAccessibilityAction(bubble, context.getString(R.string.bubble_action_cancel)) { _, _ ->
+            if (!controller.longPressCancels) return@addAccessibilityAction false
+            onCancel()
+            true
         }
     }
 
@@ -115,133 +128,66 @@ class BubbleOverlay(
         if (shown) return
         geometry = geometry()
         render(controller.state)
-        moveTo(geometry.place(store.position))
+        if (store.docked) placeDocked(store.position.side) else moveTo(geometry.place(store.position))
         // Added first, so the bubble stays above the cross while dragging.
         placeHideZone()
         hideZone.visibility = View.INVISIBLE
-        // The dimmed screen goes under the bubble, so it is added first; it stays gone until a panel shows.
         addAllOrNone(
-            listOf(scrim to scrimParams, hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
+            listOf(hideZone to hideZoneParams, backdrop to backdropParams, bubble to bubbleParams),
             add = { (view, params) -> windowManager.addView(view, params) },
             remove = { (view, _) -> windowManager.removeView(view) },
         )
         shown = true
-        logCenter("bubble shown")
-    }
-
-    /** Hidden in edge mode: the tab at the bubble's side and height. Throws if the system refuses it. */
-    fun showEdge(onShowBubble: () -> Unit) {
-        if (edgeShown) return
-        geometry = geometry()
-        val position = store.position
-        edgeTab.setOnClickListener { onShowBubble() }
-        placeEdge()
-        windowManager.addView(edgeTab, edgeParams)
-        edgeShown = true
-        Log.i(TAG, "bubble edge shown side=${position.side} at x=${edgeParams.x} y=${edgeParams.y + edgeParams.height / 2}")
-    }
-
-    private fun placeEdge() {
-        val position = store.position
-        edgeTab.side = position.side
-        edgeParams.x = if (position.side == Side.Left) geometry.insets.left else geometry.screenWidth - geometry.insets.right - edgeWidth
-        edgeParams.y = geometry.place(position).second - px(16f)
-    }
-
-    fun removeEdge() {
-        if (!edgeShown) return
-        windowManager.removeView(edgeTab)
-        edgeShown = false
+        moveTo(bubbleParams.x to bubbleParams.y)
+        BubbleEvents.setDocked(docked)
+        logCenter(if (docked) "bubble shown docked" else "bubble shown")
     }
 
     fun remove() {
-        removeEdge()
         snapAnimator?.cancel()
+        bubble.removeCallbacks(longPress)
         hideHideZone()
         if (!shown) return
-        removePanel()
         removeToast()
         windowManager.removeView(bubble)
         windowManager.removeView(backdrop)
         windowManager.removeView(hideZone)
-        windowManager.removeView(scrim)
         shown = false
+        BubbleEvents.removed()
     }
 
-    fun render(state: BubbleState) {
-        bubble.state = state
-        backdrop.state = state
-        backdrop.alpha = state.opacity
-        // « Texte prêt » shows the toast until the bubble goes back to rest.
-        if (state == BubbleState.Ready) showToast() else removeToast()
+    fun render(newState: BubbleState) {
+        val previous = state
+        state = newState
+        // A dictation started from the app (« Dicter ici ») brings a tucked bubble back first.
+        if (docked && newState != BubbleState.Idle) undock(animate = false)
+        bubble.state = newState
+        backdrop.state = newState
+        backdrop.alpha = newState.opacity
+        if (shown) play(bubble, hapticsFor(previous, newState))
+        when (newState) {
+            BubbleState.Ready -> showToast(if (toastPasted) R.string.toast_pasted else R.string.toast_copied, error = false)
+            BubbleState.Error -> errorMessage?.let { showToast(it, error = true) } ?: removeToast()
+            else -> removeToast()
+        }
     }
 
-    /** [level]: 0 to 1. [nowMs]: elapsedRealtime, for the panel timer. */
-    fun setVoiceLevel(level: Float, nowMs: Long = 0) {
+    /** [level]: 0 to 1. */
+    fun setVoiceLevel(level: Float) {
         backdrop.voiceLevel = level
-        if (panelShown && panel.panel is DictationPanel.Listening) {
-            panel.wave.push(level)
-            panel.setElapsed(nowMs - listeningSinceMs)
-        }
     }
 
-    /** Shows [newPanel] next to the bubble, or removes it ([DictationPanel.None]). */
-    fun showPanel(newPanel: DictationPanel, nowMs: Long) {
-        if (!shown) return
-        if (newPanel == DictationPanel.None) {
-            removePanel()
-            return
-        }
-        if (newPanel is DictationPanel.Listening) listeningSinceMs = newPanel.startedAtMs
-        panel.show(newPanel, nowMs - listeningSinceMs)
-        // Mockup 10 shows the suggestion alone; the bubble comes back with « Texte copié ».
-        val suggestion = newPanel is DictationPanel.Suggestion
-        listOf(bubble, backdrop).forEach { it.visibility = if (suggestion) View.GONE else View.VISIBLE }
-        // The keyboard needs a focusable window, only to correct the suggestion.
-        panelParams.flags = if (suggestion) {
-            panelParams.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
-        } else {
-            panelParams.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        }
-        placePanel()
-        if (panelShown) {
-            windowManager.updateViewLayout(panel, panelParams)
-        } else {
-            windowManager.addView(panel, panelParams)
-            panelShown = true
-            scrim.visibility = View.VISIBLE
-        }
-        Log.i(TAG, "panel ${newPanel::class.simpleName} at y=${panelParams.y + panelGlow}")
-        panel.post { if (panelShown) Log.i(TAG, "panel buttons ${panel.centers()}") }
-    }
-
-    /** Debug proof only. */
-    fun markSuggestionWord(offset: Int) = panel.suggestion.markWordAt(offset)
-
-    private fun placePanel() {
-        val width = geometry.screenWidth - geometry.insets.left - geometry.insets.right - 2 * panelSide
-        panel.measure(
-            View.MeasureSpec.makeMeasureSpec(width + 2 * panelGlow, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-        )
-        val cardHeight = panel.measuredHeight - 2 * panelGlow
-        panelParams.width = width + 2 * panelGlow
-        panelParams.x = geometry.insets.left + panelSide - panelGlow
-        panelParams.y = geometry.panelTop(bubbleParams.y, cardHeight, gap = px(4f)) - panelGlow
-    }
-
-    private fun removePanel() {
-        listOf(bubble, backdrop).forEach { it.visibility = View.VISIBLE }
-        scrim.visibility = View.GONE
-        if (!panelShown) return
-        windowManager.removeView(panel)
-        panelShown = false
+    /** While listening: [elapsedMs] for TalkBack, and the wave turns magenta near the limit (with one haptic tap). */
+    fun setListening(elapsedMs: Long, nearLimit: Boolean) {
+        bubble.listeningElapsed = formatElapsed(elapsedMs)
+        if (nearLimit && !backdrop.nearLimit && shown) play(bubble, listOf(Haptic.Warn))
+        backdrop.nearLimit = nearLimit
     }
 
     /** Next to the bubble, on the screen side, centered on it. */
-    private fun showToast() {
-        if (!shown || toastShown) return
-        toast.setText(if (toastPasted) R.string.toast_pasted else R.string.toast_copied)
+    private fun showToast(@StringRes message: Int, error: Boolean) {
+        if (!shown) return
+        toast.show(message, error)
         toast.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val glowPx = px(TOAST_GLOW_DP)
         val gap = px(8f)
@@ -252,10 +198,14 @@ class BubbleOverlay(
         }
         toastParams.y = bubbleParams.y + (size - toast.measuredHeight) / 2
         try {
-            windowManager.addView(toast, toastParams)
-            toastShown = true
+            if (toastShown) {
+                windowManager.updateViewLayout(toast, toastParams)
+            } else {
+                windowManager.addView(toast, toastParams)
+                toastShown = true
+            }
         } catch (e: RuntimeException) {
-            Log.e(TAG, "copied toast FAILED", e)
+            Log.e(TAG, "bubble toast FAILED", e)
         }
     }
 
@@ -265,30 +215,28 @@ class BubbleOverlay(
         toastShown = false
     }
 
-    /** Rotation or screen size change: same side, same vertical place. */
+    /** Rotation or screen size change: same side, same vertical place, tucked or not. */
     fun onConfigurationChanged() {
         bubble.post {
             geometry = geometry()
-            if (edgeShown) {
-                placeEdge()
-                windowManager.updateViewLayout(edgeTab, edgeParams)
-            }
             if (!shown || tracker.isDragging) return@post
             snapAnimator?.cancel()
-            moveTo(geometry.place(store.position))
+            if (docked) placeDocked(store.position.side) else moveTo(geometry.place(store.position))
             logCenter("bubble placed after configuration change")
         }
     }
 
     @SuppressLint("ClickableViewAccessibility") // performClick() is called on tap.
     private fun onTouch(view: View, event: MotionEvent): Boolean {
+        velocity?.addMovement(event)
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 // The window is square: a touch in its corners, off the disc, does nothing.
+                // Tucked, the whole window is the target: only half of the disc shows.
                 val r = view.width / 2f
                 val dx = event.x - r
                 val dy = event.y - r
-                ignoreGesture = dx * dx + dy * dy > r * r
+                ignoreGesture = !docked && dx * dx + dy * dy > r * r
                 if (ignoreGesture) return true
                 snapAnimator?.cancel()
                 // Bars and cutout can change while the bubble is shown: measure again.
@@ -298,13 +246,23 @@ class BubbleOverlay(
                 downRawY = event.rawY
                 startX = bubbleParams.x
                 startY = bubbleParams.y
+                longPressed = false
+                velocity?.recycle()
+                velocity = VelocityTracker.obtain().apply { addMovement(event) }
+                if (controller.longPressCancels) view.postDelayed(longPress, ViewConfiguration.getLongPressTimeout().toLong())
                 view.isPressed = true
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (ignoreGesture) return true
+                if (ignoreGesture || longPressed) return true
                 if (tracker.move(event.rawX, event.rawY)) {
                     view.isPressed = false
+                    view.removeCallbacks(longPress)
+                    // Pulled out of the edge: whole again, and dragged from where it shows.
+                    if (docked) {
+                        undock(animate = false)
+                        startX = bubbleParams.x
+                    }
                     if (controller.canHide) showHideZone()
                 }
                 if (tracker.isDragging) dragTo(event)
@@ -312,7 +270,12 @@ class BubbleOverlay(
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 view.isPressed = false
+                view.removeCallbacks(longPress)
                 if (ignoreGesture) return true
+                if (longPressed) {
+                    tracker.up()
+                    return true
+                }
                 // Slow devices can drop the last moves: the release point wins.
                 if (tracker.isDragging) dragTo(event)
                 val release = releaseAction(
@@ -322,6 +285,7 @@ class BubbleOverlay(
                 )
                 hideHideZone()
                 when (release) {
+                    // The click listener brings the half-bubble back instead of dictating.
                     Release.Click -> view.performClick()
 
                     Release.Hide -> {
@@ -329,17 +293,26 @@ class BubbleOverlay(
                         onHide()
                     }
 
-                    Release.Snap -> snap()
+                    Release.Snap -> {
+                        val fling = velocity?.run {
+                            computeCurrentVelocity(1000)
+                            flingSide(xVelocity, yVelocity, flingVelocity)
+                        }
+                        val side = geometry.dockSide(bubbleParams.x, dockDistance) ?: fling
+                        if (side != null && controller.canDock && event.actionMasked == MotionEvent.ACTION_UP) dock(side, animate = true) else snap()
+                    }
 
                     Release.None -> Unit
                 }
+                velocity?.recycle()
+                velocity = null
             }
         }
         return true
     }
 
     private fun dragTo(event: MotionEvent) {
-        val x = (startX + (event.rawX - downRawX)).toInt().coerceIn(0, geometry.screenWidth - size)
+        val x = geometry.clampDragX((startX + (event.rawX - downRawX)).toInt())
         val y = geometry.clampY((startY + (event.rawY - downRawY)).toInt())
         moveTo(x to y)
         updateHideZone()
@@ -348,9 +321,51 @@ class BubbleOverlay(
     private fun snap() {
         val position = geometry.snap(bubbleParams.x, bubbleParams.y)
         store.position = position
+        animateTo(geometry.place(position))
         val (toX, toY) = geometry.place(position)
+        Log.i(TAG, "bubble snapped side=${position.side} yFraction=${"%.3f".format(position.yFraction)} to x=${toX + size / 2} y=${toY + size / 2}")
+    }
+
+    /** Slides the bubble half behind the [side] edge, at its height, and keeps it there. */
+    private fun dock(side: Side, animate: Boolean) {
+        val y = geometry.clampY(bubbleParams.y)
+        store.position = geometry.snap(geometry.xFor(side), y).copy(side = side)
+        store.docked = true
+        removeToast()
+        val target = geometry.halfHiddenX(side) to y
+        if (animate) animateTo(target) { placeDocked(side) } else placeDocked(side)
+        bubble.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        Log.i(TAG, "bubble docked side=$side at y=${y + size / 2}")
+    }
+
+    /** The tucked look: the window against the edge, the disc drawn half past it, no glow. */
+    private fun placeDocked(side: Side) {
+        bubble.dockedSide = side
+        BubbleEvents.setDocked(true)
+        backdrop.visibility = View.GONE
+        moveTo(geometry.dockedX(side) to geometry.place(store.position).second)
+    }
+
+    /** Whole again at the saved side and height, 92 %. */
+    private fun undock(animate: Boolean) {
+        val side = bubble.dockedSide ?: return
+        store.docked = false
+        bubble.dockedSide = null
+        BubbleEvents.setDocked(false)
+        backdrop.visibility = View.VISIBLE
+        // Same pixels as the tucked look: the disc center stays on the edge, then slides in.
+        moveTo(geometry.halfHiddenX(side) to bubbleParams.y)
+        val target = geometry.place(store.position)
+        if (animate) animateTo(target) else moveTo(target)
+        bubble.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        Log.i(TAG, "bubble undocked side=$side")
+    }
+
+    private fun animateTo(target: Pair<Int, Int>, then: () -> Unit = {}) {
+        val (toX, toY) = target
         val fromX = bubbleParams.x
         val fromY = bubbleParams.y
+        snapAnimator?.cancel()
         snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = SNAP_MS
             interpolator = DecelerateInterpolator()
@@ -358,9 +373,10 @@ class BubbleOverlay(
                 val f = it.animatedValue as Float
                 moveTo((fromX + (toX - fromX) * f).toInt() to (fromY + (toY - fromY) * f).toInt())
             }
+            // Also when a new touch cancels it: the bubble never stays between two looks.
+            doOnEnd { then() }
             start()
         }
-        Log.i(TAG, "bubble snapped side=${position.side} yFraction=${"%.3f".format(position.yFraction)} to x=${toX + size / 2} y=${toY + size / 2}")
     }
 
     private fun moveTo(xy: Pair<Int, Int>) {
@@ -371,11 +387,8 @@ class BubbleOverlay(
         if (shown) {
             windowManager.updateViewLayout(backdrop, backdropParams)
             windowManager.updateViewLayout(bubble, bubbleParams)
-        }
-        if (panelShown) {
-            // The panel follows the bubble it comes from.
-            placePanel()
-            windowManager.updateViewLayout(panel, panelParams)
+            val centerX = xy.first + size / 2
+            BubbleEvents.place(if (centerX < geometry.screenWidth / 2) Side.Left else Side.Right, xy.second + size / 2)
         }
     }
 

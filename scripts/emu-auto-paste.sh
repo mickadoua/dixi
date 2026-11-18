@@ -110,19 +110,10 @@ tap_bubble() {
   done
   return 1
 }
-# uiautomator does not see the overlay windows: the app logs the panel buttons' centers.
-tap_panel() {
-  local xy; xy=$(log | grep "panel buttons" | tail -1 | sed -n "s/.*$1=\([0-9]*\) \([0-9]*\).*/\1 \2/p")
-  echo "$1 at: $xy"; [ -n "$xy" ] || return 1
-  wake; $ADB shell input tap $xy
-}
-# Bubble tap, Terminer, then « Valider » on the suggestion.
+# First tap starts, second tap stops: the text leaves right away, no panel (DMC-768).
 dictate() {
-  local b; b=$(count "panel buttons"); local n; n=$(count "panel Suggestion")
-  tap_bubble; wait_log "recording started" 20; wait_more "panel buttons" "$b" 20; sleep 2
-  tap_panel primary
-  wait_more "panel Suggestion" "$n" 30; sleep 2
-  b=$(count "panel buttons"); tap_panel primary
+  tap_bubble; wait_log "recording started" 20; sleep 2
+  tap_bubble
 }
 # Screen 10, auto-paste switch on through screen 8 (DataStore choice). The service is turned on
 # first, so the app does not open Android's settings (proved in part s): that app alone gets the

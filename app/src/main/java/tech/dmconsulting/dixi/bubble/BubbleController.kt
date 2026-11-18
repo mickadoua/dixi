@@ -47,7 +47,7 @@ class BubbleController(private val scheduler: Scheduler) {
 
     fun setVoiceLevel(level: Float) = onVoiceLevel(level.coerceIn(0f, 1f))
 
-    /** Tap = start or stop (mockups, screen 6). Nothing while the text is processed. */
+    /** Tap = start or stop (mockups DMC-764 § 2). Nothing while the text is processed. */
     fun tapAction(): TapAction = when (state) {
         BubbleState.Idle, BubbleState.Ready, BubbleState.Error -> TapAction.Start
         BubbleState.Listening -> TapAction.Stop
@@ -56,6 +56,12 @@ class BubbleController(private val scheduler: Scheduler) {
 
     /** The hide zone is offered only when no dictation is running. */
     val canHide: Boolean get() = tapAction() == TapAction.Start
+
+    /** Tucked at the edge only between dictations: a running one must stay in sight. */
+    val canDock: Boolean get() = canHide
+
+    /** A long press cancels a dictation while listening: nothing is sent. */
+    val longPressCancels: Boolean get() = state == BubbleState.Listening
 
     /**
      * Calls [hide] only when [canHide]. Hiding stops the service: during a

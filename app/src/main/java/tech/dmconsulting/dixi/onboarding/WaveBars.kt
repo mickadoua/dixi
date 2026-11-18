@@ -37,16 +37,16 @@ private fun WaveBars(heights: List<Float>, color: Color, modifier: Modifier = Mo
     }
 }
 
-/** The bubble at rest, 56 dp, for the preview of screen 4. */
+/** The bubble at rest, 44 dp, for the preview of screen 4. */
 @Composable
 fun BubblePreview(modifier: Modifier = Modifier) {
     Box(
         modifier
-            .size(56.dp)
+            .size(44.dp)
             .shadow(6.dp, CircleShape)
             .background(MaterialTheme.colorScheme.primary, CircleShape)
-            .padding(11.dp),
+            .padding(8.dp),
     ) {
-        WaveBars(RestBars, MaterialTheme.colorScheme.onPrimary, Modifier.size(34.dp))
+        WaveBars(RestBars, MaterialTheme.colorScheme.onPrimary, Modifier.size(28.dp))
     }
 }

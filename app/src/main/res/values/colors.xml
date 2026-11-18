@@ -13,12 +13,7 @@
     <color name="bubble_hide_zone">#050507</color>
     <color name="bubble_hide_zone_label">#F5F5F7</color>
 
-    <!-- Panel, toast: designs 09, 10 and 01 (second neon design file, DMC-213). -->
+    <!-- Message next to the bubble: design 01 (second neon design file, DMC-213). -->
     <color name="panel_text">#F5F5F7</color>
-    <color name="panel_muted">#A9A9B8</color>
-    <color name="panel_line">#6E6E7E</color>
-    <color name="panel_orange_text">#FF8F3D</color>
     <color name="toast_surface">#171720</color>
-    <!-- 55 % #050507 seen through a window at 80 %, the cap of an overlay that lets touches through. -->
-    <color name="panel_scrim">#B0050507</color>
 </resources>

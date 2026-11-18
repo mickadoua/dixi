@@ -51,7 +51,8 @@ val KeyStatus.label: Int
 
 /**
  * Screen 10, body of the « Clé API Mistral » section (DMC-227): paste, save, test, delete. Only the
- * [KeyStatus] is shown, never the key or its first characters.
+ * [KeyStatus] is shown, never the key or its first characters. Test answers and causes from
+ * Léa's texts (DMC-765); several keys come with DMC-766.
  */
 @Composable
 fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
@@ -60,6 +61,7 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
     // remember, not rememberSaveable: the pasted key must not go into the saved instance state.
     var input by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<Int?>(null) }
+    var check by remember { mutableStateOf<KeyCheck?>(null) }
     var testing by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -73,6 +75,7 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
             message = try {
                 keys.save(key)
                 input = ""
+                check = null
                 R.string.key_saved
             } catch (e: IOException) {
                 R.string.key_save_failed
@@ -86,16 +89,17 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
 
     fun test() {
         testing = true
+        check = null
         message = R.string.key_check_running
         scope.launch {
             val key = keys.key()
             val result = if (key == null) null else keyCheck.check(key)
-            when (result) {
-                KeyCheck.Valid -> keys.markAccepted()
-                KeyCheck.Rejected -> keys.markRejected()
-                else -> Unit
+            when {
+                result == KeyCheck.Valid -> keys.markAccepted()
+                result?.rejectsKey == true -> keys.markRejected()
             }
-            message = result?.message ?: R.string.key_status_none
+            check = result
+            message = if (result == null) R.string.key_status_none else null
             testing = false
         }
     }
@@ -114,27 +118,16 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
         Text(
-            stringResource(R.string.key_help),
+            stringResource(R.string.key_storage_note),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        OutlinedTextField(
-            value = input,
-            onValueChange = {
-                input = it
-                message = null
-            },
-            label = { Text(stringResource(R.string.key_field)) },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            // Password type: no suggestions, no learning by the keyboard.
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                autoCorrectEnabled = false,
-                imeAction = ImeAction.Done,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        MistralKeysLink()
+        MistralKeyField(input, onValueChange = {
+            input = it
+            message = null
+            check = null
+        })
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = ::save,
@@ -153,6 +146,7 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
         ) { Text(stringResource(R.string.key_delete)) }
+        check?.let { KeyCheckResult(it) }
         message?.let {
             Text(
                 stringResource(it),
@@ -172,6 +166,7 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
                     confirmDelete = false
                     scope.launch {
                         keys.delete()
+                        check = null
                         message = R.string.key_deleted
                     }
                 }) { Text(stringResource(R.string.key_delete_confirm)) }
