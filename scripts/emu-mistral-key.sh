@@ -1,172 +1,221 @@
 #!/usr/bin/env bash
-# Emulator proof for the « Clé API Mistral » section of screen 10, dark neon theme:
-# no key, key saved, key refused (a fake key: « Tester la clé » gets 401 from Mistral).
-# Also checks: key kept encrypted across a restart, never in logcat nor the UI tree,
-# key file excluded from backups.
-# Needs adb ($ANDROID_HOME) and a debug APK:
-#   bash scripts/emu-mistral-key.sh <out-dir> [apk]
-# One dark theme since the neon charter: MODES="light dark" is no longer needed.
-# Never use a real key here: FAKE_KEY below is not one.
+# Emulator proof for the « Mistral API key » section of screen 10, several named keys (DMC-766):
+# no key; a key refused (401) is not saved; « Perso » added and active; a 2nd key « Pro » added
+# and active; tap on « Perso » makes it active again; « Test the active key »; both kept across
+# a restart; « Pro » deleted, then the last key (back to « No key »).
+# Also checks: one encrypted file per key, never a key in the files, the log or the UI tree;
+# key files excluded from backups.
+# Needs adb ($ANDROID_HOME) and a debug APK, one emulator session:
+#   APP_LANG=fr bash scripts/emu-mistral-key.sh <out-dir>     (APP_LANG: fr by default, or en)
+# Mistral is the debug build's fake (files/fake-mistral): it accepts only « dixi-fake-… » keys.
+# No real key here.
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
 PKG=tech.dmconsulting.dixi
 NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
-OUT=${1:-proof-mistral-key}
-APK=${2:-app/build/outputs/apk/debug/app-debug.apk}
-FAKE_KEY=fausse-cle-de-preuve-0000000000
+APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
+WRONG_KEY=wrong-key-0000000000
+KEY1=dixi-fake-perso-00000000
+KEY2=dixi-fake-pro-000000000
+. "$(dirname "$0")/emu-labels.sh"
+OUT=${1:-proof-mistral-key}/$APP_LANG
 mkdir -p "$OUT"
-shot() { dump; $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(stat -c %s "$OUT/$1.png") bytes)"; }
-open() { $ADB shell am start -S -W -n $PKG/$NS.MainActivity "$@" >/dev/null; waitfor; }
-# Screen 10 scrolls: swipe up until the key section's « Tester la clé » button is on screen.
-to_key() {
-    for i in 1 2 3 4 5; do
-        has 'text="Tester la clé"' && return 0
-        $ADB shell input swipe 540 1600 540 700 400; sleep 2
+N=0
+FAILS=0
+check() { if eval "$2"; then echo "OK   $1"; else echo "FAIL $1"; FAILS=$((FAILS + 1)); fi; }
+# Not /sdcard: its FUSE mount drops out on the loaded emulator.
+UI=/data/local/tmp/ui.xml
+# A loaded emulator often shows « … isn't responding »: answer « Wait » before any tap.
+dismiss_anr() {
+    local k b
+    for k in 1 2 3; do
+        $ADB shell dumpsys window | grep -q "Not Responding" || return 0
+        $ADB shell uiautomator dump $UI >/dev/null 2>&1
+        b=$($ADB shell cat $UI | grep -o 'text="Wait"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]/\1 \2 \3 \4/p' | head -1)
+        if [ -n "$b" ]; then read -r x1 y1 x2 y2 <<< "$b"; $ADB shell input tap $(((x1 + x2) / 2)) $(((y1 + y2) / 2)); else $ADB shell input keyevent KEYCODE_BACK; fi
+        echo "  answered « Wait » to an ANR dialog"; sleep 3
     done
 }
-night() { $ADB shell cmd uimode night "$1" >/dev/null; sleep 3; }
-wake() { $ADB shell input keyevent KEYCODE_WAKEUP; }
-waitfor() {
-    for i in $(seq 1 20); do
-        $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG" && break
-        sleep 1
-    done
-    sleep 4
-}
-# Fresh dump each time: a failed dump leaves the previous file on the device (stale).
-# A loaded host often shows « System UI isn't responding » over the app: answer « Wait ».
+wake() { $ADB shell input keyevent KEYCODE_WAKEUP; dismiss_anr; }
+shot() { dismiss_anr; N=$((N + 1)); $ADB exec-out screencap -p > "$OUT/$(printf %02d $N)-$1.png"; echo "shot $(printf %02d $N)-$1"; }
 dump() {
-    for attempt in 1 2 3; do
-        $ADB shell rm -f /sdcard/ui.xml
-        for i in 1 2 3 4 5; do $ADB shell uiautomator dump /sdcard/ui.xml 2>/dev/null | grep -q dumped && break; sleep 3; done
-        $ADB shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null
-        grep -q "isn't responding" "$OUT/ui.xml" || return 0
-        local wait_xy
-        wait_xy=$(python3 - "$OUT/ui.xml" <<'PY'
-import re, sys
-for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
-    if 'text="Wait"' in node:
-        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups())
-        print((a + c) // 2, (b + d) // 2); break
-PY
-)
-        echo "ANR dialog: tap Wait at ${wait_xy:-?}"
-        $ADB shell input tap ${wait_xy:-324 1368}
-        sleep 3
+    for i in 1 2 3 4; do
+        $ADB shell rm -f $UI
+        case "$($ADB shell uiautomator dump $UI 2>&1 | tail -1)" in *dumped*) $ADB shell cat $UI > "$OUT/ui.xml"; return 0 ;; esac
+        sleep 2
     done
+    : > "$OUT/ui.xml"
 }
-has() { dump; grep -q "$1" "$OUT/ui.xml"; }
-# Taps the first node whose text or content-desc starts with $1 (is exactly $1 with $2 = exact).
-tap() {
-    wake
-    dump
-    local xy
-    xy=$(python3 - "$OUT/ui.xml" "$1" "${2:-}" <<'PY'
+# Center of the first node whose text or content-desc is exactly $1; EDITABLE:<n> = the n-th text field.
+find_node() {
+    python3 - "$OUT/ui.xml" "$1" <<'PY'
 import re, sys
-want = sys.argv[2] + ('"' if sys.argv[3] == 'exact' else '')
-for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
-    if f'text="{want}' in node or f'content-desc="{want}' in node:
-        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups())
-        print((a + c) // 2, (b + d) // 2); break
-PY
-)
-    echo "tap '$1' at ${xy:-?}"
-    [ -n "$xy" ] && $ADB shell input tap $xy
-    sleep 2
-}
-hide_keyboard() {
-    $ADB shell dumpsys input_method | grep -q "mInputShown=true" && $ADB shell input keyevent KEYCODE_BACK
-    sleep 2
-}
-# Length of the text in the (password) field, read from the UI tree.
-typed_length() {
-    dump
-    python3 - "$OUT/ui.xml" <<'PY'
-import re, sys
-for node in re.findall(r'<node [^>]*>', open(sys.argv[1]).read()):
-    if 'EditText' in node:
-        print(len(re.search(r' text="([^"]*)"', node).group(1))); break
+want = sys.argv[2]
+nodes = re.findall(r'<node [^>]*>', open(sys.argv[1], errors='replace').read())
+if want.startswith('EDITABLE:'):
+    # Only with both fields of the add form on screen: the n-th is then always the same field.
+    fields = [n for n in nodes if 'class="android.widget.EditText"' in n]
+    nodes = fields[int(want[9:]) - 1:] if len(fields) >= 2 else []
 else:
-    print(0)
+    nodes = [n for n in nodes if f'text="{want}"' in n or f'content-desc="{want}"' in n]
+if nodes:
+    a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', nodes[0]).groups())
+    print((a + c) // 2, (b + d) // 2)
 PY
 }
-# A loaded emulator drops characters of a long `input text`: type small chunks, check, retry.
-save_fake_key() {
-    tap "Coller la clé"
-    for attempt in 1 2 3; do
-        for i in $(seq 0 4 $((${#FAKE_KEY} - 1))); do
-            $ADB shell input text "${FAKE_KEY:$i:4}"
-            sleep 0.5
-        done
-        sleep 1
-        local n
-        n=$(typed_length)
-        echo "typed $n of ${#FAKE_KEY} characters (attempt $attempt)"
-        # 0: the tree hides the password text, nothing to check against.
-        [ "$n" = "${#FAKE_KEY}" ] || [ "$n" = 0 ] && break
-        $ADB shell input keyevent KEYCODE_MOVE_END
-        $ADB shell input keyevent $(for k in $(seq 1 40); do printf 'KEYCODE_DEL '; done)
-        sleep 1
-    done
-    echo "fake key readable in the UI tree while typed: $(grep -c "$FAKE_KEY" "$OUT/ui.xml")"
-    hide_keyboard
-    tap "Enregistrer"
-    sleep 2
+on_screen() { dump; [ -n "$(find_node "$1")" ]; }
+# Screen 10 scrolls: up, then down, until $1 is on screen.
+reveal() {
+    local i
+    on_screen "$1" && return 0
+    for i in 1 2 3 4 5; do $ADB shell input swipe 540 1700 540 1000 400; sleep 1; on_screen "$1" && return 0; done
+    for i in 1 2 3 4 5 6 7 8; do $ADB shell input swipe 540 900 540 1600 400; sleep 1; on_screen "$1" && return 0; done
+    echo "  not found on screen 10: $1"; return 1
 }
-test_key() {
-    tap "Tester la clé"
-    for i in 1 2 3 4 5 6; do
-        sleep 3
-        has 'text="\(Clé valide\|Test : Mistral refuse\|Pas de réseau\|Service Mistral\)' && break
-    done
-    grep -o 'text="\(Clé valide[^"]*\|Test : Mistral refuse[^"]*\|Pas de réseau[^"]*\|Service Mistral[^"]*\)"' "$OUT/ui.xml" | sort -u | sed 's/^/test result: /'
+tap() {
+    reveal "$1" || return 1
+    local xy; xy=$(find_node "$1")
+    echo "tap '$1' at $xy"
+    wake; $ADB shell input tap $xy; sleep 2
 }
-status() { dump; grep -o 'text="\(Aucune clé[^"]*\|Clé enregistrée\|Clé refusée par Mistral. Vérifiez-la ou collez[^"]*\)"' "$OUT/ui.xml" | head -1 | sed "s/^/status $1: /"; }
+open() { $ADB shell am start -S -W -n $PKG/$NS.MainActivity "$@" >/dev/null; sleep 5; }
+keyboard_down() { dismiss_anr; $ADB shell dumpsys input_method | grep -q 'mInputShown=true' && $ADB shell input keyevent KEYCODE_BACK; sleep 2; }
+# Text length of the n-th field (the key field is a password: one dot per character).
+field_length() { dump; python3 - "$OUT/ui.xml" "$1" <<'PY'
+import re, sys
+fields = [n for n in re.findall(r'<node [^>]*>', open(sys.argv[1], errors='replace').read()) if 'class="android.widget.EditText"' in n]
+print(len(re.search(r' text="([^"]*)"', fields[int(sys.argv[2]) - 1]).group(1)) if len(fields) >= int(sys.argv[2]) else '')
+PY
+}
+# Types $2 into the n-th field ($1), emptied first. Short chunks: a loaded emulator drops characters.
+type_in() {
+    local tries len k
+    for tries in 1 2 3; do
+        reveal "EDITABLE:$1" || return 1
+        wake; $ADB shell input tap $(find_node "EDITABLE:$1"); sleep 1
+        $ADB shell input keyevent KEYCODE_MOVE_END $(printf '67 %.0s' $(seq 1 40))
+        k=$2
+        while [ -n "$k" ]; do $ADB shell input text "${k:0:4}"; k=${k:4}; sleep 0.5; done
+        sleep 1
+        len=$(field_length "$1")
+        [ "$len" = "${#2}" ] && return 0
+        echo "  field $1: ${len:-?} of ${#2} characters, typing again"
+    done
+}
+# Name in the 1st field, key in the 2nd, then « Done » on the keyboard runs « Test key ».
+add_key() {
+    mark "add-$1"
+    type_in 1 "$1"
+    type_in 2 "$2"
+    wake; $ADB shell input keyevent KEYCODE_ENTER
+    waitlog "key test"
+    keyboard_down
+}
+MARK=start
+mark() { MARK="$1-$RANDOM"; $ADB shell log -t DixiProof "MARK $MARK"; }
+applog() { $ADB logcat -d -s DixiProof:I | sed -n "/MARK $MARK/,\$p"; }
+waitlog() { for i in $(seq 1 20); do applog | grep -q "$1" && return 0; sleep 2; done; echo "  no log line: $1"; return 1; }
+key_files() { $ADB shell run-as $PKG ls no_backup/mistral_keys 2>/dev/null | grep -c '\.bin$'; }
+# The row of key $1 says $2 under its name (state label).
+row_says() { dump; python3 - "$OUT/ui.xml" "$1" "$2" <<'PY'
+import re, sys
+texts = [t for t in re.findall(r' text="([^"]*)"', open(sys.argv[1], errors='replace').read()) if t]
+sys.exit(0 if any(t == sys.argv[2] and i + 1 < len(texts) and texts[i + 1] == sys.argv[3] for i, t in enumerate(texts)) else 1)
+PY
+}
+no_key_in_ui() { dump; ! grep -q -e "$KEY1" -e "$KEY2" -e "$WRONG_KEY" "$OUT/ui.xml"; }
+ACTIVE=$(label key_state_active)
+IDLE=$(label key_state_idle)
 
-$ADB shell getprop ro.build.version.sdk
+$ADB shell getprop ro.build.version.sdk | sed 's/^/sdk /'
 $ADB install -r -g "$APK" || exit 1
 $ADB shell pm clear $PKG >/dev/null
+set_app_lang
+# The fake Mistral, before the first launch (read when the process starts).
+$ADB shell "run-as $PKG sh -c 'mkdir -p files; echo ok > files/fake-mistral'"
 $ADB shell svc power stayon true
 $ADB shell settings put system screen_off_timeout 1800000
 $ADB shell settings put global hide_error_dialogs 1
 $ADB shell locksettings set-disabled true >/dev/null 2>&1
 wake; $ADB shell wm dismiss-keyguard
-sleep 15
 $ADB shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
-wake; $ADB logcat -c
+$ADB logcat -c
+mark start
 
 # Throwaway pass: the first screenshots after a cold boot often come out black.
-night no
 open --es screen Settings
-shot warmup
+$ADB exec-out screencap -p > "$OUT/warmup.png"
+check "fake Mistral running" "waitlog 'fake mistral on http://127.0.0.1'"
 
-for mode in ${MODES:-dark}; do
-    [ $mode = dark ] && night yes || night no
-    $ADB shell run-as $PKG rm -rf no_backup
-    open --es screen Settings; to_key
-    status "$mode no key"; shot "$mode-1-aucune-cle"
-    save_fake_key
-    status "$mode saved"; shot "$mode-2-cle-enregistree"
-    echo "key file: $($ADB shell run-as $PKG ls -l no_backup 2>&1 | tr '\n' ' ')"
-    echo "fake key readable in the key file: $($ADB shell run-as $PKG sh -c "cat no_backup/mistral_keys/*" | grep -c "$FAKE_KEY")"
-    test_key
-    status "$mode refused"; shot "$mode-3-cle-refusee"
-    # Restart: the status comes back from the files (Keystore decrypts on the next dictation).
-    open --es screen Settings; to_key
-    status "$mode after restart"
-done
+echo "--- 1. No key: the section says so, the add form is open"
+check "« No key » shown" "reveal \"$(label key_status_none)\""
+check "add form open" "reveal \"$(label key_test)\""
+shot 1-no-key
 
-# Delete through the dialog: back to « Aucune clé ».
-tap "Supprimer la clé"
-tap "Supprimer" exact
-sleep 2
-status "after delete"; shot dark-4-supprimee
-echo "key files after delete: $($ADB shell run-as $PKG ls no_backup 2>&1 | tr '\n' ' ')"
-night no
+echo "--- 2. Key refused by Mistral: not saved"
+add_key Perso "$WRONG_KEY"
+check "wrong key refused (401)" "applog | grep -q 'key test Invalid'"
+check "« Key refused » shown" "reveal \"$(label key_check_refused)\""
+check "refused key not saved" "[ \"\$(key_files)\" = 0 ]"
+shot 2-key-refused
 
-echo "fake key in logcat: $($ADB logcat -d | grep -c "$FAKE_KEY")"
+echo "--- 3. « Perso » accepted: saved and active"
+add_key Perso "$KEY1"
+check "key accepted (fake)" "applog | grep -q 'key test Valid'"
+check "« Key added and active » shown" "reveal \"$(label key_added)\""
+check "1 key file" "[ \"\$(key_files)\" = 1 ]"
+check "« Perso » active" "reveal Perso && row_says Perso \"$ACTIVE\""
+shot 3-perso-active
+
+echo "--- 4. 2nd key « Pro »: saved and active, « Perso » kept"
+tap "$(label key_add)  +"
+add_key Pro "$KEY2"
+check "2nd key accepted (fake)" "applog | grep -q 'key test Valid'"
+check "2 key files" "[ \"\$(key_files)\" = 2 ]"
+check "« Pro » active" "reveal Pro && row_says Pro \"$ACTIVE\""
+check "« Perso » not in use" "row_says Perso \"$IDLE\""
+shot 4-pro-active
+
+echo "--- 5. Tap on « Perso »: active again"
+tap Perso
+check "« Dixi now uses Perso » shown" "reveal \"$(label key_activated Perso)\""
+check "« Perso » active" "row_says Perso \"$ACTIVE\""
+check "« Pro » not in use" "row_says Pro \"$IDLE\""
+shot 5-perso-active-again
+
+echo "--- 6. « Test the active key »"
+tap "$(label key_test_active)"
+check "« Key valid » shown" "for i in 1 2 3 4 5; do on_screen \"$(label key_check_valid)\" && break; sleep 2; false; done"
+shot 6-active-key-valid
+check "no key in the UI tree" "no_key_in_ui"
+
+echo "--- 7. Restart: both keys kept, « Perso » still active"
+open --es screen Settings
+check "« Perso » active after a restart" "reveal Perso && row_says Perso \"$ACTIVE\""
+check "« Pro » kept after a restart" "row_says Pro \"$IDLE\""
+shot 7-after-restart
+echo "key files: $($ADB shell run-as $PKG ls -l no_backup/mistral_keys 2>&1 | tr '\n' ' ')"
+check "no key in the key files nor keys.json" "! $ADB shell run-as $PKG sh -c 'cat no_backup/mistral_keys/*' | grep -q -a -e '$KEY1' -e '$KEY2'"
+
+echo "--- 8. Delete « Pro », then the last key"
+tap "$(label key_delete_one Pro)"
+check "dialog « Delete Pro? »" "on_screen \"$(label key_delete_title Pro)\""
+shot 8-delete-dialog
+tap "$(label key_delete_confirm)"
+check "« Key Pro deleted » shown" "reveal \"$(label key_deleted Pro)\""
+check "1 key file left" "[ \"\$(key_files)\" = 1 ]"
+tap "$(label key_delete_one Perso)"
+check "last key: the dialog says Dixi cannot dictate" "on_screen \"$(label key_delete_last_body)\""
+tap "$(label key_delete_confirm)"
+check "back to « No key »" "reveal \"$(label key_status_none)\""
+check "no key file left" "[ \"\$(key_files)\" = 0 ]"
+shot 9-no-key-again
+
 $ADB logcat -d > "$OUT/logcat.txt"
+check "no key in the log" "! grep -q -e '$KEY1' -e '$KEY2' -e '$WRONG_KEY' '$OUT/logcat.txt'"
+check "no crash" "! $ADB logcat -b crash -d | grep -q $PKG"
 echo "== backup"
 $ADB shell dumpsys package $PKG | grep -E "flags=|privateFlags=" | head -2
-$ADB shell bmgr backupnow $PKG 2>&1 | head -5
-echo "proof done"
+check "app data not backed up (no ALLOW_BACKUP flag)" "! $ADB shell dumpsys package $PKG | grep 'flags=' | head -1 | grep -q ALLOW_BACKUP"
+echo "checks failed: $FAILS"
+[ "$FAILS" = 0 ]
