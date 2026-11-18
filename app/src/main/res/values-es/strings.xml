@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi necesita el micrófono</string>
     <string name="mic_body">Para convertir tu voz en texto. El audio se envía para transcribirlo y después se elimina: nunca se conserva.</string>
+    <string name="mic_notifications_note">Después, Android pide las notificaciones: muestran la grabación en curso y «Texto copiado».</string>
     <string name="mic_allow">Permitir el micrófono</string>
     <string name="mic_later">Más tarde</string>
     <string name="mic_open_settings">Abrir ajustes</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">El servicio tarda demasiado en responder. Inténtalo de nuevo.</string>
     <string name="error_audio_too_long">Dictado demasiado largo. Divídelo en otros más cortos.</string>
     <string name="error_invalid_key">Clave rechazada, compruébala en Ajustes.</string>
+    <string name="error_no_key">No hay clave de Mistral. Añade una en Ajustes.</string>
     <string name="error_rate_limited">Demasiados dictados a la vez. Inténtalo de nuevo en un minuto.</string>
     <string name="error_service_unavailable">Servicio no disponible. Inténtalo de nuevo en unos minutos.</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Clave de API de Mistral</string>
-    <string name="key_status_none">Sin clave · modo demo, no se envía nada</string>
-    <string name="key_status_saved">Clave guardada</string>
-    <string name="key_status_rejected">Clave rechazada por Mistral. Compruébala o pega otra.</string>
+    <string name="key_status_none">Sin clave: añade una para dictar.</string>
+    <string name="key_default_name">Clave %1$d</string>
+    <string name="key_state_active">Activa · se usa para los dictados</string>
+    <string name="key_state_idle">Sin usar · toca para usarla</string>
+    <string name="key_state_refused">Rechazada por Mistral</string>
+    <string name="key_activated">Dixi usa ahora «%1$s».</string>
+    <string name="key_test_active">Probar la clave activa</string>
+    <string name="key_add">Añadir una clave</string>
+    <string name="key_name_field">Nombre (opcional)</string>
+    <string name="key_added">Clave añadida y activa.</string>
+    <string name="key_delete_one">Eliminar %1$s</string>
     <string name="key_field">Pega tu clave aquí</string>
-    <string name="key_save">Guardar</string>
     <string name="key_test">Probar clave</string>
-    <string name="key_delete">Eliminar la clave</string>
-    <string name="key_saved">Clave guardada. Toca «Probar clave» para comprobarla.</string>
     <string name="key_format_invalid">Este texto no parece una clave: pégala sin espacios ni saltos de línea.</string>
     <string name="key_save_failed">No se ha podido guardar la clave. Inténtalo de nuevo.</string>
-    <string name="key_deleted">Clave eliminada. Los dictados usan ahora el modo demo.</string>
+    <string name="key_change_failed">No se ha podido guardar el cambio. Inténtalo de nuevo.</string>
+    <string name="key_deleted">Clave «%1$s» eliminada.</string>
     <string name="key_check_running">Probando…</string>
     <string name="key_check_valid">Clave válida</string>
-    <string name="key_delete_title">¿Eliminar la clave?</string>
-    <string name="key_delete_body">Los dictados usarán el modo demo hasta que pegues una clave.</string>
+    <string name="key_delete_title">¿Eliminar «%1$s»?</string>
+    <string name="key_delete_body">Esta clave se borra de este teléfono. Tu cuenta de Mistral no cambia.</string>
+    <string name="key_delete_last_body">Es tu única clave: Dixi no podrá dictar hasta que añadas otra.</string>
     <string name="key_delete_confirm">Eliminar</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">Modo demo: texto de ejemplo. Toca para añadir tu clave de Mistral en Ajustes.</string>
     <string name="notif_key_refused_title">Clave rechazada</string>
     <string name="notif_key_refused_body">Compruébala en Ajustes.</string>
+    <string name="notif_no_key_title">No hay clave de Mistral</string>
+    <string name="notif_no_key_body">Añade una en Ajustes.</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">Modo demo</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">Guardar la burbuja en el borde</string>
     <string name="bubble_action_cancel">Cancelar el dictado</string>
     <string name="bubble_error_key_refused">Clave rechazada</string>
+    <string name="bubble_error_no_key">Sin clave</string>
     <string name="bubble_error_no_network">Sin conexión</string>
     <string name="bubble_error_nothing_heard">Nada oído</string>
     <string name="home_bubble_permission">Superposición no permitida</string>

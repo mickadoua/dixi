@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi को माइक्रोफ़ोन चाहिए</string>
     <string name="mic_body">आपकी आवाज़ को टेक्स्ट में बदलने के लिए। ऑडियो ट्रांसक्रिप्शन के लिए भेजा जाता है, फिर हटा दिया जाता है: कभी सहेजा नहीं जाता।</string>
+    <string name="mic_notifications_note">इसके बाद Android सूचनाओं की अनुमति माँगता है: वे चल रही रिकॉर्डिंग और “टेक्स्ट कॉपी हो गया” दिखाती हैं।</string>
     <string name="mic_allow">माइक्रोफ़ोन की अनुमति दें</string>
     <string name="mic_later">बाद में</string>
     <string name="mic_open_settings">सेटिंग खोलें</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">सेवा को जवाब देने में बहुत समय लग रहा है। फिर से कोशिश करें।</string>
     <string name="error_audio_too_long">डिक्टेशन बहुत लंबा है। उसे छोटे हिस्सों में बाँटें।</string>
     <string name="error_invalid_key">कुंजी अस्वीकृत, सेटिंग में जाँचें।</string>
+    <string name="error_no_key">कोई Mistral कुंजी नहीं। सेटिंग में एक जोड़ें।</string>
     <string name="error_rate_limited">एक साथ बहुत ज़्यादा डिक्टेशन। एक मिनट बाद फिर से कोशिश करें।</string>
     <string name="error_service_unavailable">सेवा उपलब्ध नहीं है। कुछ मिनट बाद फिर से कोशिश करें।</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Mistral API कुंजी</string>
-    <string name="key_status_none">कोई कुंजी नहीं · डेमो मोड, कुछ नहीं भेजा जाता</string>
-    <string name="key_status_saved">कुंजी सहेजी गई</string>
-    <string name="key_status_rejected">Mistral ने कुंजी अस्वीकार की। उसे जाँचें या दूसरी कुंजी पेस्ट करें।</string>
+    <string name="key_status_none">कोई कुंजी नहीं: डिक्टेशन के लिए एक जोड़ें।</string>
+    <string name="key_default_name">कुंजी %1$d</string>
+    <string name="key_state_active">सक्रिय · डिक्टेशन के लिए उपयोग में</string>
+    <string name="key_state_idle">उपयोग में नहीं · इस्तेमाल करने के लिए टैप करें</string>
+    <string name="key_state_refused">Mistral ने अस्वीकार किया</string>
+    <string name="key_activated">Dixi अब “%1$s” का उपयोग करता है।</string>
+    <string name="key_test_active">सक्रिय कुंजी जाँचें</string>
+    <string name="key_add">कुंजी जोड़ें</string>
+    <string name="key_name_field">नाम (वैकल्पिक)</string>
+    <string name="key_added">कुंजी जोड़ी गई और सक्रिय है।</string>
+    <string name="key_delete_one">%1$s हटाएँ</string>
     <string name="key_field">अपनी कुंजी यहाँ पेस्ट करें</string>
-    <string name="key_save">सहेजें</string>
     <string name="key_test">कुंजी जाँचें</string>
-    <string name="key_delete">कुंजी हटाएँ</string>
-    <string name="key_saved">कुंजी सहेजी गई। जाँचने के लिए “कुंजी जाँचें” पर टैप करें।</string>
     <string name="key_format_invalid">यह टेक्स्ट कुंजी जैसा नहीं लगता: उसे बिना स्पेस या नई पंक्तियों के पेस्ट करें।</string>
     <string name="key_save_failed">कुंजी सहेजी नहीं जा सकी। फिर से कोशिश करें।</string>
-    <string name="key_deleted">कुंजी हटा दी गई। अब डिक्टेशन डेमो मोड में चलेंगे।</string>
+    <string name="key_change_failed">बदलाव सहेजा नहीं जा सका। फिर से कोशिश करें।</string>
+    <string name="key_deleted">कुंजी “%1$s” हटा दी गई।</string>
     <string name="key_check_running">जाँच हो रही है…</string>
     <string name="key_check_valid">कुंजी मान्य है</string>
-    <string name="key_delete_title">कुंजी हटाएँ?</string>
-    <string name="key_delete_body">जब तक आप कुंजी पेस्ट नहीं करते, डिक्टेशन डेमो मोड में चलेंगे।</string>
+    <string name="key_delete_title">“%1$s” हटाएँ?</string>
+    <string name="key_delete_body">यह कुंजी इस फ़ोन से हटा दी जाती है। आपका Mistral खाता नहीं बदलता।</string>
+    <string name="key_delete_last_body">यह आपकी इकलौती कुंजी है: जब तक आप दूसरी नहीं जोड़ते, Dixi डिक्टेशन नहीं कर सकता।</string>
     <string name="key_delete_confirm">हटाएँ</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">डेमो मोड: नमूना टेक्स्ट। सेटिंग में अपनी Mistral कुंजी जोड़ने के लिए टैप करें।</string>
     <string name="notif_key_refused_title">कुंजी अस्वीकृत</string>
     <string name="notif_key_refused_body">सेटिंग में जाँचें।</string>
+    <string name="notif_no_key_title">कोई Mistral कुंजी नहीं</string>
+    <string name="notif_no_key_body">सेटिंग में एक जोड़ें।</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">डेमो मोड</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">बबल को किनारे पर टिकाएँ</string>
     <string name="bubble_action_cancel">डिक्टेशन रद्द करें</string>
     <string name="bubble_error_key_refused">कुंजी अस्वीकृत</string>
+    <string name="bubble_error_no_key">कोई कुंजी नहीं</string>
     <string name="bubble_error_no_network">नेटवर्क नहीं है</string>
     <string name="bubble_error_nothing_heard">कुछ सुनाई नहीं दिया</string>
     <string name="home_bubble_permission">दिखाने की अनुमति नहीं</string>
