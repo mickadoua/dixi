@@ -168,11 +168,13 @@ fun MistralKeySection(keys: MistralKeyStore, keyCheck: MistralKeyCheck) {
                     modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
                 ) { Text(stringResource(if (adding.testing) R.string.key_check_running else R.string.key_test)) }
                 if (entries.isNotEmpty()) {
+                    // Not during the test: a key Mistral accepts is saved and made active even if the form is closed.
                     TextButton(
                         onClick = {
                             addOpen = false
                             adding.edit("")
                         },
+                        enabled = !adding.testing,
                         modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
