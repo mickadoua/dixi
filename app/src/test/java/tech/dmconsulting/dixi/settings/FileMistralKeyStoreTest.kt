@@ -140,6 +140,17 @@ class FileMistralKeyStoreTest {
     }
 
     @Test
+    fun anUndecryptableKeyOnAFullDiskIsForgottenWithoutThrowing() = runTest {
+        store().add("Perso", KEY)
+        val store = store(FailingCipher())
+        // keys.json cannot be rewritten: its temporary file is a directory.
+        File(dir, "keys.json.tmp").mkdirs()
+
+        assertNull(store.key())
+        assertEquals(KeyStatus.None, store.status.value)
+    }
+
+    @Test
     fun filesWithoutAnEntryAreDeletedAndEntriesWithoutAFileDropped() = runTest {
         val store = store()
         store.add("Perso", KEY)

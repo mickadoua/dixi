@@ -172,6 +172,7 @@
     <string name="key_test">Test key</string>
     <string name="key_format_invalid">This text does not look like a key: paste it without spaces or line breaks.</string>
     <string name="key_save_failed">The key could not be saved. Try again.</string>
+    <string name="key_change_failed">The change could not be saved. Try again.</string>
     <string name="key_deleted">Key “%1$s” deleted.</string>
     <string name="key_check_running">Testing…</string>
     <string name="key_check_valid">Key valid</string>

@@ -3,6 +3,7 @@ package tech.dmconsulting.dixi.transcription
 import tech.dmconsulting.dixi.settings.DictationLanguage
 import tech.dmconsulting.dixi.settings.MistralKeyStore
 import java.io.File
+import java.io.IOException
 
 /**
  * Picks the service at each call (DMC-227): the real one with the user's active key.
@@ -34,6 +35,12 @@ class KeyedTextCleaner(
 
 private val NO_KEY = VoxtralResult.Failure(VoxtralError.NoKey)
 
+/** A disk error only loses the « Clé refusée » mark: the dictation still gets its result. */
 private suspend fun MistralKeyStore.noteRefusal(result: VoxtralResult<*>) {
-    if (result == VoxtralResult.Failure(VoxtralError.InvalidKey)) markRejected()
+    if (result != VoxtralResult.Failure(VoxtralError.InvalidKey)) return
+    try {
+        markRejected()
+    } catch (e: IOException) {
+        // Marked again at the next refusal.
+    }
 }

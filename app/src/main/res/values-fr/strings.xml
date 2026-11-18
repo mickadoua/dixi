@@ -172,6 +172,7 @@
     <string name="key_test">Tester la clé</string>
     <string name="key_format_invalid">Ce texte ne ressemble pas à une clé : collez-la sans espace ni retour à la ligne.</string>
     <string name="key_save_failed">La clé n\'a pas pu être enregistrée. Réessayez.</string>
+    <string name="key_change_failed">Le changement n\'a pas pu être enregistré. Réessayez.</string>
     <string name="key_deleted">Clé « %1$s » supprimée.</string>
     <string name="key_check_running">Test en cours…</string>
     <string name="key_check_valid">Clé valide</string>

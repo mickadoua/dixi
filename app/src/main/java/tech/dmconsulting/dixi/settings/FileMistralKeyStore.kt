@@ -102,7 +102,7 @@ class FileMistralKeyStore(
     /**
      * The active key, decrypted. A key that cannot be decrypted (Keystore key gone, file
      * damaged) is useless: it is deleted and the next one takes over, so the screens never
-     * show a key that cannot work.
+     * show a key that cannot work. Never throws: a dictation must not crash on a disk error.
      */
     private fun readActive(): String? {
         while (true) {
@@ -122,7 +122,13 @@ class FileMistralKeyStore(
                 return key
             }
             keyFile(id).delete()
-            save(ring.remove(id))
+            val next = ring.remove(id)
+            try {
+                save(next)
+            } catch (e: IOException) {
+                // Its file is gone: the next start drops the entry too.
+                publish(next)
+            }
         }
     }
 
