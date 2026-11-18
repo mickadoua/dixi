@@ -1,6 +1,9 @@
-Prima versione di Dixi.
-• Bolla mobile per dettare in tutte le tue app.
-• Trascrizione Mistral con la tua chiave API.
-• Tocca una parola per correggerla prima di confermare.
-• Cronologia delle ultime 20 dettature.
-Dettatura in francese e inglese.
+Novità di Dixi:
+• Configurazione guidata con la vera bolla e una dettatura di prova.
+• Chiave Mistral passo dopo passo, verificata prima dell'uso.
+• Più chiavi con un nome, una attiva, cifrate sul telefono.
+• Bolla più piccola, che puoi riporre sul bordo dello schermo.
+• Un'onda intorno alla bolla segue la tua voce, con una vibrazione all'inizio e alla fine.
+• Schermata iniziale più chiara.
+• Incolla automatico nel campo di testo, facoltativo (disattivato di default).
+• App in 13 lingue.

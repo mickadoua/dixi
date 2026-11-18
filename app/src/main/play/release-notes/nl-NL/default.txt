@@ -1,6 +1,9 @@
-Eerste versie van Dixi.
-• Zwevende bel om in al je apps te dicteren.
-• Transcriptie door Mistral met je eigen API-sleutel.
-• Tik op een woord om het te verbeteren voor je bevestigt.
-• Geschiedenis van je laatste 20 dictaten.
-Dicteren in het Frans en Engels.
+Nieuw in Dixi:
+• Begeleide installatie met de echte bel en een proefdictaat.
+• Mistral-sleutel stap voor stap, getest voor gebruik.
+• Meerdere sleutels met een naam, één actief, versleuteld op je telefoon.
+• Kleinere bel die je aan de rand van het scherm kunt wegzetten.
+• Een golf rond de bel volgt je stem, met een trilling bij begin en einde.
+• Duidelijker startscherm.
+• Optioneel automatisch plakken in het tekstveld (standaard uit).
+• App in 13 talen.

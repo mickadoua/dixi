@@ -1,6 +1,9 @@
-Primeira versão do Dixi.
-• Bolha flutuante para ditar em todos os seus apps.
-• Transcrição da Mistral com sua própria chave de API.
-• Toque em uma palavra para corrigir antes de confirmar.
-• Histórico dos últimos 20 ditados.
-Ditado em francês e inglês.
+Novidades do Dixi:
+• Configuração guiada com a bolha de verdade e um ditado de teste.
+• Chave da Mistral passo a passo, testada antes do uso.
+• Várias chaves com nome, uma ativa, criptografadas no celular.
+• Bolha menor, que pode ficar recolhida na borda da tela.
+• Uma onda em volta da bolha acompanha sua voz, com vibração no início e no fim.
+• Tela inicial mais clara.
+• Colagem automática no campo de texto, opcional (desativada por padrão).
+• App em 13 idiomas.

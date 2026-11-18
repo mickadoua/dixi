@@ -1,6 +1,9 @@
-Erste Version von Dixi.
-• Schwebende Blase zum Diktieren in all Ihren Apps.
-• Transkription durch Mistral mit Ihrem eigenen API-Schlüssel.
-• Wort antippen und korrigieren, dann bestätigen.
-• Verlauf der letzten 20 Diktate.
-Diktat auf Französisch und Englisch.
+Neu in Dixi:
+• Geführte Einrichtung mit der echten Blase und einem Probediktat.
+• Mistral-Schlüssel Schritt für Schritt, vor der Nutzung getestet.
+• Mehrere benannte Schlüssel, einer aktiv, verschlüsselt auf dem Telefon.
+• Kleinere Blase, die sich an den Bildschirmrand legen lässt.
+• Eine Welle um die Blase folgt Ihrer Stimme, mit Vibration am Anfang und am Ende.
+• Übersichtlichere Startseite.
+• Optional: automatisches Einfügen ins Textfeld (standardmäßig aus).
+• App in 13 Sprachen.
