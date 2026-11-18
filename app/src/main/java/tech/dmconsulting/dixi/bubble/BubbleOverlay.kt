@@ -105,6 +105,8 @@ class BubbleOverlay(
     }
 
     init {
+        // The toast window takes touches (opaque, see toastParams): a tap closes it instead of doing nothing.
+        toast.setOnClickListener { removeToast() }
         // TalkBack calls performClick() directly: the half-bubble only comes back there too.
         bubble.setOnClickListener { if (docked) undock(animate = true) else onTap() }
         bubble.setOnTouchListener(::onTouch)

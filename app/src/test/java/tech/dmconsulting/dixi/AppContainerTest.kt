@@ -41,17 +41,44 @@ class AppContainerTest {
     @After
     fun tearDown() = server.close()
 
-    private fun container(key: String? = null) = AppContainer(mistralKey = InMemoryMistralKeyStore(key), mistralBaseUrl = server.url("/"))
+    private fun container(key: String? = null, demoMode: Boolean = false) = AppContainer(mistralKey = InMemoryMistralKeyStore(key), mistralBaseUrl = server.url("/"), demoMode = demoMode)
 
     @Test
-    fun withoutKeyTheFakesAnswerAndNothingIsSent() = runTest {
+    fun withoutKeyADictationSaysNoKeyAndNothingIsSent() = runTest {
         val container = container()
+        assertFalse(container.usesFakeVoxtral)
+
+        val result = container.transcription.run(audio)
+
+        assertEquals(VoxtralResult.Failure(VoxtralError.NoKey), result)
+        assertEquals(R.string.error_no_key, VoxtralError.NoKey.message)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun inDemoModeWithoutKeyTheFakesAnswerAndNothingIsSent() = runTest {
+        val container = container(demoMode = true)
         assertTrue(container.usesFakeVoxtral)
 
         val result = container.transcription.run(audio)
 
         assertTrue(result is VoxtralResult.Success)
         assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun inDemoModeAKeyStillGoesToMistral() = runTest {
+        val container = container(TEST_KEY, demoMode = true)
+        assertFalse(container.usesFakeVoxtral)
+        server.answer(200, """{"text":"bonjour"}""")
+
+        assertEquals(VoxtralResult.Success("bonjour"), container.transcriber.transcribe(audio, DictationLanguage.Auto))
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun demoModeOnlyInDebugBuilds() {
+        assertEquals(BuildConfig.DEBUG, BuildConfig.DEMO_MODE)
     }
 
     @Test
@@ -69,21 +96,27 @@ class AppContainerTest {
     }
 
     @Test
-    fun theServiceFollowsTheKeySavedAtRunTime() = runTest {
+    fun theServiceFollowsTheActiveKeyAtRunTime() = runTest {
         val container = container()
-        assertTrue(container.transcriber.transcribe(audio, DictationLanguage.Auto) is VoxtralResult.Success)
+        val noKey = VoxtralResult.Failure(VoxtralError.NoKey)
+        assertEquals(noKey, container.transcriber.transcribe(audio, DictationLanguage.Auto))
         assertEquals(0, server.requestCount)
 
-        container.mistralKey.save(TEST_KEY)
-        assertFalse(container.usesFakeVoxtral)
+        container.mistralKey.add("Perso", TEST_KEY)
+        container.mistralKey.add("Pro", OTHER_KEY)
         server.answer(200, """{"text":"bonjour"}""")
         assertEquals(VoxtralResult.Success("bonjour"), container.transcriber.transcribe(audio, DictationLanguage.Auto))
-        assertEquals(1, server.requestCount)
+        assertEquals("Bearer $OTHER_KEY", server.takeRequest().headers["Authorization"])
 
-        container.mistralKey.delete()
-        assertTrue(container.usesFakeVoxtral)
+        val perso = container.mistralKey.entries.value.first { it.name == "Perso" }
+        container.mistralKey.activate(perso.id)
+        server.answer(200, """{"text":"bonjour"}""")
         container.transcriber.transcribe(audio, DictationLanguage.Auto)
-        assertEquals(1, server.requestCount)
+        assertEquals("Bearer $TEST_KEY", server.takeRequest().headers["Authorization"])
+
+        container.mistralKey.entries.value.forEach { container.mistralKey.delete(it.id) }
+        assertEquals(noKey, container.transcriber.transcribe(audio, DictationLanguage.Auto))
+        assertEquals(2, server.requestCount)
     }
 
     @Test
@@ -124,9 +157,9 @@ class AppContainerTest {
     }
 
     @Test
-    fun defaultsHaveNoKey() = runTest {
+    fun defaultsHaveNoKeyAndNoDemo() = runTest {
         val container = AppContainer()
-        assertTrue(container.usesFakeVoxtral)
+        assertFalse(container.usesFakeVoxtral)
         assertNull(container.mistralKey.key())
         assertTrue(FakeTranscriber().transcribe(audio, DictationLanguage.Auto) is VoxtralResult.Success)
     }
@@ -151,5 +184,9 @@ class AppContainerTest {
     fun buildConfigHoldsNoKey() {
         val fields = BuildConfig::class.java.declaredFields.map { it.name }
         assertTrue(fields.toString(), fields.none { it.contains("KEY", ignoreCase = true) || it.contains("MISTRAL", ignoreCase = true) })
+    }
+
+    private companion object {
+        const val OTHER_KEY = "test-key-not-real-other"
     }
 }

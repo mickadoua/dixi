@@ -149,7 +149,7 @@ class DictationController(
                 recording.file.delete()
             }
             when (result) {
-                is VoxtralResult.Failure -> fail(result.error.bubbleMessage, keyRefused = result.error == VoxtralError.InvalidKey)
+                is VoxtralResult.Failure -> fail(result.error.bubbleMessage, keyRefused = result.error.opensKeySettings)
 
                 is VoxtralResult.Success -> {
                     val text = result.value.text
@@ -201,10 +201,15 @@ class DictationController(
 val VoxtralError.bubbleMessage: Int
     get() = when (this) {
         VoxtralError.InvalidKey -> R.string.bubble_error_key_refused
+        VoxtralError.NoKey -> R.string.bubble_error_no_key
         VoxtralError.NoConnection -> R.string.bubble_error_no_network
         VoxtralError.NothingHeard -> R.string.bubble_error_nothing_heard
         else -> message
     }
+
+/** Refused or missing key: a tap on the bubble in error opens the key settings. */
+val VoxtralError.opensKeySettings: Boolean
+    get() = this == VoxtralError.InvalidKey || this == VoxtralError.NoKey
 
 @get:StringRes
 val RecordingError.bubbleMessage: Int

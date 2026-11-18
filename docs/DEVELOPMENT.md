@@ -54,7 +54,7 @@ The store listing (texts, images, contact details) and the data safety form go t
 
 ## Mistral key
 
-The app contains no key: not in the repository, not in the APK, not in `BuildConfig`, not in resources. Each user pastes their own key in Settings. It is encrypted by an Android Keystore key (`settings/KeystoreKeyCipher`), stored in `noBackupFilesDir/mistral_key.bin` and excluded from backups and device transfer (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). Without a key, the app uses fake Voxtral services ("Demo mode") and nothing leaves the phone. Never commit, log or paste a key into an issue.
+The app contains no key: not in the repository, not in the APK, not in `BuildConfig`, not in resources. Each user pastes their own key during onboarding, which cannot end until Mistral accepts the key ("Test key"), and can keep several named keys in Settings, one of them active. Each key is encrypted by an Android Keystore key (`settings/KeystoreKeyCipher`), stored in `noBackupFilesDir/mistral_keys/<id>.bin` (names and active key in `keys.json`, never the keys) and excluded from backups and device transfer (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`). The single key of older versions (`noBackupFilesDir/mistral_key.bin`) is moved there at first start. Without any key, dictations fail with "No key". Only debug builds (`BuildConfig.DEMO_MODE`) fall back to fake Voxtral services ("Demo mode"), and nothing leaves the phone. Never commit, log or paste a key into an issue.
 
 ## Checking on an emulator or a phone
 

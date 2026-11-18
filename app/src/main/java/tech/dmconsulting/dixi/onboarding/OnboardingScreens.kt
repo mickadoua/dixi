@@ -71,6 +71,8 @@ import tech.dmconsulting.dixi.bubble.BubbleEvents
 import tech.dmconsulting.dixi.bubble.BubbleService
 import tech.dmconsulting.dixi.bubble.BubbleSwitch
 import tech.dmconsulting.dixi.bubble.Side
+import tech.dmconsulting.dixi.permissions.NotificationAskStore
+import tech.dmconsulting.dixi.permissions.needsNotificationsAfterMic
 import tech.dmconsulting.dixi.recording.MicrophoneRecorder
 import tech.dmconsulting.dixi.settings.KeyCheckResult
 import tech.dmconsulting.dixi.settings.KeyStatus
@@ -168,7 +170,8 @@ private fun ErrorLine(@StringRes text: Int) {
 private fun hasMicrophone(context: Context) = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
 /**
- * Screen 2: why the microphone, then Android's own permission window.
+ * Screen 2: why the microphone, then Android's own permission window, then the notifications
+ * on Android 13+ (DMC-785): asked here, the first tap on the bubble in the trial dictates.
  * Refused: the message and « Ouvrir les réglages » (app info page); granted
  * there, the key step opens on return.
  */
@@ -176,14 +179,29 @@ private fun hasMicrophone(context: Context) = ContextCompat.checkSelfPermission(
 fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     var refused by rememberSaveable { mutableStateOf(false) }
+    val askNotifications = remember { context.needsNotificationsAfterMic() }
+    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // Refused notifications do not stop the onboarding: only « Texte copié » is lost.
+        Log.i(MicrophoneRecorder.TAG, "notifications permission granted=$granted")
+        onGranted()
+    }
+    fun next() {
+        if (context.needsNotificationsAfterMic()) {
+            NotificationAskStore(context).asked = true
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            onGranted()
+        }
+    }
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         Log.i(MicrophoneRecorder.TAG, "microphone permission granted=$granted")
-        if (granted) onGranted() else refused = true
+        if (granted) next() else refused = true
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (refused && hasMicrophone(context)) {
             Log.i(MicrophoneRecorder.TAG, "microphone allowed in the app info page")
-            onGranted()
+            refused = false
+            next()
         }
     }
 
@@ -199,7 +217,7 @@ fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -
                 })
             } else {
                 FilledAction(stringResource(R.string.mic_allow), onClick = {
-                    if (hasMicrophone(context)) onGranted() else request.launch(Manifest.permission.RECORD_AUDIO)
+                    if (hasMicrophone(context)) next() else request.launch(Manifest.permission.RECORD_AUDIO)
                 })
             }
             TextAction(stringResource(R.string.mic_later), onLater)
@@ -208,6 +226,7 @@ fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -
         Badge(R.drawable.ic_mic, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
         Heading(stringResource(R.string.mic_title))
         Body(stringResource(R.string.mic_body))
+        if (askNotifications) Body(stringResource(R.string.mic_notifications_note), Neon.TextMuted)
         if (refused) ErrorLine(R.string.error_mic_denied)
     }
 }
@@ -220,7 +239,9 @@ fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -
 @Composable
 fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinue: () -> Unit, onBack: () -> Unit) {
     val status by keys.status.collectAsState()
+    val entries by keys.entries.collectAsState()
     val test = rememberKeyTest(keys, keyCheck)
+    val name = stringResource(R.string.key_default_name, entries.size + 1)
     // Accepted now, or saved before a relaunch on this step.
     val valid = test.result == KeyCheck.Valid || (test.result == null && !test.testing && status == KeyStatus.Saved)
 
@@ -233,7 +254,7 @@ fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinu
             } else {
                 FilledAction(
                     stringResource(if (test.testing) R.string.key_check_running else R.string.key_test),
-                    onClick = test::test,
+                    onClick = { test.test(name) },
                     enabled = test.input.isNotBlank() && !test.testing,
                 )
             }
@@ -246,7 +267,7 @@ fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinu
         } else {
             MistralKeySteps()
             MistralKeysLink()
-            MistralKeyField(test.input, onValueChange = test::edit, onDone = { if (test.input.isNotBlank()) test.test() })
+            MistralKeyField(test.input, onValueChange = test::edit, onDone = { if (test.input.isNotBlank()) test.test(name) })
             test.result?.let { KeyCheckResult(it) }
             test.problem?.let { ErrorLine(it) }
         }

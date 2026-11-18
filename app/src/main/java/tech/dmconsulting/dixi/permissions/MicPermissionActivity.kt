@@ -42,7 +42,7 @@ class MicPermissionActivity : ComponentActivity() {
             DixiTheme {
                 MicPermissionFlow(
                     notificationsOnly = intent.getBooleanExtra(EXTRA_NOTIFICATIONS_ONLY, false),
-                    askNotifications = { needsNotificationPermission() },
+                    askNotifications = { needsNotificationsAfterMic() },
                     onAskNotifications = { NotificationAskStore(this).asked = true },
                     canAskMicAgain = { shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) },
                     openSettings = { startActivity(appSettingsIntent()) },
@@ -57,12 +57,6 @@ class MicPermissionActivity : ComponentActivity() {
         if (micGranted) BubbleService.dictate(this)
         finish()
     }
-
-    private fun needsNotificationPermission() = shouldAskNotificationsAfterMic(
-        sdk = Build.VERSION.SDK_INT,
-        notificationsGranted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && granted(Manifest.permission.POST_NOTIFICATIONS),
-        askedBefore = NotificationAskStore(this).asked,
-    )
 
     private fun appSettingsIntent() = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
