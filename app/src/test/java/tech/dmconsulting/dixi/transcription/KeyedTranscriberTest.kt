@@ -1,5 +1,6 @@
 package tech.dmconsulting.dixi.transcription
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -23,6 +24,21 @@ class KeyedTranscriberTest {
     }
 
     @Test
+    fun aKeyMadeActiveDuringTheDictationIsNotMarkedRefused() = runTest {
+        val keys = InMemoryMistralKeyStore(KEY)
+        val transcriber = KeyedTranscriber(keys, fake = null) {
+            FakeTranscriber(delayMs = 0) {
+                // The user picks another key while Mistral answers about the first one.
+                runBlocking { keys.add("Pro", KEY_2) }
+                refused
+            }
+        }
+
+        assertEquals(refused, transcriber.transcribe(File("a.m4a"), DictationLanguage.Auto))
+        assertEquals(KeyStatus.Saved, keys.status.value)
+    }
+
+    @Test
     fun aDiskErrorWhileMarkingTheRefusalDoesNotCrashTheDictation() = runTest {
         val keys = BrokenDisk(InMemoryMistralKeyStore(KEY))
         val transcriber = KeyedTranscriber(keys, fake = null) { FakeTranscriber(result = refused, delayMs = 0) }
@@ -43,5 +59,6 @@ class KeyedTranscriberTest {
 
     private companion object {
         const val KEY = "test-key-not-real-1"
+        const val KEY_2 = "test-key-not-real-2"
     }
 }

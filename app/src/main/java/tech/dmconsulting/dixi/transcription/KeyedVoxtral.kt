@@ -17,7 +17,7 @@ class KeyedTranscriber(
 ) : Transcriber {
     override suspend fun transcribe(audio: File, language: DictationLanguage): VoxtralResult<String> {
         val key = keys.key() ?: return fake?.transcribe(audio, language) ?: NO_KEY
-        return real(key).transcribe(audio, language).also { keys.noteRefusal(it) }
+        return real(key).transcribe(audio, language).also { keys.noteRefusal(key, it) }
     }
 }
 
@@ -29,15 +29,18 @@ class KeyedTextCleaner(
 ) : TextCleaner {
     override suspend fun clean(rawText: String, language: DictationLanguage): VoxtralResult<String> {
         val key = keys.key() ?: return fake?.clean(rawText, language) ?: NO_KEY
-        return real(key).clean(rawText, language).also { keys.noteRefusal(it) }
+        return real(key).clean(rawText, language).also { keys.noteRefusal(key, it) }
     }
 }
 
 private val NO_KEY = VoxtralResult.Failure(VoxtralError.NoKey)
 
-/** A disk error only loses the « Clé refusée » mark: the dictation still gets its result. */
-private suspend fun MistralKeyStore.noteRefusal(result: VoxtralResult<*>) {
-    if (result != VoxtralResult.Failure(VoxtralError.InvalidKey)) return
+/**
+ * Marks [key] as refused, unless another key became active during the call. A disk error only
+ * loses the « Clé refusée » mark: the dictation still gets its result.
+ */
+private suspend fun MistralKeyStore.noteRefusal(key: String, result: VoxtralResult<*>) {
+    if (result != VoxtralResult.Failure(VoxtralError.InvalidKey) || key() != key) return
     try {
         markRejected()
     } catch (e: IOException) {
