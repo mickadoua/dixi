@@ -109,7 +109,8 @@ debug_limits() {
 step_saved() { $ADB shell run-as $PKG cat files/datastore/settings.preferences_pb 2>/dev/null | tr -c '[:print:]' ' ' | grep -o "Welcome\|MicPermission\|MistralKey\|BubbleIntro\|Trial\|BubbleEnabled" | tail -1; }
 overlay_allowed() { $ADB shell appops get $PKG SYSTEM_ALERT_WINDOW | grep -q allow; }
 mic_granted() { $ADB shell dumpsys package $PKG | grep -q "android.permission.RECORD_AUDIO: granted=true"; }
-key_saved() { $ADB shell run-as $PKG ls no_backup 2>/dev/null | grep -q mistral_key.bin; }
+# Several keys since DMC-766: one encrypted no_backup/mistral_keys/<id>.bin per key, names in keys.json.
+key_saved() { $ADB shell run-as $PKG ls no_backup/mistral_keys 2>/dev/null | grep -q '\.bin'; }
 start_app() { $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; sleep 6; debug_limits; }
 back_to_app() {
     for k in 1 2 3; do
