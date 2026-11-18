@@ -193,7 +193,8 @@ if [ "$PART" = s ]; then
   echo "--- s2. Screen 8, « $(label disclosure_decline) » changes nothing"
   tap_text ui-10b.xml "$AUTO_PASTE"
   shot 2-disclosure
-  check "screen 8 shown before any accessibility page" "node_center ui-8a.xml \"$(label disclosure_reads_title)\" | grep -q ."
+  # The section titles are upper-cased on screen: match the text under « What it reads ».
+  check "screen 8 shown before any accessibility page" "node_center ui-8a.xml \"$(label disclosure_reads)\" | grep -q ."
   check "screen 8 says what the service reads, before the buttons" "node_center ui-8b.xml \"$(label disclosure_intro)\" | grep -q ."
   tap_text ui-8c.xml "$(label disclosure_decline)"
   check "« $(label disclosure_decline) »: back to screen 10, Android settings not opened" "focus | grep -q '$PKG'"
