@@ -117,6 +117,15 @@ back_to_app() {
         $ADB shell input keyevent KEYCODE_BACK; sleep 3
     done
 }
+# Android 13+: the notifications are asked at the microphone step, right after it (DMC-785).
+# Before DMC-785 they came at the first tap on the bubble: no window here, nothing done.
+allow_notifications_window() {
+    for i in $(seq 1 5); do applog | grep -q "notifications permission granted=" && return 0; $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" && break; sleep 2; done
+    $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" || return 0
+    sleep 1; shot 2-system-notifications-window
+    FALLBACK="540 1318"; tap_node "com.android.permissioncontroller:id/permission_allow_button" "Allow" "Autoriser"
+    check "notifications allowed at the microphone step" "waitlog 'notifications permission granted=true'"
+}
 # Google Play services sometimes opens its own screen (« Sign in with ease ») over the app:
 # bring Dixi back to the front (same task, same step).
 front() {
@@ -174,6 +183,7 @@ if [ "$PART" = light ]; then
     tap_node "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
     waitlog "microphone permission granted=true"
     check "microphone granted from the system window" "mic_granted"
+    allow_notifications_window
 else
     FALLBACK="540 1610"
     tap_node "com.android.permissioncontroller:id/permission_deny_button"
@@ -195,8 +205,13 @@ else
         echo "FAIL microphone granted from the app info page (FALLBACK pm grant)"; FAILS=$((FAILS + 1))
         $ADB shell pm grant $PKG android.permission.RECORD_AUDIO
     fi
-    back_to_app
+    # Back until Dixi resumes; not once more: the notifications window opens over it.
+    for k in 1 2 3 4; do
+        applog | grep -q "microphone allowed in the app info page" && break
+        $ADB shell input keyevent KEYCODE_BACK; sleep 3
+    done
     waitlog "microphone allowed in the app info page"
+    allow_notifications_window
 fi
 
 # 3. Mistral key: required, refused (401) then accepted.
@@ -289,7 +304,7 @@ sleep 3; shot 5a-trial-tap
 read -r BX BY <<< "$(bubble_xy)"
 echo "bubble center: $BX $BY"
 wake; $ADB shell input tap "$BX" "$BY"
-# Android 13+: the first dictation asks for notifications (the recording notification) first.
+# Before DMC-785, Android 13+ asked for notifications at the first dictation: still handled.
 for i in $(seq 1 8); do $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller" && break; applog | grep -q 'bubble state Listening' && break; sleep 2; done
 if $ADB shell dumpsys window | grep -q "mCurrentFocus=.*permissioncontroller"; then
     sleep 1; shot 5a-system-notifications-window
