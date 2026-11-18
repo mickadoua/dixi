@@ -24,8 +24,9 @@ APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 AUTO_PASTE=$(label settings_auto_paste)
 SHOW_BUBBLE=$(label settings_bubble)
 ACCEPT=$(label disclosure_accept)
-# Words of the demo dictation (res demo_raw_text, cleaned up or not), in APP_LANG.
-if [ "$APP_LANG" = fr ]; then DEMO_WORDS='texte de test dixi'; else DEMO_WORDS='dixi test text'; fi
+# Words of the demo dictation (res demo_raw_text, cleaned up or not). The demo text follows the
+# phone's language, not APP_LANG (FakeTranscriber reads it with the application context).
+DEMO_WORDS='dixi test text\|texte de test dixi'
 mkdir -p "$OUT"
 trap '$ADB logcat -d > "$OUT/logcat-full.txt" 2>/dev/null; $ADB logcat -b crash -d > "$OUT/logcat-crash.txt" 2>/dev/null' EXIT
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 ($(wc -c < "$OUT/$1.png") bytes)"; }
@@ -155,6 +156,18 @@ focus_first_name() {
   focus | tee "$OUT/focus-before-dictation.txt"
 }
 occurrences() { dump "$1"; grep -io "$DEMO_WORDS" "$OUT/$1" | wc -l; }
+# The Contacts editor does not show its name fields in the uiautomator dump: « Save », then the
+# demo words counted in the name of the newest contact (Contacts' own provider).
+# Contacts saves in a background job: wait for the row.
+saved_name_occurrences() {
+  tap_text "$1" "Save" >/dev/null
+  for _ in $(seq 1 10); do
+    $ADB shell content query --uri content://com.android.contacts/raw_contacts \
+      --projection display_name --sort "_id\ DESC" | head -1 > "$OUT/saved-contact.txt"
+    grep -q "^Row" "$OUT/saved-contact.txt" && break; sleep 2
+  done
+  grep -io "$DEMO_WORDS" "$OUT/saved-contact.txt" | wc -l
+}
 
 $ADB shell getprop ro.build.version.sdk
 for _ in $(seq 1 60); do
@@ -257,8 +270,8 @@ if [ "$PART" = p ]; then
   check "bubble ready (« Text ready »)" "wait_log 'bubble state Ready' 5"
   sleep 3
   check "no « Text copied » notification" "[ \$(notif_count) -eq $NOTIFS ]"
-  check "text in « First name », once" "[ \$(occurrences ui-pasted.xml) -eq 1 ]"
   shot 3-pasted
+  check "text in « First name », once (saved contact)" "[ \$(saved_name_occurrences ui-pasted.xml) -eq 1 ]"
   log | grep -E "bubble state|clipboard|auto-paste|copied" | tee "$OUT/chain.txt"
 fi
 
