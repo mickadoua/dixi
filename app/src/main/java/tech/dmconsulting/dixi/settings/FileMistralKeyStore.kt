@@ -27,13 +27,16 @@ interface KeyCipher {
  * The plain active key is kept in memory once read, never written anywhere else.
  *
  * [legacyFile]: the single key of the versions before DMC-766. Moved into [dir] at the first
- * start, named [legacyName], so nobody has to paste their key again.
+ * start, named [defaultName] (1), so nobody has to paste their key again.
+ *
+ * [defaultName]: « Key n », for the moved key and for keys rebuilt from their files when
+ * `keys.json` cannot be read.
  */
 class FileMistralKeyStore(
     private val dir: File,
     private val cipher: KeyCipher,
     private val legacyFile: File? = null,
-    private val legacyName: String = "Key 1",
+    private val defaultName: (Int) -> String = { "Key $it" },
 ) : MistralKeyStore {
     private val index = File(dir, INDEX)
     private val lock = Mutex()
@@ -134,19 +137,12 @@ class FileMistralKeyStore(
 
     private fun load(): KeyRing {
         val loaded = when {
-            index.isFile -> try {
-                Json.decodeFromString<KeyRing>(index.readText())
-            } catch (e: SerializationException) {
-                KeyRing()
-            } catch (e: IllegalArgumentException) {
-                KeyRing()
-            } catch (e: IOException) {
-                KeyRing()
-            }
+            index.isFile -> read() ?: recover()
 
             legacyFile?.isFile == true -> migrate(legacyFile)
 
-            else -> KeyRing()
+            // No keys.json but key files: the app was killed while moving the old key in.
+            else -> recover()
         }
         // Keys whose file is gone are dropped, files no key points to are deleted.
         val ring = loaded.keys.filterNot { keyFile(it.id).isFile }.fold(loaded) { r, k -> r.remove(k.id) }
@@ -156,12 +152,32 @@ class FileMistralKeyStore(
         return ring
     }
 
+    private fun read(): KeyRing? = try {
+        Json.decodeFromString<KeyRing>(index.readText())
+    } catch (e: SerializationException) {
+        null
+    } catch (e: IllegalArgumentException) {
+        null
+    } catch (e: IOException) {
+        null
+    }
+
+    /**
+     * The keys rebuilt from their files when `keys.json` cannot be read: oldest first, with
+     * default names, the newest active. Names and refusals are lost, never the keys. Not
+     * written: a change of key writes it, and until then the next start rebuilds the same list.
+     */
+    private fun recover(): KeyRing = (dir.listFiles() ?: emptyArray())
+        .filter { it.isFile && it.name.endsWith(KEY_SUFFIX) }
+        .sortedWith(compareBy<File>({ it.lastModified() }, { it.name }))
+        .foldIndexed(KeyRing()) { i, ring, file -> ring.add(file.name.removeSuffix(KEY_SUFFIX), defaultName(i + 1)) }
+
     private fun migrate(legacy: File): KeyRing {
         val marker = File(legacy.parentFile, legacy.name + ".rejected")
         val id = KeyRing.newId()
         dir.mkdirs()
         if (!legacy.renameTo(keyFile(id))) return KeyRing()
-        val ring = KeyRing().add(id, legacyName).markActive(rejected = marker.isFile)
+        val ring = KeyRing().add(id, defaultName(1)).markActive(rejected = marker.isFile)
         return try {
             write(ring)
             marker.delete()
