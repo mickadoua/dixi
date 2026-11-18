@@ -1,7 +1,6 @@
 package tech.dmconsulting.dixi.ui.navigation
 
 import androidx.annotation.StringRes
-import tech.dmconsulting.dixi.BuildConfig
 import tech.dmconsulting.dixi.R
 
 /**
@@ -53,10 +52,10 @@ enum class Screen(val number: Int, @StringRes val title: Int) {
         val offerShown = false
 
         /**
-         * Screen 8 and its ways in (screen 5 button, settings switch): debug only, like the
-         * accessibility service, until Play accepts it in v1.1 (DMC-572).
+         * Screen 8 and its ways in (screen 5 button, settings switch): in every build again
+         * (DMC-767), off by default, on only after the disclosure and Android's settings.
          */
-        val autoPasteShown = BuildConfig.AUTO_PASTE
+        val autoPasteShown = true
 
         /** Where the app opens once the onboarding is done. */
         val home = Home

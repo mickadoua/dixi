@@ -55,10 +55,6 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
-        // Auto-paste (accessibility service) ships in debug only until Play accepts it (v1.1,
-        // DMC-572): its service sits in src/debug/AndroidManifest.xml, and this flag hides the
-        // screens that lead to it everywhere else (release, probe).
-        buildConfigField("boolean", "AUTO_PASTE", "false")
     }
 
     if (uploadKeyMissing.isEmpty()) {
@@ -76,7 +72,6 @@ android {
         // in this build and in the non-debuggable probe build below.
         debug {
             isMinifyEnabled = true
-            buildConfigField("boolean", "AUTO_PASTE", "true")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         release {
