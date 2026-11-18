@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Emulator proof for a right-to-left language (Arabic by default): onboarding
-# screens 1 and 2, then the bubble docked at the right edge, then at the left edge.
+# screens 1 and 2, then the bubble docked at the right edge, then at the left edge,
+# then the guided trial's hint card beside the bubble, at the right then at the left.
 # The app language is set per app (`cmd locale`), Android's own screens stay in English.
 # The bubble is placed from the left edge (Gravity.LEFT): docking must follow the
-# finger, not the layout direction. Needs adb ($ANDROID_HOME) and a debug APK:
+# finger, not the layout direction. So must the hint card of the guided trial.
+# Part 3 needs the debug fake Mistral (files/fake-mistral, PR #66) to get past the
+# key step; without it, it is skipped. Needs adb ($ANDROID_HOME) and a debug APK:
 #   bash scripts/emu-rtl.sh <out-dir> [locale]
 set -u
 ADB=$ANDROID_HOME/platform-tools/adb
@@ -11,7 +14,7 @@ PKG=tech.dmconsulting.dixi
 NS=tech.dmconsulting.dixi  # class package (namespace), not the applicationId
 OUT=${1:-rtl-proof-out}
 LOCALE=${2:-ar}
-APK=app/build/outputs/apk/debug/app-debug.apk
+APK=${APK:-app/build/outputs/apk/debug/app-debug.apk}
 mkdir -p "$OUT"
 shot() { $ADB exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
 log() { $ADB logcat -d -s DixiProof; }
@@ -93,6 +96,60 @@ $ADB logcat -d -s DixiProof > "$OUT/app-log-right.txt"
 $ADB shell "input motionevent DOWN $((W - 80)) ${DY:-1200}; input motionevent MOVE $((W / 2)) ${DY:-1200}; input motionevent MOVE 2 ${DY:-1200}; input motionevent UP 2 ${DY:-1200}"
 check "docked at the left edge after a drag to the left" "wait_log 'bubble docked side=Left' 10"
 sleep 2; shot 6-docked-left
+
+echo "--- 3. Guided trial: the hint card beside the bubble"
+BOTTOM="540 2220"  # lowest 56 dp button
+ABOVE="540 2052"   # the 56 dp button above it
+UI=/data/local/tmp/ui.xml
+# Center of the first node whose text (or class, for EDITABLE) matches, from a uiautomator dump.
+node_xy() {
+  $ADB shell uiautomator dump $UI >/dev/null 2>&1
+  $ADB shell cat $UI > "$OUT/ui.xml"
+  python3 - "$OUT/ui.xml" "$1" <<'PY'
+import re, sys
+for node in re.findall(r'<node [^>]*>', open(sys.argv[1], encoding='utf-8').read()):
+    want = sys.argv[2]
+    if (want == 'EDITABLE' and 'class="android.widget.EditText"' in node) or f'text="{want}"' in node:
+        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node).groups())
+        print((a + c) // 2, (b + d) // 2)
+        break
+PY
+}
+tap() { wake; $ADB shell input tap $1 $2; sleep 3; }
+$ADB uninstall $PKG >/dev/null 2>&1
+$ADB install -r -g "$APK" || exit 1
+$ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
+$ADB shell cmd locale set-app-locales $PKG --locales "$LOCALE"
+$ADB shell "run-as $PKG sh -c 'mkdir -p files; echo ok > files/fake-mistral'"
+$ADB logcat -c
+wake; $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; sleep 6
+if ! wait_log 'fake mistral on http://127.0.0.1' 5; then
+  echo "SKIP part 3: this build has no fake Mistral"
+else
+  wait_log 'onboarding step Welcome' && tap $BOTTOM
+  wait_log 'onboarding step MicPermission' && tap $ABOVE  # microphone already granted (-g)
+  wait_log 'onboarding step MistralKey'
+  tap $(node_xy EDITABLE)
+  for k in dixi fake rtlp roof 0000 0000; do $ADB shell input text $k; sleep 1; done
+  $ADB shell input keyevent KEYCODE_ENTER
+  check "fake key accepted" "wait_log 'key test Valid'"
+  $ADB shell dumpsys input_method | grep -q 'mInputShown=true' && $ADB shell input keyevent KEYCODE_BACK
+  sleep 2; tap $BOTTOM
+  wait_log 'onboarding step BubbleIntro' && tap $ABOVE  # overlay already allowed
+  check "guided trial" "wait_log 'guided trial step Tap'"
+  settle
+  check "app still running" "alive"
+  read -r BX _ <<< "$(center 'bubble shown')"
+  check "bubble at the right" "[ \"${BX:-0}\" -gt $((W / 2)) ]"
+  sleep 2; shot 7-trial-bubble-right
+  read -r AX _ <<< "$(node_xy '▸')"
+  check "card arrow ▸ on the right half, toward the bubble (x=${AX:-none})" "[ \"${AX:-0}\" -gt $((W / 2)) ]"
+  drag_to_x $((W / 4))
+  check "bubble snapped to the left" "wait_log 'bubble snapped side=Left' 10"
+  sleep 3; shot 8-trial-bubble-left
+  read -r AX _ <<< "$(node_xy '◂')"
+  check "card arrow ◂ on the left half, toward the bubble (x=${AX:-none})" "[ -n \"${AX:-}\" ] && [ \"$AX\" -lt $((W / 2)) ]"
+fi
 
 $ADB logcat -d -b all > "$OUT/logcat.txt"
 grep -A8 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A6 "$PKG" | head -20 > "$OUT/crashes.txt"
