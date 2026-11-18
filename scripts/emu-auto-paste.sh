@@ -244,7 +244,11 @@ if [ "$PART" = r ]; then
   check "bubble off after the overlay permission was taken back" "[ \"\$(switch_state ui-10f.xml \"$SHOW_BUBBLE\")\" = false ]"
   shot 6-settings-after-return
   echo "--- r2. Bubble on, permission taken back in Android, back: the switch follows"
+  # Allowed outside the app, then back to it (like a user back from Android's page): the app
+  # reads the permission again when its screen comes back, not while it stays in front.
   $ADB shell appops set $PKG SYSTEM_ALERT_WINDOW allow
+  $ADB shell input keyevent KEYCODE_HOME; sleep 2
+  $ADB shell am start -W -n $PKG/$NS.MainActivity >/dev/null; wait_focus "$PKG"
   tap_text ui-10g.xml "$SHOW_BUBBLE"
   check "bubble on" "[ \"\$(switch_state ui-10h.xml \"$SHOW_BUBBLE\")\" = true ]"
   $ADB shell input keyevent KEYCODE_HOME; sleep 2
