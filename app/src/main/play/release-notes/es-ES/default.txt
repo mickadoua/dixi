@@ -1,6 +1,9 @@
-Primera versión de Dixi.
-• Burbuja flotante para dictar en todas tus apps.
-• Transcripción de Mistral con tu propia clave API.
-• Toca una palabra para corregirla antes de confirmar.
-• Historial de los últimos 20 dictados.
-Dictado en francés y en inglés.
+Novedades de Dixi:
+• Configuración guiada con la burbuja real y un dictado de prueba.
+• Clave de Mistral paso a paso, probada antes de usarla.
+• Varias claves con nombre, una activa, cifradas en el teléfono.
+• Burbuja más pequeña que puedes guardar en el borde de la pantalla.
+• Una onda alrededor de la burbuja sigue tu voz, con vibración al empezar y al terminar.
+• Pantalla de inicio más clara.
+• Pegado automático en el campo de texto, opcional (desactivado por defecto).
+• App en 13 idiomas.

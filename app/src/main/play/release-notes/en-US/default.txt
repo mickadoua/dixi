@@ -1,6 +1,9 @@
-First version of Dixi.
-• Floating bubble to dictate in all your apps.
-• Transcription by Mistral with your own API key.
-• Tap a word to fix it before you confirm.
-• History of your last 20 dictations.
-Dictation in French and English.
+What's new in Dixi:
+• Guided setup with the real bubble and a test dictation.
+• Your Mistral key, step by step, tested before use.
+• Several named keys, one active, encrypted on your phone.
+• Smaller bubble you can tuck against the screen edge.
+• A wave around the bubble follows your voice, with a vibration at the start and the end.
+• Clearer home screen.
+• Optional auto-paste into the text field (off by default).
+• App in 13 languages.
