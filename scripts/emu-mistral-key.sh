@@ -148,7 +148,7 @@ for mode in ${MODES:-dark}; do
     save_fake_key
     status "$mode saved"; shot "$mode-2-cle-enregistree"
     echo "key file: $($ADB shell run-as $PKG ls -l no_backup 2>&1 | tr '\n' ' ')"
-    echo "fake key readable in the key file: $($ADB shell run-as $PKG cat no_backup/mistral_key.bin | grep -c "$FAKE_KEY")"
+    echo "fake key readable in the key file: $($ADB shell run-as $PKG sh -c "cat no_backup/mistral_keys/*" | grep -c "$FAKE_KEY")"
     test_key
     status "$mode refused"; shot "$mode-3-cle-refusee"
     # Restart: the status comes back from the files (Keystore decrypts on the next dictation).

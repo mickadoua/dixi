@@ -55,6 +55,8 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
+        // Fake Voxtral without a key (« Mode démo »): debug builds only, for internal tests (DMC-766).
+        buildConfigField("boolean", "DEMO_MODE", "false")
     }
 
     if (uploadKeyMissing.isEmpty()) {
@@ -71,6 +73,7 @@ android {
         // path under R8 is checked on a device with the probe (scripts/mistral-probe.sh),
         // in this build and in the non-debuggable probe build below.
         debug {
+            buildConfigField("boolean", "DEMO_MODE", "true")
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

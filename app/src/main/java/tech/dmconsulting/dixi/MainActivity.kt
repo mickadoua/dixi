@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
             ?: Screen.History.takeIf { intent.getStringExtra(EXTRA_SCREEN) == it.name }
         val openSettings = intent.getBooleanExtra(EXTRA_OPEN_SETTINGS, false)
         setContent {
-            // No saved key: the fakes answer and every screen says « Mode démo » (DMC-227).
+            // Debug build without a key: the fakes answer and every screen says « Mode démo » (DMC-227, DMC-766).
             val keyStatus by container.mistralKey.status.collectAsState()
             DixiTheme {
                 // Read once per activity, then kept across rotations so the NavHost graph stays the same.
@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                 Screen.entries.firstOrNull { it.name == start }?.let {
                     DixiNavHost(
                         container,
-                        demoMode = keyStatus == KeyStatus.None,
+                        demoMode = container.demoMode && keyStatus == KeyStatus.None,
                         start = it,
                         openOnTop = Screen.Settings.takeIf { openSettings },
                     )

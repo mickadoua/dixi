@@ -220,7 +220,9 @@ fun MicPermissionScreen(onGranted: () -> Unit, onLater: () -> Unit, onBack: () -
 @Composable
 fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinue: () -> Unit, onBack: () -> Unit) {
     val status by keys.status.collectAsState()
+    val entries by keys.entries.collectAsState()
     val test = rememberKeyTest(keys, keyCheck)
+    val name = stringResource(R.string.key_default_name, entries.size + 1)
     // Accepted now, or saved before a relaunch on this step.
     val valid = test.result == KeyCheck.Valid || (test.result == null && !test.testing && status == KeyStatus.Saved)
 
@@ -233,7 +235,7 @@ fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinu
             } else {
                 FilledAction(
                     stringResource(if (test.testing) R.string.key_check_running else R.string.key_test),
-                    onClick = test::test,
+                    onClick = { test.test(name) },
                     enabled = test.input.isNotBlank() && !test.testing,
                 )
             }
@@ -246,7 +248,7 @@ fun MistralKeyScreen(keys: MistralKeyStore, keyCheck: MistralKeyCheck, onContinu
         } else {
             MistralKeySteps()
             MistralKeysLink()
-            MistralKeyField(test.input, onValueChange = test::edit, onDone = { if (test.input.isNotBlank()) test.test() })
+            MistralKeyField(test.input, onValueChange = test::edit, onDone = { if (test.input.isNotBlank()) test.test(name) })
             test.result?.let { KeyCheckResult(it) }
             test.problem?.let { ErrorLine(it) }
         }

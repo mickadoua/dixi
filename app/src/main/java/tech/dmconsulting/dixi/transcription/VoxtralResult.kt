@@ -30,6 +30,9 @@ enum class VoxtralError(@StringRes val message: Int) {
     /** The user's key, refused by Mistral (HTTP 401 or 403): to check in screen 10. */
     InvalidKey(R.string.error_invalid_key),
 
+    /** No Mistral key saved (all deleted in screen 10): add one there. Never in debug « Mode démo ». */
+    NoKey(R.string.error_no_key),
+
     /** Too many requests (HTTP 429): rate limit or spending cap reached. */
     RateLimited(R.string.error_rate_limited),
 

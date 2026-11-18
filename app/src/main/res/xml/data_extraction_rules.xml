@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+. The user's Mistral key (no_backup/mistral_key.bin, DMC-227) never leaves
+<!-- Android 12+. The user's Mistral keys (no_backup/mistral_keys/, DMC-227, DMC-766) never leave
      the phone: neither in the cloud backup nor in a transfer to a new device. Nor does the
      history of dictations (DMC-338). -->
 <data-extraction-rules>

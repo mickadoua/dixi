@@ -83,6 +83,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val entries by history.entries.collectAsState(initial = null)
     val keyStatus by keys.status.collectAsState()
+    val keyEntries by keys.entries.collectAsState()
     Column(
         Modifier
             .fillMaxSize()
@@ -110,7 +111,7 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(4.dp))
         BubbleCard(bubble)
-        KeyCard(keyStatus, onOpenSettings)
+        KeyCard(keyStatus, keyEntries.firstOrNull { it.active }?.name, onOpenSettings)
         if (autoPaste != null && autoPaste.on == false) AutoPasteCard(onTurnOn = { autoPaste.set(true) })
         Spacer(Modifier.height(8.dp))
         SectionLabel(stringResource(R.string.home_last_dictation))
@@ -184,9 +185,12 @@ private fun BubbleCard(bubble: BubbleToggle) {
     }
 }
 
-/** The key in use: valid, refused at the last dictation or test, or missing. A tap opens its settings. */
+/**
+ * The key in use, by its name ([activeName], DMC-766): valid, refused at the last dictation or
+ * test, or missing. A tap opens its settings.
+ */
 @Composable
-private fun KeyCard(status: KeyStatus, onOpenSettings: () -> Unit) {
+private fun KeyCard(status: KeyStatus, activeName: String?, onOpenSettings: () -> Unit) {
     NeonCard(
         Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpenSettings),
         border = BorderStroke(1.dp, if (status == KeyStatus.Saved) Neon.Hairline else Neon.Magenta),
@@ -199,7 +203,7 @@ private fun KeyCard(status: KeyStatus, onOpenSettings: () -> Unit) {
                         KeyStatus.Rejected -> R.string.home_key_refused
                         KeyStatus.None -> R.string.home_key_none
                     },
-                ),
+                ) + activeName?.let { " · $it" }.orEmpty(),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = if (status == KeyStatus.Saved) Neon.Text else Neon.Magenta,
                 modifier = Modifier.weight(1f),

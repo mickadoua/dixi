@@ -64,7 +64,7 @@ import tech.dmconsulting.dixi.ui.theme.Neon
 
 /**
  * Home, History and Settings are tabs (neon mockups 05 and 06).
- * [demoMode]: no Mistral key, Voxtral is faked, shown by a « Mode démo » label
+ * [demoMode]: debug build without a Mistral key, Voxtral is faked, shown by a « Mode démo » label
  * that each screen places ([LocalDemoMode]).
  * [openOnTop]: a screen opened once over [start], so « Retour » leads back to it
  * (a dictation notification opens screen 10 this way).
