@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi에 마이크가 필요합니다</string>
     <string name="mic_body">음성을 텍스트로 바꾸기 위해서입니다. 오디오는 받아쓰기를 위해 전송된 뒤 삭제되며 보관되지 않습니다.</string>
+    <string name="mic_notifications_note">이어서 Android가 알림 권한을 요청합니다. 알림에는 녹음 진행 상태와 “텍스트 복사됨”이 표시됩니다.</string>
     <string name="mic_allow">마이크 허용</string>
     <string name="mic_later">나중에</string>
     <string name="mic_open_settings">설정 열기</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">서비스 응답이 너무 오래 걸립니다. 다시 시도하세요.</string>
     <string name="error_audio_too_long">받아쓰기가 너무 깁니다. 더 짧게 나누어 주세요.</string>
     <string name="error_invalid_key">키가 거부되었습니다. 설정에서 확인하세요.</string>
+    <string name="error_no_key">Mistral 키가 없습니다. 설정에서 추가하세요.</string>
     <string name="error_rate_limited">한꺼번에 너무 많이 받아썼습니다. 1분 뒤 다시 시도하세요.</string>
     <string name="error_service_unavailable">서비스를 사용할 수 없습니다. 몇 분 뒤 다시 시도하세요.</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Mistral API 키</string>
-    <string name="key_status_none">키 없음 · 데모 모드, 아무것도 전송되지 않음</string>
-    <string name="key_status_saved">키 저장됨</string>
-    <string name="key_status_rejected">Mistral이 키를 거부했습니다. 확인하거나 다른 키를 붙여 넣으세요.</string>
+    <string name="key_status_none">키 없음: 받아쓰려면 키를 추가하세요.</string>
+    <string name="key_default_name">키 %1$d</string>
+    <string name="key_state_active">사용 중 · 받아쓰기에 사용됨</string>
+    <string name="key_state_idle">사용 안 함 · 탭하여 사용</string>
+    <string name="key_state_refused">Mistral에서 거부됨</string>
+    <string name="key_activated">이제 Dixi가 “%1$s” 키를 사용합니다.</string>
+    <string name="key_test_active">사용 중인 키 테스트</string>
+    <string name="key_add">키 추가</string>
+    <string name="key_name_field">이름(선택 사항)</string>
+    <string name="key_added">키가 추가되어 사용 중입니다.</string>
+    <string name="key_delete_one">%1$s 삭제</string>
     <string name="key_field">여기에 키 붙여 넣기</string>
-    <string name="key_save">저장</string>
     <string name="key_test">키 테스트</string>
-    <string name="key_delete">키 삭제</string>
-    <string name="key_saved">키가 저장되었습니다. “키 테스트”를 탭해 확인하세요.</string>
     <string name="key_format_invalid">키처럼 보이지 않는 텍스트입니다. 공백이나 줄 바꿈 없이 붙여 넣으세요.</string>
     <string name="key_save_failed">키를 저장하지 못했습니다. 다시 시도하세요.</string>
-    <string name="key_deleted">키가 삭제되었습니다. 이제 받아쓰기는 데모 모드로 작동합니다.</string>
+    <string name="key_change_failed">변경 사항을 저장하지 못했습니다. 다시 시도하세요.</string>
+    <string name="key_deleted">“%1$s” 키를 삭제했습니다.</string>
     <string name="key_check_running">테스트 중…</string>
     <string name="key_check_valid">유효한 키</string>
-    <string name="key_delete_title">키를 삭제할까요?</string>
-    <string name="key_delete_body">키를 붙여 넣을 때까지 받아쓰기는 데모 모드로 작동합니다.</string>
+    <string name="key_delete_title">“%1$s” 키를 삭제할까요?</string>
+    <string name="key_delete_body">이 키는 이 휴대전화에서 삭제됩니다. Mistral 계정은 바뀌지 않습니다.</string>
+    <string name="key_delete_last_body">유일한 키입니다. 다른 키를 추가할 때까지 Dixi로 받아쓸 수 없습니다.</string>
     <string name="key_delete_confirm">삭제</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">데모 모드: 샘플 텍스트입니다. 탭해서 설정에서 Mistral 키를 추가하세요.</string>
     <string name="notif_key_refused_title">키 거부됨</string>
     <string name="notif_key_refused_body">설정에서 확인하세요.</string>
+    <string name="notif_no_key_title">Mistral 키 없음</string>
+    <string name="notif_no_key_body">설정에서 추가하세요.</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">데모 모드</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">버블을 가장자리에 붙이기</string>
     <string name="bubble_action_cancel">받아쓰기 취소</string>
     <string name="bubble_error_key_refused">키 거부됨</string>
+    <string name="bubble_error_no_key">키 없음</string>
     <string name="bubble_error_no_network">네트워크 없음</string>
     <string name="bubble_error_nothing_heard">들리지 않음</string>
     <string name="home_bubble_permission">표시 허용 안 됨</string>

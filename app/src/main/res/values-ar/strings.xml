@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">يحتاج Dixi إلى الميكروفون</string>
     <string name="mic_body">لتحويل صوتك إلى نص. يُرسل الصوت للتفريغ النصي ثم يُحذف: لا يُحفظ أبدًا.</string>
+    <string name="mic_notifications_note">بعد ذلك يطلب Android الإشعارات: فهي تعرض التسجيل الجاري و«تم نسخ النص».</string>
     <string name="mic_allow">السماح بالميكروفون</string>
     <string name="mic_later">لاحقًا</string>
     <string name="mic_open_settings">فتح الإعدادات</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">تستغرق الخدمة وقتًا طويلًا للرد. حاول مجددًا.</string>
     <string name="error_audio_too_long">الإملاء طويل جدًا. قسّمه إلى عمليات أقصر.</string>
     <string name="error_invalid_key">المفتاح مرفوض، تحقق منه في الإعدادات.</string>
+    <string name="error_no_key">لا يوجد مفتاح Mistral. أضف مفتاحًا في الإعدادات.</string>
     <string name="error_rate_limited">عدد كبير من عمليات الإملاء دفعة واحدة. حاول مجددًا بعد دقيقة.</string>
     <string name="error_service_unavailable">الخدمة غير متاحة. حاول مجددًا بعد بضع دقائق.</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">مفتاح Mistral</string>
-    <string name="key_status_none">لا يوجد مفتاح · وضع العرض التجريبي، لا يُرسل شيء</string>
-    <string name="key_status_saved">تم حفظ المفتاح</string>
-    <string name="key_status_rejected">رفض Mistral المفتاح. تحقق منه أو الصق مفتاحًا آخر.</string>
+    <string name="key_status_none">لا يوجد مفتاح: أضف مفتاحًا لتتمكن من الإملاء.</string>
+    <string name="key_default_name">المفتاح %1$d</string>
+    <string name="key_state_active">نشط · يُستخدم للإملاء</string>
+    <string name="key_state_idle">غير مستخدم · اضغط لاستخدامه</string>
+    <string name="key_state_refused">رفضه Mistral</string>
+    <string name="key_activated">يستخدم Dixi الآن «%1$s».</string>
+    <string name="key_test_active">اختبار المفتاح النشط</string>
+    <string name="key_add">إضافة مفتاح</string>
+    <string name="key_name_field">الاسم (اختياري)</string>
+    <string name="key_added">تمت إضافة المفتاح وتفعيله.</string>
+    <string name="key_delete_one">حذف %1$s</string>
     <string name="key_field">الصق مفتاحك هنا</string>
-    <string name="key_save">حفظ</string>
     <string name="key_test">اختبار المفتاح</string>
-    <string name="key_delete">حذف المفتاح</string>
-    <string name="key_saved">تم حفظ المفتاح. اضغط «اختبار المفتاح» للتحقق منه.</string>
     <string name="key_format_invalid">لا يبدو هذا النص مفتاحًا: الصقه دون مسافات أو فواصل أسطر.</string>
     <string name="key_save_failed">تعذّر حفظ المفتاح. حاول مجددًا.</string>
-    <string name="key_deleted">تم حذف المفتاح. ستستخدم عمليات الإملاء الآن الوضع التجريبي.</string>
+    <string name="key_change_failed">تعذّر حفظ التغيير. حاول مجددًا.</string>
+    <string name="key_deleted">تم حذف المفتاح «%1$s».</string>
     <string name="key_check_running">جارٍ الاختبار…</string>
     <string name="key_check_valid">المفتاح صالح</string>
-    <string name="key_delete_title">حذف المفتاح؟</string>
-    <string name="key_delete_body">ستستخدم عمليات الإملاء الوضع التجريبي إلى أن تلصق مفتاحًا.</string>
+    <string name="key_delete_title">حذف «%1$s»؟</string>
+    <string name="key_delete_body">سيُزال هذا المفتاح من هذا الهاتف. لن يتغير حسابك في Mistral.</string>
+    <string name="key_delete_last_body">هذا مفتاحك الوحيد: لن يتمكن Dixi من الإملاء حتى تضيف مفتاحًا آخر.</string>
     <string name="key_delete_confirm">حذف</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">الوضع التجريبي: نص نموذجي. اضغط لإضافة مفتاح Mistral في الإعدادات.</string>
     <string name="notif_key_refused_title">المفتاح مرفوض</string>
     <string name="notif_key_refused_body">تحقق منه في الإعدادات.</string>
+    <string name="notif_no_key_title">لا يوجد مفتاح Mistral</string>
+    <string name="notif_no_key_body">أضف مفتاحًا في الإعدادات.</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">الوضع التجريبي</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">ضع الفقاعة عند الحافة</string>
     <string name="bubble_action_cancel">إلغاء الإملاء</string>
     <string name="bubble_error_key_refused">المفتاح مرفوض</string>
+    <string name="bubble_error_no_key">لا يوجد مفتاح</string>
     <string name="bubble_error_no_network">لا توجد شبكة</string>
     <string name="bubble_error_nothing_heard">لم يُسمع شيء</string>
     <string name="home_bubble_permission">العرض غير مسموح</string>

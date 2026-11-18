@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi にはマイクが必要です</string>
     <string name="mic_body">音声をテキストに変換するためです。音声は文字起こしのために送信され、その後削除されます。保存されることはありません。</string>
+    <string name="mic_notifications_note">続いて Android が通知の許可を求めます。通知には、録音中の表示と「テキストをコピーしました」が表示されます。</string>
     <string name="mic_allow">マイクを許可</string>
     <string name="mic_later">あとで</string>
     <string name="mic_open_settings">設定を開く</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">サービスの応答に時間がかかっています。もう一度お試しください。</string>
     <string name="error_audio_too_long">音声入力が長すぎます。短く分けてください。</string>
     <string name="error_invalid_key">キーが拒否されました。設定で確認してください。</string>
+    <string name="error_no_key">Mistral のキーがありません。設定で追加してください。</string>
     <string name="error_rate_limited">音声入力が集中しています。1 分後にもう一度お試しください。</string>
     <string name="error_service_unavailable">サービスを利用できません。数分後にもう一度お試しください。</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Mistral API キー</string>
-    <string name="key_status_none">キーなし · デモモード、何も送信されません</string>
-    <string name="key_status_saved">キーを保存しました</string>
-    <string name="key_status_rejected">Mistral にキーが拒否されました。確認するか、別のキーを貼り付けてください。</string>
+    <string name="key_status_none">キーがありません。音声入力するには追加してください。</string>
+    <string name="key_default_name">キー %1$d</string>
+    <string name="key_state_active">使用中 · 音声入力に使われます</string>
+    <string name="key_state_idle">未使用 · タップして使用</string>
+    <string name="key_state_refused">Mistral に拒否されました</string>
+    <string name="key_activated">Dixi は「%1$s」を使用します。</string>
+    <string name="key_test_active">使用中のキーをテスト</string>
+    <string name="key_add">キーを追加</string>
+    <string name="key_name_field">名前（任意）</string>
+    <string name="key_added">キーを追加し、使用中にしました。</string>
+    <string name="key_delete_one">%1$s を削除</string>
     <string name="key_field">ここにキーを貼り付け</string>
-    <string name="key_save">保存</string>
     <string name="key_test">キーをテスト</string>
-    <string name="key_delete">キーを削除</string>
-    <string name="key_saved">キーを保存しました。「キーをテスト」をタップして確認してください。</string>
     <string name="key_format_invalid">キーのようには見えません。スペースや改行を含めずに貼り付けてください。</string>
     <string name="key_save_failed">キーを保存できませんでした。もう一度お試しください。</string>
-    <string name="key_deleted">キーを削除しました。音声入力はデモモードになります。</string>
+    <string name="key_change_failed">変更を保存できませんでした。もう一度お試しください。</string>
+    <string name="key_deleted">キー「%1$s」を削除しました。</string>
     <string name="key_check_running">テスト中…</string>
     <string name="key_check_valid">有効なキーです</string>
-    <string name="key_delete_title">キーを削除しますか？</string>
-    <string name="key_delete_body">キーを貼り付けるまで、音声入力はデモモードになります。</string>
+    <string name="key_delete_title">「%1$s」を削除しますか？</string>
+    <string name="key_delete_body">このキーはこのスマートフォンから削除されます。Mistral のアカウントは変わりません。</string>
+    <string name="key_delete_last_body">これが唯一のキーです。別のキーを追加するまで、Dixi は音声入力できません。</string>
     <string name="key_delete_confirm">削除</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">デモモード：サンプルテキストです。タップして設定で Mistral キーを追加してください。</string>
     <string name="notif_key_refused_title">キーが拒否されました</string>
     <string name="notif_key_refused_body">設定で確認してください。</string>
+    <string name="notif_no_key_title">Mistral のキーがありません</string>
+    <string name="notif_no_key_body">設定で追加してください。</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">デモモード</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">バブルを端にしまう</string>
     <string name="bubble_action_cancel">音声入力をキャンセル</string>
     <string name="bubble_error_key_refused">キーが拒否されました</string>
+    <string name="bubble_error_no_key">キーなし</string>
     <string name="bubble_error_no_network">ネットワークなし</string>
     <string name="bubble_error_nothing_heard">聞き取れませんでした</string>
     <string name="home_bubble_permission">表示が許可されていません</string>

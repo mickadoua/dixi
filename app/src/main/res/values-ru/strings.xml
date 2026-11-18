@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi нужен микрофон</string>
     <string name="mic_body">Чтобы превращать ваш голос в текст. Звук отправляется на расшифровку, затем удаляется: он нигде не хранится.</string>
+    <string name="mic_notifications_note">Затем Android запросит уведомления: в них отображается идущая запись и «Текст скопирован».</string>
     <string name="mic_allow">Разрешить микрофон</string>
     <string name="mic_later">Позже</string>
     <string name="mic_open_settings">Открыть настройки</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">Сервис слишком долго отвечает. Попробуйте ещё раз.</string>
     <string name="error_audio_too_long">Диктовка слишком длинная. Разделите её на более короткие.</string>
     <string name="error_invalid_key">Ключ отклонён, проверьте его в настройках.</string>
+    <string name="error_no_key">Нет ключа Mistral. Добавьте его в настройках.</string>
     <string name="error_rate_limited">Слишком много диктовок сразу. Попробуйте через минуту.</string>
     <string name="error_service_unavailable">Сервис недоступен. Попробуйте через несколько минут.</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Ключ API Mistral</string>
-    <string name="key_status_none">Ключа нет · демо-режим, ничего не отправляется</string>
-    <string name="key_status_saved">Ключ сохранён</string>
-    <string name="key_status_rejected">Mistral отклонил ключ. Проверьте его или вставьте другой.</string>
+    <string name="key_status_none">Нет ключа: добавьте его, чтобы диктовать.</string>
+    <string name="key_default_name">Ключ %1$d</string>
+    <string name="key_state_active">Активен · используется для диктовок</string>
+    <string name="key_state_idle">Не используется · нажмите, чтобы выбрать</string>
+    <string name="key_state_refused">Отклонён Mistral</string>
+    <string name="key_activated">Теперь Dixi использует «%1$s».</string>
+    <string name="key_test_active">Проверить активный ключ</string>
+    <string name="key_add">Добавить ключ</string>
+    <string name="key_name_field">Название (необязательно)</string>
+    <string name="key_added">Ключ добавлен и активен.</string>
+    <string name="key_delete_one">Удалить %1$s</string>
     <string name="key_field">Вставьте ключ сюда</string>
-    <string name="key_save">Сохранить</string>
     <string name="key_test">Проверить ключ</string>
-    <string name="key_delete">Удалить ключ</string>
-    <string name="key_saved">Ключ сохранён. Нажмите «Проверить ключ», чтобы убедиться, что он работает.</string>
     <string name="key_format_invalid">Этот текст не похож на ключ: вставьте его без пробелов и переносов строк.</string>
     <string name="key_save_failed">Не удалось сохранить ключ. Попробуйте ещё раз.</string>
-    <string name="key_deleted">Ключ удалён. Диктовки теперь работают в демо-режиме.</string>
+    <string name="key_change_failed">Не удалось сохранить изменение. Попробуйте ещё раз.</string>
+    <string name="key_deleted">Ключ «%1$s» удалён.</string>
     <string name="key_check_running">Проверка…</string>
     <string name="key_check_valid">Ключ действителен</string>
-    <string name="key_delete_title">Удалить ключ?</string>
-    <string name="key_delete_body">Диктовки будут работать в демо-режиме, пока вы не вставите ключ.</string>
+    <string name="key_delete_title">Удалить «%1$s»?</string>
+    <string name="key_delete_body">Этот ключ удаляется с телефона. Ваш аккаунт Mistral не меняется.</string>
+    <string name="key_delete_last_body">Это ваш единственный ключ: Dixi не сможет диктовать, пока вы не добавите другой.</string>
     <string name="key_delete_confirm">Удалить</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">Демо-режим: пример текста. Нажмите, чтобы добавить ключ Mistral в настройках.</string>
     <string name="notif_key_refused_title">Ключ отклонён</string>
     <string name="notif_key_refused_body">Проверьте его в настройках.</string>
+    <string name="notif_no_key_title">Нет ключа Mistral</string>
+    <string name="notif_no_key_body">Добавьте его в настройках.</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">Демо-режим</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">Спрятать пузырёк у края</string>
     <string name="bubble_action_cancel">Отменить диктовку</string>
     <string name="bubble_error_key_refused">Ключ отклонён</string>
+    <string name="bubble_error_no_key">Нет ключа</string>
     <string name="bubble_error_no_network">Нет сети</string>
     <string name="bubble_error_nothing_heard">Ничего не слышно</string>
     <string name="home_bubble_permission">Показ не разрешён</string>

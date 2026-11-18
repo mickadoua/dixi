@@ -18,6 +18,7 @@
     <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
     <string name="mic_title">Dixi heeft de microfoon nodig</string>
     <string name="mic_body">Om je stem in tekst om te zetten. De audio wordt verstuurd voor transcriptie en daarna verwijderd: nooit bewaard.</string>
+    <string name="mic_notifications_note">Daarna vraagt Android om meldingen: die tonen de lopende opname en ‘Tekst gekopieerd’.</string>
     <string name="mic_allow">Microfoon toestaan</string>
     <string name="mic_later">Later</string>
     <string name="mic_open_settings">Instellingen openen</string>
@@ -148,32 +149,42 @@
     <string name="error_timeout">De service doet er te lang over om te antwoorden. Probeer het opnieuw.</string>
     <string name="error_audio_too_long">Dictaat te lang. Splits het op in kortere dictaten.</string>
     <string name="error_invalid_key">Sleutel geweigerd, controleer hem in de instellingen.</string>
+    <string name="error_no_key">Geen Mistral-sleutel. Voeg er een toe in de instellingen.</string>
     <string name="error_rate_limited">Te veel dictaten tegelijk. Probeer het over een minuut opnieuw.</string>
     <string name="error_service_unavailable">Service niet beschikbaar. Probeer het over een paar minuten opnieuw.</string>
 
     <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
     <string name="key_section">Mistral-sleutel</string>
-    <string name="key_status_none">Geen sleutel · demomodus, er wordt niets verstuurd</string>
-    <string name="key_status_saved">Sleutel opgeslagen</string>
-    <string name="key_status_rejected">Sleutel geweigerd door Mistral. Controleer hem of plak een andere.</string>
+    <string name="key_status_none">Geen sleutel: voeg er een toe om te dicteren.</string>
+    <string name="key_default_name">Sleutel %1$d</string>
+    <string name="key_state_active">Actief · gebruikt voor dictaten</string>
+    <string name="key_state_idle">Niet in gebruik · tik om hem te gebruiken</string>
+    <string name="key_state_refused">Geweigerd door Mistral</string>
+    <string name="key_activated">Dixi gebruikt nu ‘%1$s’.</string>
+    <string name="key_test_active">Actieve sleutel testen</string>
+    <string name="key_add">Sleutel toevoegen</string>
+    <string name="key_name_field">Naam (optioneel)</string>
+    <string name="key_added">Sleutel toegevoegd en actief.</string>
+    <string name="key_delete_one">%1$s verwijderen</string>
     <string name="key_field">Plak je sleutel hier</string>
-    <string name="key_save">Opslaan</string>
     <string name="key_test">Sleutel testen</string>
-    <string name="key_delete">De sleutel verwijderen</string>
-    <string name="key_saved">Sleutel opgeslagen. Tik op ‘Sleutel testen’ om hem te controleren.</string>
     <string name="key_format_invalid">Deze tekst lijkt niet op een sleutel: plak hem zonder spaties of regeleinden.</string>
     <string name="key_save_failed">De sleutel kon niet worden opgeslagen. Probeer het opnieuw.</string>
-    <string name="key_deleted">Sleutel verwijderd. Dictaten gebruiken nu de demomodus.</string>
+    <string name="key_change_failed">De wijziging kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="key_deleted">Sleutel ‘%1$s’ verwijderd.</string>
     <string name="key_check_running">Bezig met testen…</string>
     <string name="key_check_valid">Sleutel geldig</string>
-    <string name="key_delete_title">De sleutel verwijderen?</string>
-    <string name="key_delete_body">Dictaten gebruiken de demomodus totdat je een sleutel plakt.</string>
+    <string name="key_delete_title">‘%1$s’ verwijderen?</string>
+    <string name="key_delete_body">Deze sleutel wordt van deze telefoon verwijderd. Je Mistral-account verandert niet.</string>
+    <string name="key_delete_last_body">Dit is je enige sleutel: Dixi kan pas weer dicteren als je een andere toevoegt.</string>
     <string name="key_delete_confirm">Verwijderen</string>
 
     <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
     <string name="notif_demo_body">Demomodus: voorbeeldtekst. Tik om je Mistral-sleutel toe te voegen in de instellingen.</string>
     <string name="notif_key_refused_title">Sleutel geweigerd</string>
     <string name="notif_key_refused_body">Controleer hem in de instellingen.</string>
+    <string name="notif_no_key_title">Geen Mistral-sleutel</string>
+    <string name="notif_no_key_body">Voeg er een toe in de instellingen.</string>
 
     <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
     <string name="demo_mode">Demomodus</string>
@@ -232,6 +243,7 @@
     <string name="bubble_action_dock">De bel tegen de rand schuiven</string>
     <string name="bubble_action_cancel">Het dictaat annuleren</string>
     <string name="bubble_error_key_refused">Sleutel geweigerd</string>
+    <string name="bubble_error_no_key">Geen sleutel</string>
     <string name="bubble_error_no_network">Geen netwerk</string>
     <string name="bubble_error_nothing_heard">Niets gehoord</string>
     <string name="home_bubble_permission">Weergave niet toegestaan</string>
