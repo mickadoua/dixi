@@ -36,7 +36,7 @@ class AppContainer(
     val mistralKey: MistralKeyStore = InMemoryMistralKeyStore(),
     val history: DictationHistory = InMemoryDictationHistory(),
     val settings: SettingsStore = InMemorySettingsStore(),
-    mistralBaseUrl: HttpUrl = MistralHttp.defaultBaseUrl,
+    mistralBaseUrl: HttpUrl = MistralHttp.debugBaseUrl ?: MistralHttp.defaultBaseUrl,
     /** Fakes without a key, for internal tests. Never on in a release build. */
     val demoMode: Boolean = false,
     /** Raw text of a demo dictation, in the phone language. */

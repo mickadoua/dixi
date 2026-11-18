@@ -30,6 +30,13 @@ object MistralHttp {
     /** Mistral's EU-hosted API (brief § 5). */
     val defaultBaseUrl: HttpUrl = "https://api.mistral.ai/".toHttpUrl()
 
+    /**
+     * Debug builds only: the fake Mistral of the emulator proofs (src/debug, FakeMistralProvider)
+     * sets it before the app container is created. Always null in release.
+     */
+    @Volatile
+    var debugBaseUrl: HttpUrl? = null
+
     val json = Json { ignoreUnknownKeys = true }
 
     /** One client for the app: transcription can take a while for a 5-minute dictation. */
