@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">Welkom</string>
+    <string name="screen_mic_permission">Toegang tot microfoon</string>
+    <string name="screen_trial">Probeer de bel</string>
+    <string name="screen_bubble_intro">Over de bel</string>
+    <string name="screen_bubble_enabled">Bel aan</string>
+    <string name="screen_auto_paste_disclosure">Automatisch plakken</string>
+    <string name="screen_history">Geschiedenis</string>
+    <string name="screen_settings">Instellingen</string>
+
+    <!-- Common. -->
+    <string name="action_back">Terug</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="text_copied">Tekst gekopieerd</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi heeft de microfoon nodig</string>
+    <string name="mic_body">Om je stem in tekst om te zetten. De audio wordt verstuurd voor transcriptie en daarna verwijderd: nooit bewaard.</string>
+    <string name="mic_allow">Microfoon toestaan</string>
+    <string name="mic_later">Later</string>
+    <string name="mic_open_settings">Instellingen openen</string>
+    <string name="trial_title">Probeer de bel</string>
+    <string name="trial_skip">Overslaan</string>
+    <string name="bubble_intro_preview">Hij blijft binnen bereik van je duim, in al je apps.</string>
+    <string name="bubble_intro_title">Een bel boven je apps</string>
+    <string name="bubble_intro_step_tap">Tik op de bel om te dicteren</string>
+    <string name="bubble_intro_step_stop">Tik nogmaals om te stoppen</string>
+    <string name="bubble_intro_step_copied">De nette tekst wordt gekopieerd</string>
+    <string name="bubble_intro_system">Android vraagt je ‘Weergeven over andere apps’ toe te staan.</string>
+    <string name="bubble_intro_open">Instelling openen</string>
+    <string name="bubble_intro_not_now">Niet nu</string>
+    <string name="bubble_intro_refused">Instelling niet aangezet</string>
+    <string name="bubble_enabled_title">Dixi is klaar</string>
+    <string name="bubble_enabled_body">De bel blijft op je scherm. Tik erop in een willekeurige app om te dicteren.</string>
+    <string name="bubble_enabled_note">Schuif hem tegen de rand als je hem niet nodig hebt, tik erop om hem terug te halen.</string>
+    <string name="bubble_enabled_finish">Klaar</string>
+    <string name="bubble_enabled_auto_paste">Automatisch plakken aanzetten</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">Je laatste 20 dictaten, alleen tekst. Audio wordt nooit bewaard.</string>
+    <string name="history_empty">Nog geen dictaten.</string>
+    <string name="history_today">Vandaag</string>
+    <string name="history_yesterday">Gisteren</string>
+    <string name="history_copy">Tekst kopiëren</string>
+    <string name="history_copy_action">Kopiëren</string>
+    <string name="history_clear_all">Alles wissen</string>
+    <string name="history_clear_title">Geschiedenis wissen?</string>
+    <string name="history_clear_body">De dictaten die op deze telefoon zijn bewaard, worden verwijderd. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="history_clear_confirm">Wissen</string>
+    <string name="history_open_settings">Instellingen</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">De bel tonen</string>
+    <string name="settings_bubble_summary">Boven je andere apps</string>
+    <string name="settings_auto_paste">Automatisch plakken</string>
+    <string name="settings_language">Taal</string>
+    <string name="settings_language_auto">Automatisch herkennen (FR, EN)</string>
+    <string name="settings_language_french">Frans</string>
+    <string name="settings_language_english">Engels</string>
+    <string name="settings_clear_history">Geschiedenis wissen</string>
+    <string name="settings_clear_history_summary">Je laatste 20 dictaten, alleen tekst</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_summary">De audio gaat voor transcriptie naar Mistral. Dixi bewaart hem nooit.</string>
+    <string name="settings_about">Over</string>
+    <string name="settings_about_summary">Versie %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">Automatisch plakken</string>
+    <string name="disclosure_optional">Optioneel: zonder deze functie wordt de tekst gekopieerd en plak je hem zelf.</string>
+    <string name="disclosure_accept">Akkoord en aanzetten</string>
+    <string name="disclosure_decline">Niet nu</string>
+    <string name="auto_paste_service_label">Dixi · automatisch plakken</string>
+    <string name="auto_paste_service_description">Plakt de tekst die je net hebt gedicteerd in het veld waarin je typt. Leest alleen of dat veld tekst accepteert, nooit de inhoud. Verzamelt geen gegevens.</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">Start</string>
+    <string name="screen_offer">Abonnement</string>
+    <string name="home_bubble_on">Bel aan</string>
+    <string name="home_bubble_off">Bel uit</string>
+    <string name="home_bubble_on_body">Tik op de bel om in elke app te dicteren.</string>
+    <string name="home_bubble_off_body">Zet hem aan om in elke app te dicteren.</string>
+    <string name="home_last_dictation">Laatste dictaat</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">Spreek, en Dixi schrijft het netjes uit. In elke app.</string>
+    <string name="welcome_no_account">Geen account nodig.</string>
+    <string name="welcome_start">Aan de slag</string>
+    <string name="welcome_step">Stap %1$d van %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">Je abonnement</string>
+    <string name="offer_free">Gratis</string>
+    <string name="offer_current">Huidig abonnement</string>
+    <string name="offer_upgrade">Overstappen op het betaalde abonnement</string>
+    <string name="offer_label">Abonnement wijzigen</string>
+    <string name="offer_title">Kies je abonnement</string>
+    <string name="offer_paid">Betaald</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">Bel</string>
+    <string name="settings_section_dictation">Dicteren</string>
+    <string name="settings_section_other">Gegevens en info</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi, klaar om te dicteren</string>
+    <string name="bubble_listening">Dixi, neemt op</string>
+    <string name="bubble_processing">Dixi, transcribeert</string>
+    <string name="bubble_ready">Dixi, tekst gekopieerd</string>
+    <string name="bubble_error">Dixi, dicteren mislukt</string>
+    <string name="bubble_hide_zone">De bel verbergen</string>
+    <string name="bubble_hide_zone_label">Hier neerzetten om te verbergen</string>
+    <string name="bubble_action_hide">De bel verbergen</string>
+    <string name="channel_bubble">Bel</string>
+    <string name="notif_bubble_hidden_title">Bel verborgen</string>
+    <string name="notif_bubble_hidden_body">Tik om de bel te tonen.</string>
+    <string name="channel_dictation">Dicteren</string>
+    <string name="channel_copied">Tekst gekopieerd</string>
+    <string name="notif_recording">Opname bezig</string>
+    <string name="notif_recording_body">Tik op de bel om te stoppen.</string>
+    <string name="notif_recording_warning">Stopt automatisch na 30 s.</string>
+    <string name="notif_recording_stop">Stoppen</string>
+    <string name="error_nothing_heard">Ik heb niets gehoord. Probeer het opnieuw.</string>
+    <string name="error_mic_denied">Dixi heeft de microfoon nodig. Sta hem toe in de instellingen.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">Microfoon toestaan</string>
+    <string name="mic_ask_body">Dixi luistert alleen als je op de bel tikt, om op te schrijven wat je dicteert. Meldingen tonen de lopende opname en ‘Tekst gekopieerd’.</string>
+    <string name="mic_ask_continue">Doorgaan</string>
+    <string name="action_later">Later</string>
+    <string name="mic_settings_title">Microfoon geweigerd</string>
+    <string name="mic_settings_body">Om te dicteren open je de instellingen van Dixi en kies je Rechten › Microfoon › Toestaan.</string>
+    <string name="mic_settings_open">Instellingen openen</string>
+    <string name="error_recording_failed">De microfoon is niet gestart. Probeer het opnieuw.</string>
+    <string name="notif_copied_title">Tekst gekopieerd</string>
+    <string name="notif_copied_body">Houd ingedrukt in het veld om te plakken.</string>
+    <string name="notif_copied_show_text">Tekst tonen</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">Geen verbinding. Probeer het zo opnieuw.</string>
+    <string name="error_timeout">De service doet er te lang over om te antwoorden. Probeer het opnieuw.</string>
+    <string name="error_audio_too_long">Dictaat te lang. Splits het op in kortere dictaten.</string>
+    <string name="error_invalid_key">Sleutel geweigerd, controleer hem in de instellingen.</string>
+    <string name="error_rate_limited">Te veel dictaten tegelijk. Probeer het over een minuut opnieuw.</string>
+    <string name="error_service_unavailable">Service niet beschikbaar. Probeer het over een paar minuten opnieuw.</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Mistral-sleutel</string>
+    <string name="key_status_none">Geen sleutel · demomodus, er wordt niets verstuurd</string>
+    <string name="key_status_saved">Sleutel opgeslagen</string>
+    <string name="key_status_rejected">Sleutel geweigerd door Mistral. Controleer hem of plak een andere.</string>
+    <string name="key_field">Plak je sleutel hier</string>
+    <string name="key_save">Opslaan</string>
+    <string name="key_test">Sleutel testen</string>
+    <string name="key_delete">De sleutel verwijderen</string>
+    <string name="key_saved">Sleutel opgeslagen. Tik op ‘Sleutel testen’ om hem te controleren.</string>
+    <string name="key_format_invalid">Deze tekst lijkt niet op een sleutel: plak hem zonder spaties of regeleinden.</string>
+    <string name="key_save_failed">De sleutel kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="key_deleted">Sleutel verwijderd. Dictaten gebruiken nu de demomodus.</string>
+    <string name="key_check_running">Bezig met testen…</string>
+    <string name="key_check_valid">Sleutel geldig</string>
+    <string name="key_delete_title">De sleutel verwijderen?</string>
+    <string name="key_delete_body">Dictaten gebruiken de demomodus totdat je een sleutel plakt.</string>
+    <string name="key_delete_confirm">Verwijderen</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">Demomodus: voorbeeldtekst. Tik om je Mistral-sleutel toe te voegen in de instellingen.</string>
+    <string name="notif_key_refused_title">Sleutel geweigerd</string>
+    <string name="notif_key_refused_body">Controleer hem in de instellingen.</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">Demomodus</string>
+    <string name="demo_mode_description">Demomodus: gesimuleerde transcriptie, er wordt niets verstuurd.</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">Tekst gekopieerd</string>
+    <string name="toast_pasted">Tekst geplakt</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">d MMM</string>
+    <string name="history_date_day_month_year">d MMM yyyy</string>
+    <string name="history_date_time">HH:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Voeg je Mistral-sleutel toe</string>
+    <string name="key_guide_intro">Dixi gebruikt je eigen Mistral-sleutel om je stem in tekst om te zetten. Het duurt ongeveer twee minuten.</string>
+    <string name="key_guide_step1">1. Open console.mistral.ai en log in, of maak een account aan.</string>
+    <string name="key_guide_step1_note">Mistral kan je eerst vragen een abonnement te kiezen en je telefoonnummer te bevestigen.</string>
+    <string name="key_guide_step2">2. Open in het menu API Keys.</string>
+    <string name="key_guide_step3">3. Tik op Create new key, geef hem een naam (bijvoorbeeld ‘Dixi’) en bevestig.</string>
+    <string name="key_guide_step4">4. Kopieer de sleutel. Mistral toont hem maar één keer.</string>
+    <string name="key_guide_step5">5. Ga terug naar Dixi en plak hem hieronder.</string>
+    <string name="key_guide_link">Open de pagina API Keys van Mistral</string>
+    <string name="key_check_valid_body">Mistral accepteert deze sleutel. Je kunt verder.</string>
+    <string name="key_check_refused">Sleutel geweigerd</string>
+    <string name="key_cause_invalid">Mistral herkent deze sleutel niet. Controleer of je hem helemaal hebt gekopieerd, zonder spaties, of maak een nieuwe.</string>
+    <string name="key_cause_no_access">Deze sleutel heeft geen toegang tot de API. Controleer of je Mistral-abonnement actief is.</string>
+    <string name="key_cause_rate_limited">Mistral beperkt deze sleutel op dit moment. Wacht een minuut en test opnieuw.</string>
+    <string name="key_cause_no_network">Geen netwerk. Test opnieuw zodra je online bent.</string>
+    <string name="key_cause_unavailable">Mistral reageert niet. Test over een paar minuten opnieuw.</string>
+    <string name="key_continue">Doorgaan</string>
+    <string name="key_storage_note">Je sleutel blijft versleuteld op deze telefoon. Dixi toont hem nooit en maakt er nooit een back-up van.</string>
+    <string name="disclosure_intro">Om je gedicteerde tekst in het veld te plakken waarin je typt, gebruikt Dixi de toegankelijkheidsservice-API van Android. Lees wat die doet voordat je hem aanzet.</string>
+    <string name="disclosure_reads_title">Wat hij leest</string>
+    <string name="disclosure_reads">Alleen het veld waarin je typt, direct na een dictaat: of het tekst accepteert, of het een wachtwoordveld is en bij welke app het hoort. Hij leest nooit de tekst in het veld of iets anders op je scherm.</string>
+    <string name="disclosure_does_title">Wat hij doet</string>
+    <string name="disclosure_does">Hij plakt de tekst die je net hebt gedicteerd in dat veld. Tussen twee dictaten doet hij niets.</string>
+    <string name="disclosure_does_not_title">Wat hij niet doet</string>
+    <string name="disclosure_does_not">Hij verzamelt geen gegevens, slaat niets op en verstuurt niets: via deze service verlaten geen gegevens je telefoon. Hij plakt nooit in een wachtwoordveld.</string>
+    <string name="disclosure_voice_note">Je stem wordt nog steeds naar Mistral gestuurd om de tekst te maken, net als zonder automatisch plakken.</string>
+    <string name="disclosure_stop_title">Zo zet je hem uit</string>
+    <string name="disclosure_stop">Zet Automatisch plakken op elk moment uit in de instellingen van Dixi, of in Android-instellingen › Toegankelijkheid › Dixi · automatisch plakken.</string>
+    <string name="disclosure_next_step">Android opent de toegankelijkheidsinstellingen. Kies ‘Dixi · automatisch plakken’ en zet het aan.</string>
+    <string name="settings_auto_paste_on">Aan · plakt in het veld waarin je typt</string>
+    <string name="settings_auto_paste_off">Uit · de tekst wordt gekopieerd, jij plakt hem</string>
+    <string name="screen_mistral_key">Mistral-sleutel</string>
+    <string name="trial_field_hint">Je tekst verschijnt hier</string>
+    <string name="trial_hint_tap">Tik op de bel om te spreken</string>
+    <string name="trial_hint_speak">Spreek en tik nogmaals om af te ronden</string>
+    <string name="trial_it_works">Zie je wel. Het werkt in al je apps.</string>
+    <string name="trial_hint_dock">Sleep de bel naar de rand om hem weg te schuiven</string>
+    <string name="trial_hint_undock">Tik erop om hem terug te halen</string>
+    <string name="trial_retry">Tik op de bel om het opnieuw te proberen.</string>
+    <string name="bubble_docked">Dixi, tegen de rand geschoven. Tik om hem terug te halen.</string>
+    <string name="bubble_listening_elapsed">Dixi, luistert, %1$s</string>
+    <string name="bubble_action_dock">De bel tegen de rand schuiven</string>
+    <string name="bubble_action_cancel">Het dictaat annuleren</string>
+    <string name="bubble_error_key_refused">Sleutel geweigerd</string>
+    <string name="bubble_error_no_network">Geen netwerk</string>
+    <string name="bubble_error_nothing_heard">Niets gehoord</string>
+    <string name="home_bubble_permission">Weergave niet toegestaan</string>
+    <string name="home_bubble_permission_body">Sta ‘Weergeven over andere apps’ toe om de bel te tonen.</string>
+    <string name="home_key_active">Sleutel actief</string>
+    <string name="home_key_refused">Sleutel geweigerd</string>
+    <string name="home_key_none">Geen sleutel</string>
+    <string name="home_key_change">Sleutel wijzigen</string>
+    <string name="home_key_check">De sleutel controleren</string>
+    <string name="home_key_add">Een sleutel toevoegen</string>
+    <string name="home_auto_paste_off">Automatisch plakken: uit</string>
+    <string name="home_auto_paste_turn_on">Aanzetten</string>
+    <string name="home_last_dictation_empty">Je eerste dictaat verschijnt hier.</string>
+    <string name="home_all_history">Alle geschiedenis</string>
+    <string name="home_dictate_here">Hier dicteren</string>
+</resources>

@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">स्वागत</string>
+    <string name="screen_mic_permission">माइक्रोफ़ोन की अनुमति</string>
+    <string name="screen_trial">बबल आज़माएँ</string>
+    <string name="screen_bubble_intro">बबल के बारे में</string>
+    <string name="screen_bubble_enabled">बबल चालू</string>
+    <string name="screen_auto_paste_disclosure">ऑटो-पेस्ट</string>
+    <string name="screen_history">इतिहास</string>
+    <string name="screen_settings">सेटिंग</string>
+
+    <!-- Common. -->
+    <string name="action_back">वापस</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="text_copied">टेक्स्ट कॉपी हो गया</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi को माइक्रोफ़ोन चाहिए</string>
+    <string name="mic_body">आपकी आवाज़ को टेक्स्ट में बदलने के लिए। ऑडियो ट्रांसक्रिप्शन के लिए भेजा जाता है, फिर हटा दिया जाता है: कभी सहेजा नहीं जाता।</string>
+    <string name="mic_allow">माइक्रोफ़ोन की अनुमति दें</string>
+    <string name="mic_later">बाद में</string>
+    <string name="mic_open_settings">सेटिंग खोलें</string>
+    <string name="trial_title">बबल आज़माएँ</string>
+    <string name="trial_skip">छोड़ें</string>
+    <string name="bubble_intro_preview">यह आपके अंगूठे की पहुँच में रहता है, आपके सभी ऐप्स में।</string>
+    <string name="bubble_intro_title">आपके ऐप्स के ऊपर एक बबल</string>
+    <string name="bubble_intro_step_tap">बोलने के लिए बबल पर टैप करें</string>
+    <string name="bubble_intro_step_stop">रोकने के लिए फिर से टैप करें</string>
+    <string name="bubble_intro_step_copied">साफ़ टेक्स्ट कॉपी हो जाता है</string>
+    <string name="bubble_intro_system">Android आपसे “अन्य ऐप्स के ऊपर दिखाएँ” की अनुमति देने को कहेगा।</string>
+    <string name="bubble_intro_open">सेटिंग खोलें</string>
+    <string name="bubble_intro_not_now">अभी नहीं</string>
+    <string name="bubble_intro_refused">सेटिंग चालू नहीं की गई</string>
+    <string name="bubble_enabled_title">Dixi तैयार है</string>
+    <string name="bubble_enabled_body">बबल आपकी स्क्रीन पर रहता है। किसी भी ऐप में बोलने के लिए उस पर टैप करें।</string>
+    <string name="bubble_enabled_note">ज़रूरत न हो तो उसे किनारे पर टिका दें, वापस लाने के लिए उस पर टैप करें।</string>
+    <string name="bubble_enabled_finish">हो गया</string>
+    <string name="bubble_enabled_auto_paste">ऑटो-पेस्ट चालू करें</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">आपके पिछले 20 डिक्टेशन, केवल टेक्स्ट। ऑडियो कभी सहेजा नहीं जाता।</string>
+    <string name="history_empty">अभी तक कोई डिक्टेशन नहीं।</string>
+    <string name="history_today">आज</string>
+    <string name="history_yesterday">कल</string>
+    <string name="history_copy">टेक्स्ट कॉपी करें</string>
+    <string name="history_copy_action">कॉपी करें</string>
+    <string name="history_clear_all">सब साफ़ करें</string>
+    <string name="history_clear_title">इतिहास साफ़ करें?</string>
+    <string name="history_clear_body">इस फ़ोन पर सहेजे गए डिक्टेशन हटा दिए जाएँगे। इसे पहले जैसा नहीं किया जा सकता।</string>
+    <string name="history_clear_confirm">साफ़ करें</string>
+    <string name="history_open_settings">सेटिंग</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">बबल दिखाएँ</string>
+    <string name="settings_bubble_summary">आपके दूसरे ऐप्स के ऊपर</string>
+    <string name="settings_auto_paste">ऑटो-पेस्ट</string>
+    <string name="settings_language">भाषा</string>
+    <string name="settings_language_auto">अपने-आप पहचान (FR, EN)</string>
+    <string name="settings_language_french">फ़्रेंच</string>
+    <string name="settings_language_english">अंग्रेज़ी</string>
+    <string name="settings_clear_history">इतिहास साफ़ करें</string>
+    <string name="settings_clear_history_summary">आपके पिछले 20 डिक्टेशन, केवल टेक्स्ट</string>
+    <string name="settings_privacy">निजता</string>
+    <string name="settings_privacy_summary">ऑडियो ट्रांसक्रिप्शन के लिए Mistral को जाता है। Dixi उसे कभी सहेजता नहीं।</string>
+    <string name="settings_about">जानकारी</string>
+    <string name="settings_about_summary">वर्शन %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">ऑटो-पेस्ट</string>
+    <string name="disclosure_optional">वैकल्पिक: इसके बिना टेक्स्ट कॉपी हो जाता है और आप उसे ख़ुद पेस्ट करते हैं।</string>
+    <string name="disclosure_accept">सहमत हूँ, चालू करें</string>
+    <string name="disclosure_decline">अभी नहीं</string>
+    <string name="auto_paste_service_label">Dixi · ऑटो-पेस्ट</string>
+    <string name="auto_paste_service_description">आपका अभी बोला गया टेक्स्ट उस फ़ील्ड में पेस्ट करता है जहाँ आप टाइप कर रहे हैं। केवल यह जाँचता है कि फ़ील्ड टेक्स्ट स्वीकार करता है या नहीं, उसकी सामग्री कभी नहीं पढ़ता। कोई डेटा इकट्ठा नहीं करता।</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">होम</string>
+    <string name="screen_offer">प्लान</string>
+    <string name="home_bubble_on">बबल चालू</string>
+    <string name="home_bubble_off">बबल बंद</string>
+    <string name="home_bubble_on_body">किसी भी ऐप में बोलने के लिए बबल पर टैप करें।</string>
+    <string name="home_bubble_off_body">किसी भी ऐप में बोलने के लिए इसे चालू करें।</string>
+    <string name="home_last_dictation">पिछला डिक्टेशन</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">बोलिए, और Dixi उसे साफ़-सुथरा लिख देता है। हर ऐप में।</string>
+    <string name="welcome_no_account">कोई खाता बनाने की ज़रूरत नहीं।</string>
+    <string name="welcome_start">शुरू करें</string>
+    <string name="welcome_step">चरण %1$d / %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">आपका प्लान</string>
+    <string name="offer_free">मुफ़्त</string>
+    <string name="offer_current">मौजूदा प्लान</string>
+    <string name="offer_upgrade">सशुल्क प्लान में अपग्रेड करें</string>
+    <string name="offer_label">प्लान बदलें</string>
+    <string name="offer_title">अपना प्लान चुनें</string>
+    <string name="offer_paid">सशुल्क</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">बबल</string>
+    <string name="settings_section_dictation">डिक्टेशन</string>
+    <string name="settings_section_other">डेटा और जानकारी</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi, बोलने के लिए तैयार</string>
+    <string name="bubble_listening">Dixi, रिकॉर्डिंग जारी है</string>
+    <string name="bubble_processing">Dixi, ट्रांसक्राइब कर रहा है</string>
+    <string name="bubble_ready">Dixi, टेक्स्ट कॉपी हो गया</string>
+    <string name="bubble_error">Dixi, डिक्टेशन विफल रहा</string>
+    <string name="bubble_hide_zone">बबल छिपाएँ</string>
+    <string name="bubble_hide_zone_label">छिपाने के लिए यहाँ छोड़ें</string>
+    <string name="bubble_action_hide">बबल छिपाएँ</string>
+    <string name="channel_bubble">बबल</string>
+    <string name="notif_bubble_hidden_title">बबल छिपा है</string>
+    <string name="notif_bubble_hidden_body">बबल दिखाने के लिए टैप करें।</string>
+    <string name="channel_dictation">डिक्टेशन</string>
+    <string name="channel_copied">टेक्स्ट कॉपी हो गया</string>
+    <string name="notif_recording">रिकॉर्डिंग जारी है</string>
+    <string name="notif_recording_body">रोकने के लिए बबल पर टैप करें।</string>
+    <string name="notif_recording_warning">30 सेकंड में अपने-आप रुक जाएगी।</string>
+    <string name="notif_recording_stop">रोकें</string>
+    <string name="error_nothing_heard">मुझे कुछ सुनाई नहीं दिया। फिर से कोशिश करें।</string>
+    <string name="error_mic_denied">Dixi को माइक्रोफ़ोन चाहिए। सेटिंग में अनुमति दें।</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">माइक्रोफ़ोन की अनुमति दें</string>
+    <string name="mic_ask_body">Dixi केवल तब सुनता है जब आप बबल पर टैप करते हैं, ताकि आप जो बोलें उसे लिख सके। सूचनाएँ चल रही रिकॉर्डिंग और “टेक्स्ट कॉपी हो गया” दिखाती हैं।</string>
+    <string name="mic_ask_continue">जारी रखें</string>
+    <string name="action_later">बाद में</string>
+    <string name="mic_settings_title">माइक्रोफ़ोन की अनुमति नहीं मिली</string>
+    <string name="mic_settings_body">बोलने के लिए Dixi की सेटिंग खोलें, फिर अनुमतियाँ › माइक्रोफ़ोन › अनुमति दें।</string>
+    <string name="mic_settings_open">सेटिंग खोलें</string>
+    <string name="error_recording_failed">माइक्रोफ़ोन चालू नहीं हुआ। फिर से कोशिश करें।</string>
+    <string name="notif_copied_title">टेक्स्ट कॉपी हो गया</string>
+    <string name="notif_copied_body">पेस्ट करने के लिए फ़ील्ड में देर तक दबाएँ।</string>
+    <string name="notif_copied_show_text">टेक्स्ट दिखाएँ</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">कनेक्शन नहीं है। थोड़ी देर बाद फिर से कोशिश करें।</string>
+    <string name="error_timeout">सेवा को जवाब देने में बहुत समय लग रहा है। फिर से कोशिश करें।</string>
+    <string name="error_audio_too_long">डिक्टेशन बहुत लंबा है। उसे छोटे हिस्सों में बाँटें।</string>
+    <string name="error_invalid_key">कुंजी अस्वीकृत, सेटिंग में जाँचें।</string>
+    <string name="error_rate_limited">एक साथ बहुत ज़्यादा डिक्टेशन। एक मिनट बाद फिर से कोशिश करें।</string>
+    <string name="error_service_unavailable">सेवा उपलब्ध नहीं है। कुछ मिनट बाद फिर से कोशिश करें।</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Mistral API कुंजी</string>
+    <string name="key_status_none">कोई कुंजी नहीं · डेमो मोड, कुछ नहीं भेजा जाता</string>
+    <string name="key_status_saved">कुंजी सहेजी गई</string>
+    <string name="key_status_rejected">Mistral ने कुंजी अस्वीकार की। उसे जाँचें या दूसरी कुंजी पेस्ट करें।</string>
+    <string name="key_field">अपनी कुंजी यहाँ पेस्ट करें</string>
+    <string name="key_save">सहेजें</string>
+    <string name="key_test">कुंजी जाँचें</string>
+    <string name="key_delete">कुंजी हटाएँ</string>
+    <string name="key_saved">कुंजी सहेजी गई। जाँचने के लिए “कुंजी जाँचें” पर टैप करें।</string>
+    <string name="key_format_invalid">यह टेक्स्ट कुंजी जैसा नहीं लगता: उसे बिना स्पेस या नई पंक्तियों के पेस्ट करें।</string>
+    <string name="key_save_failed">कुंजी सहेजी नहीं जा सकी। फिर से कोशिश करें।</string>
+    <string name="key_deleted">कुंजी हटा दी गई। अब डिक्टेशन डेमो मोड में चलेंगे।</string>
+    <string name="key_check_running">जाँच हो रही है…</string>
+    <string name="key_check_valid">कुंजी मान्य है</string>
+    <string name="key_delete_title">कुंजी हटाएँ?</string>
+    <string name="key_delete_body">जब तक आप कुंजी पेस्ट नहीं करते, डिक्टेशन डेमो मोड में चलेंगे।</string>
+    <string name="key_delete_confirm">हटाएँ</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">डेमो मोड: नमूना टेक्स्ट। सेटिंग में अपनी Mistral कुंजी जोड़ने के लिए टैप करें।</string>
+    <string name="notif_key_refused_title">कुंजी अस्वीकृत</string>
+    <string name="notif_key_refused_body">सेटिंग में जाँचें।</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">डेमो मोड</string>
+    <string name="demo_mode_description">डेमो मोड: नकली ट्रांसक्रिप्शन, कुछ नहीं भेजा जाता।</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">टेक्स्ट कॉपी हो गया</string>
+    <string name="toast_pasted">टेक्स्ट पेस्ट हो गया</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">d MMM</string>
+    <string name="history_date_day_month_year">d MMM yyyy</string>
+    <string name="history_date_time">h:mm a</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">अपनी Mistral कुंजी जोड़ें</string>
+    <string name="key_guide_intro">Dixi आपकी आवाज़ को टेक्स्ट में बदलने के लिए आपकी अपनी Mistral कुंजी का उपयोग करता है। इसमें लगभग दो मिनट लगते हैं।</string>
+    <string name="key_guide_step1">1. console.mistral.ai खोलें और साइन इन करें, या खाता बनाएँ।</string>
+    <string name="key_guide_step1_note">Mistral पहले आपसे कोई प्लान चुनने और अपना फ़ोन नंबर पुष्टि करने को कह सकता है।</string>
+    <string name="key_guide_step2">2. मेनू में API Keys खोलें।</string>
+    <string name="key_guide_step3">3. Create new key पर टैप करें, उसे नाम दें (जैसे “Dixi”), फिर पुष्टि करें।</string>
+    <string name="key_guide_step4">4. कुंजी कॉपी करें। Mistral इसे केवल एक बार दिखाता है।</string>
+    <string name="key_guide_step5">5. Dixi पर लौटें और उसे नीचे पेस्ट करें।</string>
+    <string name="key_guide_link">Mistral का API Keys पेज खोलें</string>
+    <string name="key_check_valid_body">Mistral इस कुंजी को स्वीकार करता है। आप आगे बढ़ सकते हैं।</string>
+    <string name="key_check_refused">कुंजी अस्वीकृत</string>
+    <string name="key_cause_invalid">Mistral इस कुंजी को नहीं पहचानता। जाँचें कि आपने पूरी कुंजी बिना स्पेस के कॉपी की है, या नई कुंजी बनाएँ।</string>
+    <string name="key_cause_no_access">इस कुंजी को API की पहुँच नहीं है। जाँचें कि आपका Mistral प्लान सक्रिय है।</string>
+    <string name="key_cause_rate_limited">Mistral अभी इस कुंजी को सीमित कर रहा है। एक मिनट रुकें, फिर दोबारा जाँचें।</string>
+    <string name="key_cause_no_network">नेटवर्क नहीं है। ऑनलाइन होने पर दोबारा जाँचें।</string>
+    <string name="key_cause_unavailable">Mistral जवाब नहीं दे रहा है। कुछ मिनट बाद दोबारा जाँचें।</string>
+    <string name="key_continue">जारी रखें</string>
+    <string name="key_storage_note">आपकी कुंजी इस फ़ोन पर एन्क्रिप्ट होकर रहती है। Dixi इसे कभी नहीं दिखाता और कभी इसका बैकअप नहीं लेता।</string>
+    <string name="disclosure_intro">आपका बोला गया टेक्स्ट उस फ़ील्ड में पेस्ट करने के लिए जहाँ आप टाइप कर रहे हैं, Dixi Android की सुलभता सेवा (Accessibility Service) API का उपयोग करता है। इसे चालू करने से पहले पढ़ें कि यह क्या करता है।</string>
+    <string name="disclosure_reads_title">यह क्या पढ़ता है</string>
+    <string name="disclosure_reads">केवल वह फ़ील्ड जिसमें आप टाइप कर रहे हैं, डिक्टेशन के ठीक बाद: क्या वह टेक्स्ट स्वीकार करता है, क्या वह पासवर्ड फ़ील्ड है, और वह किस ऐप का है। यह फ़ील्ड का टेक्स्ट या आपकी स्क्रीन पर कुछ और कभी नहीं पढ़ता।</string>
+    <string name="disclosure_does_title">यह क्या करता है</string>
+    <string name="disclosure_does">यह आपका अभी बोला गया टेक्स्ट उस फ़ील्ड में पेस्ट करता है। दो डिक्टेशन के बीच यह कुछ नहीं करता।</string>
+    <string name="disclosure_does_not_title">यह क्या नहीं करता</string>
+    <string name="disclosure_does_not">यह कोई डेटा इकट्ठा नहीं करता, कुछ भी सहेजता नहीं और कुछ भी नहीं भेजता: इस सेवा के ज़रिए कोई डेटा आपके फ़ोन से बाहर नहीं जाता। यह कभी पासवर्ड फ़ील्ड में पेस्ट नहीं करता।</string>
+    <string name="disclosure_voice_note">टेक्स्ट बनाने के लिए आपकी आवाज़ अब भी Mistral को भेजी जाती है, ठीक वैसे ही जैसे ऑटो-पेस्ट के बिना।</string>
+    <string name="disclosure_stop_title">इसे कैसे बंद करें</string>
+    <string name="disclosure_stop">Dixi की सेटिंग में ऑटो-पेस्ट को कभी भी बंद करें, या Android सेटिंग › सुलभता › Dixi · ऑटो-पेस्ट में।</string>
+    <string name="disclosure_next_step">Android अपनी सुलभता सेटिंग खोलेगा। “Dixi · ऑटो-पेस्ट” चुनें और उसे चालू करें।</string>
+    <string name="settings_auto_paste_on">चालू · उस फ़ील्ड में पेस्ट करता है जहाँ आप टाइप करते हैं</string>
+    <string name="settings_auto_paste_off">बंद · टेक्स्ट कॉपी होता है, आप पेस्ट करते हैं</string>
+    <string name="screen_mistral_key">Mistral कुंजी</string>
+    <string name="trial_field_hint">आपका टेक्स्ट यहाँ आएगा</string>
+    <string name="trial_hint_tap">बोलने के लिए बबल पर टैप करें</string>
+    <string name="trial_hint_speak">बोलिए, फिर पूरा करने के लिए दोबारा टैप करें</string>
+    <string name="trial_it_works">लीजिए। यह आपके सभी ऐप्स में काम करता है।</string>
+    <string name="trial_hint_dock">बबल को किनारे पर खींचकर टिका दें</string>
+    <string name="trial_hint_undock">वापस लाने के लिए उस पर टैप करें</string>
+    <string name="trial_retry">फिर से कोशिश करने के लिए बबल पर टैप करें।</string>
+    <string name="bubble_docked">Dixi, किनारे पर टिका है। वापस लाने के लिए टैप करें।</string>
+    <string name="bubble_listening_elapsed">Dixi, सुन रहा है, %1$s</string>
+    <string name="bubble_action_dock">बबल को किनारे पर टिकाएँ</string>
+    <string name="bubble_action_cancel">डिक्टेशन रद्द करें</string>
+    <string name="bubble_error_key_refused">कुंजी अस्वीकृत</string>
+    <string name="bubble_error_no_network">नेटवर्क नहीं है</string>
+    <string name="bubble_error_nothing_heard">कुछ सुनाई नहीं दिया</string>
+    <string name="home_bubble_permission">दिखाने की अनुमति नहीं</string>
+    <string name="home_bubble_permission_body">बबल दिखाने के लिए “अन्य ऐप्स के ऊपर दिखाएँ” की अनुमति दें।</string>
+    <string name="home_key_active">कुंजी सक्रिय</string>
+    <string name="home_key_refused">कुंजी अस्वीकृत</string>
+    <string name="home_key_none">कोई कुंजी नहीं</string>
+    <string name="home_key_change">कुंजी बदलें</string>
+    <string name="home_key_check">कुंजी जाँचें</string>
+    <string name="home_key_add">कुंजी जोड़ें</string>
+    <string name="home_auto_paste_off">ऑटो-पेस्ट: बंद</string>
+    <string name="home_auto_paste_turn_on">चालू करें</string>
+    <string name="home_last_dictation_empty">आपका पहला डिक्टेशन यहाँ दिखेगा।</string>
+    <string name="home_all_history">पूरा इतिहास</string>
+    <string name="home_dictate_here">यहाँ बोलें</string>
+</resources>

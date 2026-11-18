@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">Добро пожаловать</string>
+    <string name="screen_mic_permission">Доступ к микрофону</string>
+    <string name="screen_trial">Попробуйте пузырёк</string>
+    <string name="screen_bubble_intro">О пузырьке</string>
+    <string name="screen_bubble_enabled">Пузырёк включён</string>
+    <string name="screen_auto_paste_disclosure">Автовставка</string>
+    <string name="screen_history">История</string>
+    <string name="screen_settings">Настройки</string>
+
+    <!-- Common. -->
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="text_copied">Текст скопирован</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi нужен микрофон</string>
+    <string name="mic_body">Чтобы превращать ваш голос в текст. Звук отправляется на расшифровку, затем удаляется: он нигде не хранится.</string>
+    <string name="mic_allow">Разрешить микрофон</string>
+    <string name="mic_later">Позже</string>
+    <string name="mic_open_settings">Открыть настройки</string>
+    <string name="trial_title">Попробуйте пузырёк</string>
+    <string name="trial_skip">Пропустить</string>
+    <string name="bubble_intro_preview">Он всегда под рукой, во всех ваших приложениях.</string>
+    <string name="bubble_intro_title">Пузырёк поверх приложений</string>
+    <string name="bubble_intro_step_tap">Нажмите на пузырёк, чтобы диктовать</string>
+    <string name="bubble_intro_step_stop">Нажмите ещё раз, чтобы остановить</string>
+    <string name="bubble_intro_step_copied">Готовый текст копируется</string>
+    <string name="bubble_intro_system">Android попросит вас разрешить «Поверх других приложений».</string>
+    <string name="bubble_intro_open">Открыть настройку</string>
+    <string name="bubble_intro_not_now">Не сейчас</string>
+    <string name="bubble_intro_refused">Настройка не включена</string>
+    <string name="bubble_enabled_title">Dixi готов</string>
+    <string name="bubble_enabled_body">Пузырёк остаётся на экране. Нажмите на него в любом приложении, чтобы диктовать.</string>
+    <string name="bubble_enabled_note">Спрячьте его у края экрана, когда он не нужен, и нажмите на него, чтобы вернуть.</string>
+    <string name="bubble_enabled_finish">Готово</string>
+    <string name="bubble_enabled_auto_paste">Включить автовставку</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">Ваши последние 20 диктовок, только текст. Звук никогда не хранится.</string>
+    <string name="history_empty">Диктовок пока нет.</string>
+    <string name="history_today">Сегодня</string>
+    <string name="history_yesterday">Вчера</string>
+    <string name="history_copy">Копировать текст</string>
+    <string name="history_copy_action">Копировать</string>
+    <string name="history_clear_all">Очистить всё</string>
+    <string name="history_clear_title">Очистить историю?</string>
+    <string name="history_clear_body">Диктовки, сохранённые на этом телефоне, будут удалены. Это действие нельзя отменить.</string>
+    <string name="history_clear_confirm">Очистить</string>
+    <string name="history_open_settings">Настройки</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">Показывать пузырёк</string>
+    <string name="settings_bubble_summary">Поверх других приложений</string>
+    <string name="settings_auto_paste">Автовставка</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_auto">Автоопределение (FR, EN)</string>
+    <string name="settings_language_french">Французский</string>
+    <string name="settings_language_english">Английский</string>
+    <string name="settings_clear_history">Очистить историю</string>
+    <string name="settings_clear_history_summary">Ваши последние 20 диктовок, только текст</string>
+    <string name="settings_privacy">Конфиденциальность</string>
+    <string name="settings_privacy_summary">Звук отправляется в Mistral для расшифровки. Dixi его никогда не хранит.</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_summary">Версия %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">Автовставка</string>
+    <string name="disclosure_optional">Необязательно: без неё текст копируется, и вы вставляете его сами.</string>
+    <string name="disclosure_accept">Согласен, включить</string>
+    <string name="disclosure_decline">Не сейчас</string>
+    <string name="auto_paste_service_label">Dixi · автовставка</string>
+    <string name="auto_paste_service_description">Вставляет только что надиктованный текст в поле, где вы пишете. Проверяет только, принимает ли поле текст, но не читает его содержимое. Не собирает данные.</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">Главная</string>
+    <string name="screen_offer">Тариф</string>
+    <string name="home_bubble_on">Пузырёк включён</string>
+    <string name="home_bubble_off">Пузырёк выключен</string>
+    <string name="home_bubble_on_body">Нажмите на пузырёк, чтобы диктовать в любом приложении.</string>
+    <string name="home_bubble_off_body">Включите его, чтобы диктовать в любом приложении.</string>
+    <string name="home_last_dictation">Последняя диктовка</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">Говорите, а Dixi аккуратно запишет. В любом приложении.</string>
+    <string name="welcome_no_account">Аккаунт создавать не нужно.</string>
+    <string name="welcome_start">Начать</string>
+    <string name="welcome_step">Шаг %1$d из %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">Ваш тариф</string>
+    <string name="offer_free">Бесплатный</string>
+    <string name="offer_current">Текущий тариф</string>
+    <string name="offer_upgrade">Перейти на платный тариф</string>
+    <string name="offer_label">Сменить тариф</string>
+    <string name="offer_title">Выберите тариф</string>
+    <string name="offer_paid">Платный</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">Пузырёк</string>
+    <string name="settings_section_dictation">Диктовка</string>
+    <string name="settings_section_other">Данные и информация</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi, готов к диктовке</string>
+    <string name="bubble_listening">Dixi, идёт запись</string>
+    <string name="bubble_processing">Dixi, расшифровка</string>
+    <string name="bubble_ready">Dixi, текст скопирован</string>
+    <string name="bubble_error">Dixi, диктовка не удалась</string>
+    <string name="bubble_hide_zone">Скрыть пузырёк</string>
+    <string name="bubble_hide_zone_label">Перетащите сюда, чтобы скрыть</string>
+    <string name="bubble_action_hide">Скрыть пузырёк</string>
+    <string name="channel_bubble">Пузырёк</string>
+    <string name="notif_bubble_hidden_title">Пузырёк скрыт</string>
+    <string name="notif_bubble_hidden_body">Нажмите, чтобы показать пузырёк.</string>
+    <string name="channel_dictation">Диктовка</string>
+    <string name="channel_copied">Текст скопирован</string>
+    <string name="notif_recording">Идёт запись</string>
+    <string name="notif_recording_body">Нажмите на пузырёк, чтобы остановить.</string>
+    <string name="notif_recording_warning">Остановится автоматически через 30 с.</string>
+    <string name="notif_recording_stop">Стоп</string>
+    <string name="error_nothing_heard">Я ничего не услышал. Попробуйте ещё раз.</string>
+    <string name="error_mic_denied">Dixi нужен микрофон. Разрешите доступ в настройках.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">Разрешите микрофон</string>
+    <string name="mic_ask_body">Dixi слушает, только когда вы нажимаете на пузырёк, чтобы записать то, что вы диктуете. В уведомлениях отображается идущая запись и «Текст скопирован».</string>
+    <string name="mic_ask_continue">Продолжить</string>
+    <string name="action_later">Позже</string>
+    <string name="mic_settings_title">Доступ к микрофону запрещён</string>
+    <string name="mic_settings_body">Чтобы диктовать, откройте настройки Dixi, затем Разрешения › Микрофон › Разрешить.</string>
+    <string name="mic_settings_open">Открыть настройки</string>
+    <string name="error_recording_failed">Микрофон не включился. Попробуйте ещё раз.</string>
+    <string name="notif_copied_title">Текст скопирован</string>
+    <string name="notif_copied_body">Нажмите и удерживайте поле, чтобы вставить.</string>
+    <string name="notif_copied_show_text">Показать текст</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">Нет соединения. Попробуйте чуть позже.</string>
+    <string name="error_timeout">Сервис слишком долго отвечает. Попробуйте ещё раз.</string>
+    <string name="error_audio_too_long">Диктовка слишком длинная. Разделите её на более короткие.</string>
+    <string name="error_invalid_key">Ключ отклонён, проверьте его в настройках.</string>
+    <string name="error_rate_limited">Слишком много диктовок сразу. Попробуйте через минуту.</string>
+    <string name="error_service_unavailable">Сервис недоступен. Попробуйте через несколько минут.</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Ключ API Mistral</string>
+    <string name="key_status_none">Ключа нет · демо-режим, ничего не отправляется</string>
+    <string name="key_status_saved">Ключ сохранён</string>
+    <string name="key_status_rejected">Mistral отклонил ключ. Проверьте его или вставьте другой.</string>
+    <string name="key_field">Вставьте ключ сюда</string>
+    <string name="key_save">Сохранить</string>
+    <string name="key_test">Проверить ключ</string>
+    <string name="key_delete">Удалить ключ</string>
+    <string name="key_saved">Ключ сохранён. Нажмите «Проверить ключ», чтобы убедиться, что он работает.</string>
+    <string name="key_format_invalid">Этот текст не похож на ключ: вставьте его без пробелов и переносов строк.</string>
+    <string name="key_save_failed">Не удалось сохранить ключ. Попробуйте ещё раз.</string>
+    <string name="key_deleted">Ключ удалён. Диктовки теперь работают в демо-режиме.</string>
+    <string name="key_check_running">Проверка…</string>
+    <string name="key_check_valid">Ключ действителен</string>
+    <string name="key_delete_title">Удалить ключ?</string>
+    <string name="key_delete_body">Диктовки будут работать в демо-режиме, пока вы не вставите ключ.</string>
+    <string name="key_delete_confirm">Удалить</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">Демо-режим: пример текста. Нажмите, чтобы добавить ключ Mistral в настройках.</string>
+    <string name="notif_key_refused_title">Ключ отклонён</string>
+    <string name="notif_key_refused_body">Проверьте его в настройках.</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">Демо-режим</string>
+    <string name="demo_mode_description">Демо-режим: имитация расшифровки, ничего не отправляется.</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">Текст скопирован</string>
+    <string name="toast_pasted">Текст вставлен</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">d MMM</string>
+    <string name="history_date_day_month_year">d MMM yyyy</string>
+    <string name="history_date_time">HH:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Добавьте ключ Mistral</string>
+    <string name="key_guide_intro">Dixi использует ваш собственный ключ Mistral, чтобы превращать голос в текст. Это займёт около двух минут.</string>
+    <string name="key_guide_step1">1. Откройте console.mistral.ai и войдите или создайте аккаунт.</string>
+    <string name="key_guide_step1_note">Mistral может сначала попросить выбрать тариф и подтвердить номер телефона.</string>
+    <string name="key_guide_step2">2. В меню откройте API Keys.</string>
+    <string name="key_guide_step3">3. Нажмите Create new key, введите название (например, «Dixi») и подтвердите.</string>
+    <string name="key_guide_step4">4. Скопируйте ключ. Mistral показывает его только один раз.</string>
+    <string name="key_guide_step5">5. Вернитесь в Dixi и вставьте его ниже.</string>
+    <string name="key_guide_link">Открыть страницу API Keys в Mistral</string>
+    <string name="key_check_valid_body">Mistral принимает этот ключ. Можно продолжить.</string>
+    <string name="key_check_refused">Ключ отклонён</string>
+    <string name="key_cause_invalid">Mistral не распознаёт этот ключ. Убедитесь, что скопировали его полностью, без пробелов, или создайте новый.</string>
+    <string name="key_cause_no_access">У этого ключа нет доступа к API. Проверьте, что ваш тариф Mistral активен.</string>
+    <string name="key_cause_rate_limited">Mistral временно ограничивает этот ключ. Подождите минуту и проверьте снова.</string>
+    <string name="key_cause_no_network">Нет сети. Проверьте снова, когда будете онлайн.</string>
+    <string name="key_cause_unavailable">Mistral не отвечает. Проверьте снова через несколько минут.</string>
+    <string name="key_continue">Продолжить</string>
+    <string name="key_storage_note">Ключ хранится в зашифрованном виде на этом телефоне. Dixi никогда его не показывает и не включает в резервные копии.</string>
+    <string name="disclosure_intro">Чтобы вставлять надиктованный текст в поле, где вы пишете, Dixi использует API службы специальных возможностей Android. Прочитайте, что она делает, прежде чем включать.</string>
+    <string name="disclosure_reads_title">Что она считывает</string>
+    <string name="disclosure_reads">Только поле, в котором вы пишете, сразу после диктовки: принимает ли оно текст, является ли оно полем пароля и какому приложению принадлежит. Она никогда не читает текст в поле и ничего другого на экране.</string>
+    <string name="disclosure_does_title">Что она делает</string>
+    <string name="disclosure_does">Вставляет в это поле только что надиктованный текст. Между диктовками она ничего не делает.</string>
+    <string name="disclosure_does_not_title">Чего она не делает</string>
+    <string name="disclosure_does_not">Она не собирает данные, ничего не хранит и ничего не отправляет: через эту службу никакие данные не покидают телефон. Она никогда не вставляет текст в поле пароля.</string>
+    <string name="disclosure_voice_note">Ваш голос по-прежнему отправляется в Mistral для создания текста, как и без автовставки.</string>
+    <string name="disclosure_stop_title">Как её отключить</string>
+    <string name="disclosure_stop">Отключите «Автовставку» в настройках Dixi в любой момент или в Настройках Android › Специальные возможности › Dixi · автовставка.</string>
+    <string name="disclosure_next_step">Android откроет настройки специальных возможностей. Выберите «Dixi · автовставка» и включите её.</string>
+    <string name="settings_auto_paste_on">Вкл. · вставляет в поле, где вы пишете</string>
+    <string name="settings_auto_paste_off">Выкл. · текст копируется, вы вставляете его сами</string>
+    <string name="screen_mistral_key">Ключ Mistral</string>
+    <string name="trial_field_hint">Здесь появится ваш текст</string>
+    <string name="trial_hint_tap">Нажмите на пузырёк и говорите</string>
+    <string name="trial_hint_speak">Говорите, затем нажмите ещё раз, чтобы закончить</string>
+    <string name="trial_it_works">Вот и всё. Это работает во всех ваших приложениях.</string>
+    <string name="trial_hint_dock">Перетащите пузырёк к краю, чтобы спрятать его</string>
+    <string name="trial_hint_undock">Нажмите на него, чтобы вернуть</string>
+    <string name="trial_retry">Нажмите на пузырёк, чтобы попробовать снова.</string>
+    <string name="bubble_docked">Dixi, спрятан у края. Нажмите, чтобы вернуть.</string>
+    <string name="bubble_listening_elapsed">Dixi, запись, %1$s</string>
+    <string name="bubble_action_dock">Спрятать пузырёк у края</string>
+    <string name="bubble_action_cancel">Отменить диктовку</string>
+    <string name="bubble_error_key_refused">Ключ отклонён</string>
+    <string name="bubble_error_no_network">Нет сети</string>
+    <string name="bubble_error_nothing_heard">Ничего не слышно</string>
+    <string name="home_bubble_permission">Показ не разрешён</string>
+    <string name="home_bubble_permission_body">Разрешите «Поверх других приложений», чтобы показывать пузырёк.</string>
+    <string name="home_key_active">Ключ активен</string>
+    <string name="home_key_refused">Ключ отклонён</string>
+    <string name="home_key_none">Нет ключа</string>
+    <string name="home_key_change">Изменить ключ</string>
+    <string name="home_key_check">Проверить ключ</string>
+    <string name="home_key_add">Добавить ключ</string>
+    <string name="home_auto_paste_off">Автовставка: выкл.</string>
+    <string name="home_auto_paste_turn_on">Включить</string>
+    <string name="home_last_dictation_empty">Здесь появится ваша первая диктовка.</string>
+    <string name="home_all_history">Вся история</string>
+    <string name="home_dictate_here">Диктовать здесь</string>
+</resources>

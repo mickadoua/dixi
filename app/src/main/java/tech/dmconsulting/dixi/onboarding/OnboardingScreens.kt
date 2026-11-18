@@ -20,10 +20,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -441,6 +442,7 @@ private const val DONE_PAUSE_MS = 800L
 /**
  * The hint card that points at the real bubble: beside it, on the inner side, centered on
  * its height ([y], pixels in this box). Without the bubble on screen, under the field.
+ * Placed in physical left/right, like the bubble: [Side] does not follow the layout direction.
  */
 @Composable
 private fun BoxScope.GuideHint(@StringRes hint: Int, @StringRes error: Int?, side: Side?, y: Int?) {
@@ -454,12 +456,12 @@ private fun BoxScope.GuideHint(@StringRes hint: Int, @StringRes error: Int?, sid
                 if (top == null) {
                     Alignment.Center
                 } else if (right) {
-                    Alignment.TopEnd
+                    AbsoluteAlignment.TopRight
                 } else {
-                    Alignment.TopStart
+                    AbsoluteAlignment.TopLeft
                 },
             )
-            .offset {
+            .absoluteOffset {
                 IntOffset(
                     if (top == null) {
                         0
@@ -479,7 +481,7 @@ private fun BoxScope.GuideHint(@StringRes hint: Int, @StringRes error: Int?, sid
             .semantics { liveRegion = LiveRegionMode.Polite },
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Absolute.spacedBy(8.dp)) {
             if (!right && top != null) Text("◂", color = Neon.Orange)
             Text(stringResource(hint), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false))
             if (right && top != null) Text("▸", color = Neon.Orange)

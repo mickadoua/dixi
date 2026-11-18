@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">مرحبًا</string>
+    <string name="screen_mic_permission">إذن الميكروفون</string>
+    <string name="screen_trial">جرّب الفقاعة</string>
+    <string name="screen_bubble_intro">عن الفقاعة</string>
+    <string name="screen_bubble_enabled">الفقاعة مفعّلة</string>
+    <string name="screen_auto_paste_disclosure">اللصق التلقائي</string>
+    <string name="screen_history">السجل</string>
+    <string name="screen_settings">الإعدادات</string>
+
+    <!-- Common. -->
+    <string name="action_back">رجوع</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="text_copied">تم نسخ النص</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">يحتاج Dixi إلى الميكروفون</string>
+    <string name="mic_body">لتحويل صوتك إلى نص. يُرسل الصوت للتفريغ النصي ثم يُحذف: لا يُحفظ أبدًا.</string>
+    <string name="mic_allow">السماح بالميكروفون</string>
+    <string name="mic_later">لاحقًا</string>
+    <string name="mic_open_settings">فتح الإعدادات</string>
+    <string name="trial_title">جرّب الفقاعة</string>
+    <string name="trial_skip">تخطّي</string>
+    <string name="bubble_intro_preview">تبقى في متناول إبهامك، في كل تطبيقاتك.</string>
+    <string name="bubble_intro_title">فقاعة فوق تطبيقاتك</string>
+    <string name="bubble_intro_step_tap">اضغط على الفقاعة للإملاء</string>
+    <string name="bubble_intro_step_stop">اضغط مجددًا للإيقاف</string>
+    <string name="bubble_intro_step_copied">يُنسخ النص المرتّب</string>
+    <string name="bubble_intro_system">سيطلب منك Android السماح بـ«العرض فوق التطبيقات الأخرى».</string>
+    <string name="bubble_intro_open">فتح الإعداد</string>
+    <string name="bubble_intro_not_now">ليس الآن</string>
+    <string name="bubble_intro_refused">الإعداد غير مفعّل</string>
+    <string name="bubble_enabled_title">Dixi جاهز</string>
+    <string name="bubble_enabled_body">تبقى الفقاعة على شاشتك. اضغط عليها في أي تطبيق للإملاء.</string>
+    <string name="bubble_enabled_note">ضعها عند حافة الشاشة حين لا تحتاج إليها، واضغط عليها لإعادتها.</string>
+    <string name="bubble_enabled_finish">تم</string>
+    <string name="bubble_enabled_auto_paste">تفعيل اللصق التلقائي</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">آخر 20 عملية إملاء لديك، نص فقط. لا يُحفظ الصوت أبدًا.</string>
+    <string name="history_empty">لا توجد عمليات إملاء بعد.</string>
+    <string name="history_today">اليوم</string>
+    <string name="history_yesterday">أمس</string>
+    <string name="history_copy">نسخ النص</string>
+    <string name="history_copy_action">نسخ</string>
+    <string name="history_clear_all">مسح الكل</string>
+    <string name="history_clear_title">مسح السجل؟</string>
+    <string name="history_clear_body">ستُحذف عمليات الإملاء المحفوظة على هذا الهاتف. لا يمكن التراجع عن ذلك.</string>
+    <string name="history_clear_confirm">مسح</string>
+    <string name="history_open_settings">الإعدادات</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">إظهار الفقاعة</string>
+    <string name="settings_bubble_summary">فوق تطبيقاتك الأخرى</string>
+    <string name="settings_auto_paste">اللصق التلقائي</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_language_auto">كشف تلقائي (FR, EN)</string>
+    <string name="settings_language_french">الفرنسية</string>
+    <string name="settings_language_english">الإنجليزية</string>
+    <string name="settings_clear_history">مسح السجل</string>
+    <string name="settings_clear_history_summary">آخر 20 عملية إملاء، نص فقط</string>
+    <string name="settings_privacy">الخصوصية</string>
+    <string name="settings_privacy_summary">يُرسل الصوت إلى Mistral للتفريغ النصي. لا يحتفظ به Dixi أبدًا.</string>
+    <string name="settings_about">حول</string>
+    <string name="settings_about_summary">الإصدار %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">اللصق التلقائي</string>
+    <string name="disclosure_optional">اختياري: دونها يُنسخ النص وتلصقه بنفسك.</string>
+    <string name="disclosure_accept">موافق، فعِّلها</string>
+    <string name="disclosure_decline">ليس الآن</string>
+    <string name="auto_paste_service_label">Dixi · اللصق التلقائي</string>
+    <string name="auto_paste_service_description">يلصق النص الذي أمليته للتو في الحقل الذي تكتب فيه. يتحقق فقط مما إذا كان الحقل يقبل نصًا، ولا يقرأ محتواه أبدًا. لا يجمع أي بيانات.</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">الرئيسية</string>
+    <string name="screen_offer">الخطة</string>
+    <string name="home_bubble_on">الفقاعة مفعّلة</string>
+    <string name="home_bubble_off">الفقاعة متوقفة</string>
+    <string name="home_bubble_on_body">اضغط على الفقاعة للإملاء في أي تطبيق.</string>
+    <string name="home_bubble_off_body">فعِّلها للإملاء في أي تطبيق.</string>
+    <string name="home_last_dictation">آخر إملاء</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">تحدّث، ويكتب Dixi نصك بشكل مرتّب. في كل تطبيق.</string>
+    <string name="welcome_no_account">لا حاجة لإنشاء حساب.</string>
+    <string name="welcome_start">ابدأ</string>
+    <string name="welcome_step">الخطوة %1$d من %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">خطتك</string>
+    <string name="offer_free">مجانية</string>
+    <string name="offer_current">الخطة الحالية</string>
+    <string name="offer_upgrade">الترقية إلى الخطة المدفوعة</string>
+    <string name="offer_label">تغيير الخطة</string>
+    <string name="offer_title">اختر خطتك</string>
+    <string name="offer_paid">مدفوعة</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">الفقاعة</string>
+    <string name="settings_section_dictation">الإملاء</string>
+    <string name="settings_section_other">البيانات والمعلومات</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi، جاهز للإملاء</string>
+    <string name="bubble_listening">Dixi، جارٍ التسجيل</string>
+    <string name="bubble_processing">Dixi، جارٍ التفريغ النصي</string>
+    <string name="bubble_ready">Dixi، تم نسخ النص</string>
+    <string name="bubble_error">Dixi، فشل الإملاء</string>
+    <string name="bubble_hide_zone">إخفاء الفقاعة</string>
+    <string name="bubble_hide_zone_label">أفلتها هنا للإخفاء</string>
+    <string name="bubble_action_hide">إخفاء الفقاعة</string>
+    <string name="channel_bubble">الفقاعة</string>
+    <string name="notif_bubble_hidden_title">الفقاعة مخفية</string>
+    <string name="notif_bubble_hidden_body">اضغط لإظهار الفقاعة.</string>
+    <string name="channel_dictation">الإملاء</string>
+    <string name="channel_copied">تم نسخ النص</string>
+    <string name="notif_recording">جارٍ التسجيل</string>
+    <string name="notif_recording_body">اضغط على الفقاعة للإيقاف.</string>
+    <string name="notif_recording_warning">يتوقف تلقائيًا بعد 30 ثانية.</string>
+    <string name="notif_recording_stop">إيقاف</string>
+    <string name="error_nothing_heard">لم أسمع شيئًا. حاول مجددًا.</string>
+    <string name="error_mic_denied">يحتاج Dixi إلى الميكروفون. اسمح به من الإعدادات.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">السماح بالميكروفون</string>
+    <string name="mic_ask_body">لا يستمع Dixi إلا عندما تضغط على الفقاعة، ليكتب ما تمليه. تعرض الإشعارات التسجيل الجاري و«تم نسخ النص».</string>
+    <string name="mic_ask_continue">متابعة</string>
+    <string name="action_later">لاحقًا</string>
+    <string name="mic_settings_title">تم رفض الميكروفون</string>
+    <string name="mic_settings_body">للإملاء، افتح إعدادات Dixi، ثم الأذونات › الميكروفون › السماح.</string>
+    <string name="mic_settings_open">فتح الإعدادات</string>
+    <string name="error_recording_failed">لم يبدأ الميكروفون. حاول مجددًا.</string>
+    <string name="notif_copied_title">تم نسخ النص</string>
+    <string name="notif_copied_body">اضغط مطولًا في الحقل للصق.</string>
+    <string name="notif_copied_show_text">إظهار النص</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">لا يوجد اتصال. حاول مجددًا بعد قليل.</string>
+    <string name="error_timeout">تستغرق الخدمة وقتًا طويلًا للرد. حاول مجددًا.</string>
+    <string name="error_audio_too_long">الإملاء طويل جدًا. قسّمه إلى عمليات أقصر.</string>
+    <string name="error_invalid_key">المفتاح مرفوض، تحقق منه في الإعدادات.</string>
+    <string name="error_rate_limited">عدد كبير من عمليات الإملاء دفعة واحدة. حاول مجددًا بعد دقيقة.</string>
+    <string name="error_service_unavailable">الخدمة غير متاحة. حاول مجددًا بعد بضع دقائق.</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">مفتاح Mistral</string>
+    <string name="key_status_none">لا يوجد مفتاح · وضع العرض التجريبي، لا يُرسل شيء</string>
+    <string name="key_status_saved">تم حفظ المفتاح</string>
+    <string name="key_status_rejected">رفض Mistral المفتاح. تحقق منه أو الصق مفتاحًا آخر.</string>
+    <string name="key_field">الصق مفتاحك هنا</string>
+    <string name="key_save">حفظ</string>
+    <string name="key_test">اختبار المفتاح</string>
+    <string name="key_delete">حذف المفتاح</string>
+    <string name="key_saved">تم حفظ المفتاح. اضغط «اختبار المفتاح» للتحقق منه.</string>
+    <string name="key_format_invalid">لا يبدو هذا النص مفتاحًا: الصقه دون مسافات أو فواصل أسطر.</string>
+    <string name="key_save_failed">تعذّر حفظ المفتاح. حاول مجددًا.</string>
+    <string name="key_deleted">تم حذف المفتاح. ستستخدم عمليات الإملاء الآن الوضع التجريبي.</string>
+    <string name="key_check_running">جارٍ الاختبار…</string>
+    <string name="key_check_valid">المفتاح صالح</string>
+    <string name="key_delete_title">حذف المفتاح؟</string>
+    <string name="key_delete_body">ستستخدم عمليات الإملاء الوضع التجريبي إلى أن تلصق مفتاحًا.</string>
+    <string name="key_delete_confirm">حذف</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">الوضع التجريبي: نص نموذجي. اضغط لإضافة مفتاح Mistral في الإعدادات.</string>
+    <string name="notif_key_refused_title">المفتاح مرفوض</string>
+    <string name="notif_key_refused_body">تحقق منه في الإعدادات.</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">الوضع التجريبي</string>
+    <string name="demo_mode_description">الوضع التجريبي: تفريغ نصي محاكى، لا يُرسل شيء.</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">تم نسخ النص</string>
+    <string name="toast_pasted">تم لصق النص</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">d MMM</string>
+    <string name="history_date_day_month_year">d MMM yyyy</string>
+    <string name="history_date_time">h:mm a</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">أضِف مفتاح Mistral</string>
+    <string name="key_guide_intro">يستخدم Dixi مفتاح Mistral الخاص بك لتحويل صوتك إلى نص. يستغرق الأمر دقيقتين تقريبًا.</string>
+    <string name="key_guide_step1">1. افتح console.mistral.ai وسجّل الدخول، أو أنشئ حسابًا.</string>
+    <string name="key_guide_step1_note">قد يطلب منك Mistral أولًا اختيار خطة وتأكيد رقم هاتفك.</string>
+    <string name="key_guide_step2">2. من القائمة، افتح API Keys.</string>
+    <string name="key_guide_step3">3. اضغط Create new key، وسمِّه (مثلًا «Dixi»)، ثم أكِّد.</string>
+    <string name="key_guide_step4">4. انسخ المفتاح. يعرضه Mistral مرة واحدة فقط.</string>
+    <string name="key_guide_step5">5. ارجع إلى Dixi والصقه أدناه.</string>
+    <string name="key_guide_link">افتح صفحة API Keys في Mistral</string>
+    <string name="key_check_valid_body">يقبل Mistral هذا المفتاح. يمكنك المتابعة.</string>
+    <string name="key_check_refused">المفتاح مرفوض</string>
+    <string name="key_cause_invalid">لا يتعرّف Mistral على هذا المفتاح. تأكّد من نسخه كاملًا ودون مسافات، أو أنشئ مفتاحًا جديدًا.</string>
+    <string name="key_cause_no_access">لا يملك هذا المفتاح صلاحية الوصول إلى الواجهة البرمجية. تأكّد من أن خطتك في Mistral مفعّلة.</string>
+    <string name="key_cause_rate_limited">يحدّ Mistral من استخدام هذا المفتاح حاليًا. انتظر دقيقة ثم اختبر مجددًا.</string>
+    <string name="key_cause_no_network">لا يوجد اتصال بالشبكة. اختبر مجددًا عند الاتصال.</string>
+    <string name="key_cause_unavailable">لا يستجيب Mistral. اختبر مجددًا بعد بضع دقائق.</string>
+    <string name="key_continue">متابعة</string>
+    <string name="key_storage_note">يبقى مفتاحك مشفّرًا على هذا الهاتف. لا يعرضه Dixi أبدًا ولا يحفظ منه نسخة احتياطية.</string>
+    <string name="disclosure_intro">للصق النص الذي أمليته في الحقل الذي تكتب فيه، يستخدم Dixi واجهة خدمة تسهيل الاستخدام في Android. اقرأ ما تفعله قبل تفعيلها.</string>
+    <string name="disclosure_reads_title">ما الذي تقرؤه</string>
+    <string name="disclosure_reads">الحقل الذي تكتب فيه فقط، مباشرة بعد الإملاء: هل يقبل نصًا، وهل هو حقل كلمة مرور، وإلى أي تطبيق ينتمي. لا تقرأ أبدًا النص الموجود في الحقل ولا أي شيء آخر على شاشتك.</string>
+    <string name="disclosure_does_title">ما الذي تفعله</string>
+    <string name="disclosure_does">تلصق في هذا الحقل النص الذي أمليته للتو. لا تفعل شيئًا بين عمليتي إملاء.</string>
+    <string name="disclosure_does_not_title">ما الذي لا تفعله</string>
+    <string name="disclosure_does_not">لا تجمع أي بيانات، ولا تخزّن شيئًا، ولا ترسل شيئًا: لا تغادر أي بيانات هاتفك عبر هذه الخدمة. ولا تلصق أبدًا في حقل كلمة مرور.</string>
+    <string name="disclosure_voice_note">يظل صوتك يُرسل إلى Mistral لإنشاء النص، كما هو الحال دون اللصق التلقائي.</string>
+    <string name="disclosure_stop_title">كيف توقفها</string>
+    <string name="disclosure_stop">أوقف «اللصق التلقائي» في إعدادات Dixi في أي وقت، أو من إعدادات Android › تسهيل الاستخدام › Dixi · اللصق التلقائي.</string>
+    <string name="disclosure_next_step">سيفتح Android إعدادات تسهيل الاستخدام. اختر «Dixi · اللصق التلقائي» وفعِّلها.</string>
+    <string name="settings_auto_paste_on">مفعّل · يلصق في الحقل الذي تكتب فيه</string>
+    <string name="settings_auto_paste_off">متوقف · يُنسخ النص وتلصقه أنت</string>
+    <string name="screen_mistral_key">مفتاح Mistral</string>
+    <string name="trial_field_hint">سيصل نصك إلى هنا</string>
+    <string name="trial_hint_tap">اضغط على الفقاعة للتحدث</string>
+    <string name="trial_hint_speak">تحدّث، ثم اضغط مجددًا للإنهاء</string>
+    <string name="trial_it_works">ها هو. يعمل في كل تطبيقاتك.</string>
+    <string name="trial_hint_dock">اسحب الفقاعة إلى الحافة لإخفائها جانبًا</string>
+    <string name="trial_hint_undock">اضغط عليها لإعادتها</string>
+    <string name="trial_retry">اضغط على الفقاعة للمحاولة مجددًا.</string>
+    <string name="bubble_docked">Dixi، عند الحافة. اضغط لإعادتها.</string>
+    <string name="bubble_listening_elapsed">Dixi، يستمع، %1$s</string>
+    <string name="bubble_action_dock">ضع الفقاعة عند الحافة</string>
+    <string name="bubble_action_cancel">إلغاء الإملاء</string>
+    <string name="bubble_error_key_refused">المفتاح مرفوض</string>
+    <string name="bubble_error_no_network">لا توجد شبكة</string>
+    <string name="bubble_error_nothing_heard">لم يُسمع شيء</string>
+    <string name="home_bubble_permission">العرض غير مسموح</string>
+    <string name="home_bubble_permission_body">اسمح بـ«العرض فوق التطبيقات الأخرى» لإظهار الفقاعة.</string>
+    <string name="home_key_active">المفتاح نشط</string>
+    <string name="home_key_refused">المفتاح مرفوض</string>
+    <string name="home_key_none">لا يوجد مفتاح</string>
+    <string name="home_key_change">تغيير المفتاح</string>
+    <string name="home_key_check">اختبار المفتاح</string>
+    <string name="home_key_add">إضافة مفتاح</string>
+    <string name="home_auto_paste_off">اللصق التلقائي: متوقف</string>
+    <string name="home_auto_paste_turn_on">تفعيل</string>
+    <string name="home_last_dictation_empty">سيظهر أول إملاء لك هنا.</string>
+    <string name="home_all_history">كل السجل</string>
+    <string name="home_dictate_here">أملِ هنا</string>
+</resources>

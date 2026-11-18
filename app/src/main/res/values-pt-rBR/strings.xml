@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">Boas-vindas</string>
+    <string name="screen_mic_permission">Permissão do microfone</string>
+    <string name="screen_trial">Experimente a bolha</string>
+    <string name="screen_bubble_intro">Sobre a bolha</string>
+    <string name="screen_bubble_enabled">Bolha ativada</string>
+    <string name="screen_auto_paste_disclosure">Colar automaticamente</string>
+    <string name="screen_history">Histórico</string>
+    <string name="screen_settings">Configurações</string>
+
+    <!-- Common. -->
+    <string name="action_back">Voltar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="text_copied">Texto copiado</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">O Dixi precisa do microfone</string>
+    <string name="mic_body">Para transformar sua voz em texto. O áudio é enviado para transcrição e depois apagado: nunca é guardado.</string>
+    <string name="mic_allow">Permitir o microfone</string>
+    <string name="mic_later">Depois</string>
+    <string name="mic_open_settings">Abrir configurações</string>
+    <string name="trial_title">Experimente a bolha</string>
+    <string name="trial_skip">Pular</string>
+    <string name="bubble_intro_preview">Ela fica ao alcance do polegar, em todos os seus apps.</string>
+    <string name="bubble_intro_title">Uma bolha sobre seus apps</string>
+    <string name="bubble_intro_step_tap">Toque na bolha para ditar</string>
+    <string name="bubble_intro_step_stop">Toque de novo para parar</string>
+    <string name="bubble_intro_step_copied">O texto limpo é copiado</string>
+    <string name="bubble_intro_system">O Android vai pedir que você permita “Sobrepor a outros apps”.</string>
+    <string name="bubble_intro_open">Abrir a configuração</string>
+    <string name="bubble_intro_not_now">Agora não</string>
+    <string name="bubble_intro_refused">Configuração não ativada</string>
+    <string name="bubble_enabled_title">O Dixi está pronto</string>
+    <string name="bubble_enabled_body">A bolha fica na sua tela. Toque nela em qualquer app para ditar.</string>
+    <string name="bubble_enabled_note">Encoste-a na borda quando não precisar dela e toque para trazê-la de volta.</string>
+    <string name="bubble_enabled_finish">Concluir</string>
+    <string name="bubble_enabled_auto_paste">Ativar colagem automática</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">Seus últimos 20 ditados, só o texto. O áudio nunca é guardado.</string>
+    <string name="history_empty">Nenhum ditado ainda.</string>
+    <string name="history_today">Hoje</string>
+    <string name="history_yesterday">Ontem</string>
+    <string name="history_copy">Copiar texto</string>
+    <string name="history_copy_action">Copiar</string>
+    <string name="history_clear_all">Limpar tudo</string>
+    <string name="history_clear_title">Limpar o histórico?</string>
+    <string name="history_clear_body">Os ditados guardados neste celular serão apagados. Esta ação não pode ser desfeita.</string>
+    <string name="history_clear_confirm">Limpar</string>
+    <string name="history_open_settings">Configurações</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">Mostrar a bolha</string>
+    <string name="settings_bubble_summary">Sobre seus outros apps</string>
+    <string name="settings_auto_paste">Colar automaticamente</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_auto">Detecção automática (FR, EN)</string>
+    <string name="settings_language_french">Francês</string>
+    <string name="settings_language_english">Inglês</string>
+    <string name="settings_clear_history">Limpar histórico</string>
+    <string name="settings_clear_history_summary">Seus últimos 20 ditados, só o texto</string>
+    <string name="settings_privacy">Privacidade</string>
+    <string name="settings_privacy_summary">O áudio vai para a Mistral para transcrição. O Dixi nunca o guarda.</string>
+    <string name="settings_about">Sobre</string>
+    <string name="settings_about_summary">Versão %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">Colar automaticamente</string>
+    <string name="disclosure_optional">Opcional: sem ele, o texto é copiado e você mesmo cola.</string>
+    <string name="disclosure_accept">Aceitar e ativar</string>
+    <string name="disclosure_decline">Agora não</string>
+    <string name="auto_paste_service_label">Dixi · colar automaticamente</string>
+    <string name="auto_paste_service_description">Cola o texto que você acabou de ditar no campo em que está digitando. Lê só se esse campo aceita texto, nunca o conteúdo. Não coleta nenhum dado.</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">Início</string>
+    <string name="screen_offer">Plano</string>
+    <string name="home_bubble_on">Bolha ativada</string>
+    <string name="home_bubble_off">Bolha desativada</string>
+    <string name="home_bubble_on_body">Toque na bolha para ditar em qualquer app.</string>
+    <string name="home_bubble_off_body">Ative-a para ditar em qualquer app.</string>
+    <string name="home_last_dictation">Último ditado</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">Fale, e o Dixi escreve tudo direitinho. Em todos os apps.</string>
+    <string name="welcome_no_account">Sem conta para criar.</string>
+    <string name="welcome_start">Começar</string>
+    <string name="welcome_step">Etapa %1$d de %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">Seu plano</string>
+    <string name="offer_free">Grátis</string>
+    <string name="offer_current">Plano atual</string>
+    <string name="offer_upgrade">Mudar para o plano pago</string>
+    <string name="offer_label">Mudar de plano</string>
+    <string name="offer_title">Escolha seu plano</string>
+    <string name="offer_paid">Pago</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">Bolha</string>
+    <string name="settings_section_dictation">Ditado</string>
+    <string name="settings_section_other">Dados e informações</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi, pronto para ditar</string>
+    <string name="bubble_listening">Dixi, gravando</string>
+    <string name="bubble_processing">Dixi, transcrevendo</string>
+    <string name="bubble_ready">Dixi, texto copiado</string>
+    <string name="bubble_error">Dixi, falha no ditado</string>
+    <string name="bubble_hide_zone">Ocultar a bolha</string>
+    <string name="bubble_hide_zone_label">Solte aqui para ocultar</string>
+    <string name="bubble_action_hide">Ocultar a bolha</string>
+    <string name="channel_bubble">Bolha</string>
+    <string name="notif_bubble_hidden_title">Bolha oculta</string>
+    <string name="notif_bubble_hidden_body">Toque para mostrar a bolha.</string>
+    <string name="channel_dictation">Ditado</string>
+    <string name="channel_copied">Texto copiado</string>
+    <string name="notif_recording">Gravando</string>
+    <string name="notif_recording_body">Toque na bolha para parar.</string>
+    <string name="notif_recording_warning">Para automaticamente em 30 s.</string>
+    <string name="notif_recording_stop">Parar</string>
+    <string name="error_nothing_heard">Não ouvi nada. Tente de novo.</string>
+    <string name="error_mic_denied">O Dixi precisa do microfone. Permita nas configurações.</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">Permitir o microfone</string>
+    <string name="mic_ask_body">O Dixi só escuta quando você toca na bolha, para escrever o que você dita. As notificações mostram a gravação em andamento e “Texto copiado”.</string>
+    <string name="mic_ask_continue">Continuar</string>
+    <string name="action_later">Depois</string>
+    <string name="mic_settings_title">Microfone negado</string>
+    <string name="mic_settings_body">Para ditar, abra as configurações do Dixi e vá em Permissões › Microfone › Permitir.</string>
+    <string name="mic_settings_open">Abrir configurações</string>
+    <string name="error_recording_failed">O microfone não iniciou. Tente de novo.</string>
+    <string name="notif_copied_title">Texto copiado</string>
+    <string name="notif_copied_body">Mantenha pressionado no campo para colar.</string>
+    <string name="notif_copied_show_text">Mostrar texto</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">Sem conexão. Tente de novo em instantes.</string>
+    <string name="error_timeout">O serviço está demorando para responder. Tente de novo.</string>
+    <string name="error_audio_too_long">Ditado longo demais. Divida-o em ditados mais curtos.</string>
+    <string name="error_invalid_key">Chave recusada, confira nas Configurações.</string>
+    <string name="error_rate_limited">Ditados demais ao mesmo tempo. Tente de novo em um minuto.</string>
+    <string name="error_service_unavailable">Serviço indisponível. Tente de novo em alguns minutos.</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Chave de API da Mistral</string>
+    <string name="key_status_none">Sem chave · modo demonstração, nada é enviado</string>
+    <string name="key_status_saved">Chave salva</string>
+    <string name="key_status_rejected">Chave recusada pela Mistral. Confira-a ou cole outra.</string>
+    <string name="key_field">Cole sua chave aqui</string>
+    <string name="key_save">Salvar</string>
+    <string name="key_test">Testar chave</string>
+    <string name="key_delete">Excluir a chave</string>
+    <string name="key_saved">Chave salva. Toque em “Testar chave” para conferir.</string>
+    <string name="key_format_invalid">Este texto não parece uma chave: cole-o sem espaços nem quebras de linha.</string>
+    <string name="key_save_failed">Não foi possível salvar a chave. Tente de novo.</string>
+    <string name="key_deleted">Chave excluída. Os ditados agora usam o modo demonstração.</string>
+    <string name="key_check_running">Testando…</string>
+    <string name="key_check_valid">Chave válida</string>
+    <string name="key_delete_title">Excluir a chave?</string>
+    <string name="key_delete_body">Os ditados usarão o modo demonstração até você colar uma chave.</string>
+    <string name="key_delete_confirm">Excluir</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">Modo demonstração: texto de exemplo. Toque para adicionar sua chave Mistral nas Configurações.</string>
+    <string name="notif_key_refused_title">Chave recusada</string>
+    <string name="notif_key_refused_body">Confira nas Configurações.</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">Modo demonstração</string>
+    <string name="demo_mode_description">Modo demonstração: transcrição simulada, nada é enviado.</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">Texto copiado</string>
+    <string name="toast_pasted">Texto colado</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">d \'de\' MMM</string>
+    <string name="history_date_day_month_year">d \'de\' MMM \'de\' yyyy</string>
+    <string name="history_date_time">HH:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Adicione sua chave Mistral</string>
+    <string name="key_guide_intro">O Dixi usa sua própria chave Mistral para transformar sua voz em texto. Leva uns dois minutos.</string>
+    <string name="key_guide_step1">1. Abra console.mistral.ai e entre, ou crie uma conta.</string>
+    <string name="key_guide_step1_note">A Mistral pode pedir antes que você escolha um plano e confirme seu número de telefone.</string>
+    <string name="key_guide_step2">2. No menu, abra API Keys.</string>
+    <string name="key_guide_step3">3. Toque em Create new key, dê um nome (por exemplo “Dixi”) e confirme.</string>
+    <string name="key_guide_step4">4. Copie a chave. A Mistral mostra a chave só uma vez.</string>
+    <string name="key_guide_step5">5. Volte ao Dixi e cole abaixo.</string>
+    <string name="key_guide_link">Abrir a página API Keys da Mistral</string>
+    <string name="key_check_valid_body">A Mistral aceita esta chave. Você pode continuar.</string>
+    <string name="key_check_refused">Chave recusada</string>
+    <string name="key_cause_invalid">A Mistral não reconhece esta chave. Confira se você copiou a chave inteira, sem espaços, ou crie uma nova.</string>
+    <string name="key_cause_no_access">Esta chave não tem acesso à API. Confira se o seu plano Mistral está ativo.</string>
+    <string name="key_cause_rate_limited">A Mistral está limitando esta chave no momento. Espere um minuto e teste de novo.</string>
+    <string name="key_cause_no_network">Sem conexão. Teste de novo quando estiver on-line.</string>
+    <string name="key_cause_unavailable">A Mistral não está respondendo. Teste de novo em alguns minutos.</string>
+    <string name="key_continue">Continuar</string>
+    <string name="key_storage_note">Sua chave fica criptografada neste celular. O Dixi nunca mostra a chave e nunca faz backup dela.</string>
+    <string name="disclosure_intro">Para colar o texto ditado no campo em que você está digitando, o Dixi usa a API do serviço de acessibilidade do Android. Leia o que ele faz antes de ativar.</string>
+    <string name="disclosure_reads_title">O que ele lê</string>
+    <string name="disclosure_reads">Só o campo em que você está digitando, logo depois de um ditado: se ele aceita texto, se é um campo de senha e a qual app pertence. Ele nunca lê o texto do campo nem nada mais da sua tela.</string>
+    <string name="disclosure_does_title">O que ele faz</string>
+    <string name="disclosure_does">Ele cola nesse campo o texto que você acabou de ditar. Não faz nada entre um ditado e outro.</string>
+    <string name="disclosure_does_not_title">O que ele não faz</string>
+    <string name="disclosure_does_not">Ele não coleta nenhum dado, não guarda nada e não envia nada: nenhum dado sai do seu celular por este serviço. Ele nunca cola em um campo de senha.</string>
+    <string name="disclosure_voice_note">Sua voz continua sendo enviada à Mistral para gerar o texto, como sem a colagem automática.</string>
+    <string name="disclosure_stop_title">Como desativar</string>
+    <string name="disclosure_stop">Desative Colar automaticamente nas configurações do Dixi a qualquer momento, ou em Configurações do Android › Acessibilidade › Dixi · colar automaticamente.</string>
+    <string name="disclosure_next_step">O Android vai abrir as configurações de acessibilidade. Escolha “Dixi · colar automaticamente” e ative.</string>
+    <string name="settings_auto_paste_on">Ativado · cola no campo em que você digita</string>
+    <string name="settings_auto_paste_off">Desativado · o texto é copiado, você cola</string>
+    <string name="screen_mistral_key">Chave Mistral</string>
+    <string name="trial_field_hint">Seu texto vai chegar aqui</string>
+    <string name="trial_hint_tap">Toque na bolha para falar</string>
+    <string name="trial_hint_speak">Fale e toque de novo para terminar</string>
+    <string name="trial_it_works">Pronto. Funciona em todos os seus apps.</string>
+    <string name="trial_hint_dock">Arraste a bolha até a borda para guardá-la</string>
+    <string name="trial_hint_undock">Toque nela para trazê-la de volta</string>
+    <string name="trial_retry">Toque na bolha para tentar de novo.</string>
+    <string name="bubble_docked">Dixi, encostado na borda. Toque para trazê-lo de volta.</string>
+    <string name="bubble_listening_elapsed">Dixi, ouvindo, %1$s</string>
+    <string name="bubble_action_dock">Encostar a bolha na borda</string>
+    <string name="bubble_action_cancel">Cancelar o ditado</string>
+    <string name="bubble_error_key_refused">Chave recusada</string>
+    <string name="bubble_error_no_network">Sem conexão</string>
+    <string name="bubble_error_nothing_heard">Nada ouvido</string>
+    <string name="home_bubble_permission">Exibição não permitida</string>
+    <string name="home_bubble_permission_body">Permita “Sobrepor a outros apps” para mostrar a bolha.</string>
+    <string name="home_key_active">Chave ativa</string>
+    <string name="home_key_refused">Chave recusada</string>
+    <string name="home_key_none">Sem chave</string>
+    <string name="home_key_change">Trocar chave</string>
+    <string name="home_key_check">Conferir a chave</string>
+    <string name="home_key_add">Adicionar uma chave</string>
+    <string name="home_auto_paste_off">Colar automaticamente: desativado</string>
+    <string name="home_auto_paste_turn_on">Ativar</string>
+    <string name="home_last_dictation_empty">Seu primeiro ditado vai aparecer aqui.</string>
+    <string name="home_all_history">Todo o histórico</string>
+    <string name="home_dictate_here">Ditar aqui</string>
+</resources>

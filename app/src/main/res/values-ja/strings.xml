@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">ようこそ</string>
+    <string name="screen_mic_permission">マイクの権限</string>
+    <string name="screen_trial">バブルを試す</string>
+    <string name="screen_bubble_intro">バブルについて</string>
+    <string name="screen_bubble_enabled">バブル オン</string>
+    <string name="screen_auto_paste_disclosure">自動貼り付け</string>
+    <string name="screen_history">履歴</string>
+    <string name="screen_settings">設定</string>
+
+    <!-- Common. -->
+    <string name="action_back">戻る</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="text_copied">テキストをコピーしました</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi にはマイクが必要です</string>
+    <string name="mic_body">音声をテキストに変換するためです。音声は文字起こしのために送信され、その後削除されます。保存されることはありません。</string>
+    <string name="mic_allow">マイクを許可</string>
+    <string name="mic_later">あとで</string>
+    <string name="mic_open_settings">設定を開く</string>
+    <string name="trial_title">バブルを試す</string>
+    <string name="trial_skip">スキップ</string>
+    <string name="bubble_intro_preview">親指が届く位置にあり、すべてのアプリで使えます。</string>
+    <string name="bubble_intro_title">アプリの上に表示されるバブル</string>
+    <string name="bubble_intro_step_tap">バブルをタップして音声入力</string>
+    <string name="bubble_intro_step_stop">もう一度タップして停止</string>
+    <string name="bubble_intro_step_copied">整えたテキストがコピーされます</string>
+    <string name="bubble_intro_system">Android が「他のアプリの上に重ねて表示」の許可を求めます。</string>
+    <string name="bubble_intro_open">設定を開く</string>
+    <string name="bubble_intro_not_now">今はしない</string>
+    <string name="bubble_intro_refused">設定がオンになっていません</string>
+    <string name="bubble_enabled_title">Dixi の準備ができました</string>
+    <string name="bubble_enabled_body">バブルは画面に表示されたままです。どのアプリでもタップして音声入力できます。</string>
+    <string name="bubble_enabled_note">使わないときは画面の端にしまい、タップすると元に戻ります。</string>
+    <string name="bubble_enabled_finish">完了</string>
+    <string name="bubble_enabled_auto_paste">自動貼り付けをオンにする</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">直近 20 件の音声入力（テキストのみ）。音声は保存されません。</string>
+    <string name="history_empty">音声入力はまだありません。</string>
+    <string name="history_today">今日</string>
+    <string name="history_yesterday">昨日</string>
+    <string name="history_copy">テキストをコピー</string>
+    <string name="history_copy_action">コピー</string>
+    <string name="history_clear_all">すべて削除</string>
+    <string name="history_clear_title">履歴を削除しますか？</string>
+    <string name="history_clear_body">このスマートフォンに保存されている音声入力が削除されます。元に戻すことはできません。</string>
+    <string name="history_clear_confirm">削除</string>
+    <string name="history_open_settings">設定</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">バブルを表示</string>
+    <string name="settings_bubble_summary">ほかのアプリの上に表示</string>
+    <string name="settings_auto_paste">自動貼り付け</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_language_auto">自動検出（FR, EN）</string>
+    <string name="settings_language_french">フランス語</string>
+    <string name="settings_language_english">英語</string>
+    <string name="settings_clear_history">履歴を削除</string>
+    <string name="settings_clear_history_summary">直近 20 件の音声入力（テキストのみ）</string>
+    <string name="settings_privacy">プライバシー</string>
+    <string name="settings_privacy_summary">音声は文字起こしのため Mistral に送信されます。Dixi が保存することはありません。</string>
+    <string name="settings_about">アプリについて</string>
+    <string name="settings_about_summary">バージョン %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">自動貼り付け</string>
+    <string name="disclosure_optional">任意：オフの場合、テキストはコピーされ、ご自身で貼り付けます。</string>
+    <string name="disclosure_accept">同意してオンにする</string>
+    <string name="disclosure_decline">今はしない</string>
+    <string name="auto_paste_service_label">Dixi · 自動貼り付け</string>
+    <string name="auto_paste_service_description">音声入力したばかりのテキストを、入力中のフィールドに貼り付けます。そのフィールドがテキストを受け付けるかどうかだけを確認し、内容は読み取りません。データは収集しません。</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">ホーム</string>
+    <string name="screen_offer">プラン</string>
+    <string name="home_bubble_on">バブル オン</string>
+    <string name="home_bubble_off">バブル オフ</string>
+    <string name="home_bubble_on_body">バブルをタップすると、どのアプリでも音声入力できます。</string>
+    <string name="home_bubble_off_body">オンにすると、どのアプリでも音声入力できます。</string>
+    <string name="home_last_dictation">直近の音声入力</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">話すだけで、Dixi がきれいな文章にします。どのアプリでも。</string>
+    <string name="welcome_no_account">アカウントの作成は不要です。</string>
+    <string name="welcome_start">はじめる</string>
+    <string name="welcome_step">ステップ %1$d / %2$d</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">あなたのプラン</string>
+    <string name="offer_free">無料</string>
+    <string name="offer_current">現在のプラン</string>
+    <string name="offer_upgrade">有料プランにアップグレード</string>
+    <string name="offer_label">プランを変更</string>
+    <string name="offer_title">プランを選択</string>
+    <string name="offer_paid">有料</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">バブル</string>
+    <string name="settings_section_dictation">音声入力</string>
+    <string name="settings_section_other">データと情報</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi、音声入力の準備完了</string>
+    <string name="bubble_listening">Dixi、録音中</string>
+    <string name="bubble_processing">Dixi、文字起こし中</string>
+    <string name="bubble_ready">Dixi、テキストをコピーしました</string>
+    <string name="bubble_error">Dixi、音声入力に失敗しました</string>
+    <string name="bubble_hide_zone">バブルを非表示</string>
+    <string name="bubble_hide_zone_label">ここにドロップして非表示</string>
+    <string name="bubble_action_hide">バブルを非表示</string>
+    <string name="channel_bubble">バブル</string>
+    <string name="notif_bubble_hidden_title">バブルを非表示にしました</string>
+    <string name="notif_bubble_hidden_body">タップするとバブルを表示します。</string>
+    <string name="channel_dictation">音声入力</string>
+    <string name="channel_copied">テキストをコピーしました</string>
+    <string name="notif_recording">録音中</string>
+    <string name="notif_recording_body">バブルをタップして停止します。</string>
+    <string name="notif_recording_warning">30 秒後に自動で停止します。</string>
+    <string name="notif_recording_stop">停止</string>
+    <string name="error_nothing_heard">何も聞き取れませんでした。もう一度お試しください。</string>
+    <string name="error_mic_denied">Dixi にはマイクが必要です。設定で許可してください。</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">マイクを許可</string>
+    <string name="mic_ask_body">Dixi は、バブルをタップしたときだけ音声を聞き取り、話した内容を文字にします。通知には、録音中の表示と「テキストをコピーしました」が表示されます。</string>
+    <string name="mic_ask_continue">次へ</string>
+    <string name="action_later">あとで</string>
+    <string name="mic_settings_title">マイクが許可されていません</string>
+    <string name="mic_settings_body">音声入力するには、Dixi の設定を開き、権限 › マイク › 許可 の順に選択してください。</string>
+    <string name="mic_settings_open">設定を開く</string>
+    <string name="error_recording_failed">マイクを起動できませんでした。もう一度お試しください。</string>
+    <string name="notif_copied_title">テキストをコピーしました</string>
+    <string name="notif_copied_body">フィールドを長押しして貼り付けます。</string>
+    <string name="notif_copied_show_text">テキストを表示</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">接続されていません。しばらくしてからもう一度お試しください。</string>
+    <string name="error_timeout">サービスの応答に時間がかかっています。もう一度お試しください。</string>
+    <string name="error_audio_too_long">音声入力が長すぎます。短く分けてください。</string>
+    <string name="error_invalid_key">キーが拒否されました。設定で確認してください。</string>
+    <string name="error_rate_limited">音声入力が集中しています。1 分後にもう一度お試しください。</string>
+    <string name="error_service_unavailable">サービスを利用できません。数分後にもう一度お試しください。</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Mistral API キー</string>
+    <string name="key_status_none">キーなし · デモモード、何も送信されません</string>
+    <string name="key_status_saved">キーを保存しました</string>
+    <string name="key_status_rejected">Mistral にキーが拒否されました。確認するか、別のキーを貼り付けてください。</string>
+    <string name="key_field">ここにキーを貼り付け</string>
+    <string name="key_save">保存</string>
+    <string name="key_test">キーをテスト</string>
+    <string name="key_delete">キーを削除</string>
+    <string name="key_saved">キーを保存しました。「キーをテスト」をタップして確認してください。</string>
+    <string name="key_format_invalid">キーのようには見えません。スペースや改行を含めずに貼り付けてください。</string>
+    <string name="key_save_failed">キーを保存できませんでした。もう一度お試しください。</string>
+    <string name="key_deleted">キーを削除しました。音声入力はデモモードになります。</string>
+    <string name="key_check_running">テスト中…</string>
+    <string name="key_check_valid">有効なキーです</string>
+    <string name="key_delete_title">キーを削除しますか？</string>
+    <string name="key_delete_body">キーを貼り付けるまで、音声入力はデモモードになります。</string>
+    <string name="key_delete_confirm">削除</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">デモモード：サンプルテキストです。タップして設定で Mistral キーを追加してください。</string>
+    <string name="notif_key_refused_title">キーが拒否されました</string>
+    <string name="notif_key_refused_body">設定で確認してください。</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">デモモード</string>
+    <string name="demo_mode_description">デモモード：模擬の文字起こしです。何も送信されません。</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">テキストをコピーしました</string>
+    <string name="toast_pasted">テキストを貼り付けました</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">M月d日</string>
+    <string name="history_date_day_month_year">yyyy年M月d日</string>
+    <string name="history_date_time">H:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">Mistral キーを追加</string>
+    <string name="key_guide_intro">Dixi は、あなた自身の Mistral キーを使って音声をテキストに変換します。2 分ほどで完了します。</string>
+    <string name="key_guide_step1">1. console.mistral.ai を開いてログインするか、アカウントを作成します。</string>
+    <string name="key_guide_step1_note">先にプランの選択と電話番号の確認を求められる場合があります。</string>
+    <string name="key_guide_step2">2. メニューから API Keys を開きます。</string>
+    <string name="key_guide_step3">3. Create new key をタップし、名前（例：「Dixi」）を付けて確定します。</string>
+    <string name="key_guide_step4">4. キーをコピーします。Mistral はキーを 1 回しか表示しません。</string>
+    <string name="key_guide_step5">5. Dixi に戻り、下に貼り付けます。</string>
+    <string name="key_guide_link">Mistral の API Keys ページを開く</string>
+    <string name="key_check_valid_body">Mistral がこのキーを受け付けました。次へ進めます。</string>
+    <string name="key_check_refused">キーが拒否されました</string>
+    <string name="key_cause_invalid">Mistral がこのキーを認識できません。スペースを含めず全体をコピーしたか確認するか、新しいキーを作成してください。</string>
+    <string name="key_cause_no_access">このキーには API へのアクセス権がありません。Mistral のプランが有効か確認してください。</string>
+    <string name="key_cause_rate_limited">Mistral が現在このキーの利用を制限しています。1 分待ってから再度テストしてください。</string>
+    <string name="key_cause_no_network">ネットワークに接続されていません。オンラインになってから再度テストしてください。</string>
+    <string name="key_cause_unavailable">Mistral が応答しません。数分後に再度テストしてください。</string>
+    <string name="key_continue">次へ</string>
+    <string name="key_storage_note">キーはこのスマートフォンに暗号化して保存されます。Dixi がキーを表示したり、バックアップしたりすることはありません。</string>
+    <string name="disclosure_intro">入力中のフィールドに音声入力したテキストを貼り付けるため、Dixi は Android のユーザー補助サービス API を使用します。オンにする前に、その動作をご確認ください。</string>
+    <string name="disclosure_reads_title">読み取る内容</string>
+    <string name="disclosure_reads">音声入力の直後に、入力中のフィールドについてのみ、テキストを入力できるか、パスワード欄か、どのアプリのものかを確認します。フィールド内のテキストや画面上のほかの内容は一切読み取りません。</string>
+    <string name="disclosure_does_title">行うこと</string>
+    <string name="disclosure_does">音声入力したばかりのテキストをそのフィールドに貼り付けます。音声入力の合間には何もしません。</string>
+    <string name="disclosure_does_not_title">行わないこと</string>
+    <string name="disclosure_does_not">データの収集、保存、送信は一切行いません。このサービスを通じてデータがスマートフォンの外に出ることはありません。パスワード欄には貼り付けません。</string>
+    <string name="disclosure_voice_note">自動貼り付けを使わない場合と同様に、テキスト作成のため音声は Mistral に送信されます。</string>
+    <string name="disclosure_stop_title">停止する方法</string>
+    <string name="disclosure_stop">Dixi の設定でいつでも「自動貼り付け」をオフにできます。Android の設定 › ユーザー補助 › Dixi · 自動貼り付け からもオフにできます。</string>
+    <string name="disclosure_next_step">Android のユーザー補助設定が開きます。「Dixi · 自動貼り付け」を選んでオンにしてください。</string>
+    <string name="settings_auto_paste_on">オン · 入力中のフィールドに貼り付けます</string>
+    <string name="settings_auto_paste_off">オフ · テキストはコピーされ、ご自身で貼り付けます</string>
+    <string name="screen_mistral_key">Mistral キー</string>
+    <string name="trial_field_hint">ここにテキストが表示されます</string>
+    <string name="trial_hint_tap">バブルをタップして話す</string>
+    <string name="trial_hint_speak">話してから、もう一度タップして終了</string>
+    <string name="trial_it_works">このとおり、すべてのアプリで使えます。</string>
+    <string name="trial_hint_dock">バブルを端にドラッグするとしまえます</string>
+    <string name="trial_hint_undock">タップすると元に戻ります</string>
+    <string name="trial_retry">バブルをタップしてもう一度試す。</string>
+    <string name="bubble_docked">Dixi、端にしまっています。タップすると元に戻ります。</string>
+    <string name="bubble_listening_elapsed">Dixi、聞き取り中、%1$s</string>
+    <string name="bubble_action_dock">バブルを端にしまう</string>
+    <string name="bubble_action_cancel">音声入力をキャンセル</string>
+    <string name="bubble_error_key_refused">キーが拒否されました</string>
+    <string name="bubble_error_no_network">ネットワークなし</string>
+    <string name="bubble_error_nothing_heard">聞き取れませんでした</string>
+    <string name="home_bubble_permission">表示が許可されていません</string>
+    <string name="home_bubble_permission_body">バブルを表示するには「他のアプリの上に重ねて表示」を許可してください。</string>
+    <string name="home_key_active">キー有効</string>
+    <string name="home_key_refused">キーが拒否されました</string>
+    <string name="home_key_none">キーなし</string>
+    <string name="home_key_change">キーを変更</string>
+    <string name="home_key_check">キーを確認</string>
+    <string name="home_key_add">キーを追加</string>
+    <string name="home_auto_paste_off">自動貼り付け：オフ</string>
+    <string name="home_auto_paste_turn_on">オンにする</string>
+    <string name="home_last_dictation_empty">最初の音声入力がここに表示されます。</string>
+    <string name="home_all_history">すべての履歴</string>
+    <string name="home_dictate_here">ここで音声入力</string>
+</resources>

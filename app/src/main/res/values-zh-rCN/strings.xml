@@ -1,0 +1,250 @@
+<resources>
+
+    <!-- Screens, named like the designs (DMC-121). -->
+    <string name="screen_welcome">欢迎</string>
+    <string name="screen_mic_permission">麦克风权限</string>
+    <string name="screen_trial">试用气泡</string>
+    <string name="screen_bubble_intro">关于气泡</string>
+    <string name="screen_bubble_enabled">气泡已开启</string>
+    <string name="screen_auto_paste_disclosure">自动粘贴</string>
+    <string name="screen_history">历史记录</string>
+    <string name="screen_settings">设置</string>
+
+    <!-- Common. -->
+    <string name="action_back">返回</string>
+    <string name="action_cancel">取消</string>
+    <string name="text_copied">文字已复制</string>
+
+    <!-- Onboarding, screens 2 to 5 (DMC-140). Screen 1 is under « Welcome ». -->
+    <string name="mic_title">Dixi 需要使用麦克风</string>
+    <string name="mic_body">用来把你的语音转为文字。音频会被发送转写，随后删除，绝不保留。</string>
+    <string name="mic_allow">允许使用麦克风</string>
+    <string name="mic_later">稍后</string>
+    <string name="mic_open_settings">打开设置</string>
+    <string name="trial_title">试用气泡</string>
+    <string name="trial_skip">跳过</string>
+    <string name="bubble_intro_preview">它就在拇指够得到的地方，在所有应用中都可用。</string>
+    <string name="bubble_intro_title">浮在应用上方的气泡</string>
+    <string name="bubble_intro_step_tap">点按气泡开始听写</string>
+    <string name="bubble_intro_step_stop">再次点按即可停止</string>
+    <string name="bubble_intro_step_copied">整理好的文字会被复制</string>
+    <string name="bubble_intro_system">Android 会请你允许“显示在其他应用的上层”。</string>
+    <string name="bubble_intro_open">打开该设置</string>
+    <string name="bubble_intro_not_now">暂不</string>
+    <string name="bubble_intro_refused">设置未开启</string>
+    <string name="bubble_enabled_title">Dixi 已就绪</string>
+    <string name="bubble_enabled_body">气泡会一直停留在屏幕上。在任何应用中点按它即可听写。</string>
+    <string name="bubble_enabled_note">不需要时，把它收到屏幕边缘；点按即可再次唤出。</string>
+    <string name="bubble_enabled_finish">完成</string>
+    <string name="bubble_enabled_auto_paste">开启自动粘贴</string>
+
+    <!-- Screen 9, history. -->
+    <string name="history_intro">最近 20 次听写，仅保存文字。音频绝不保留。</string>
+    <string name="history_empty">还没有听写记录。</string>
+    <string name="history_today">今天</string>
+    <string name="history_yesterday">昨天</string>
+    <string name="history_copy">复制文字</string>
+    <string name="history_copy_action">复制</string>
+    <string name="history_clear_all">全部清除</string>
+    <string name="history_clear_title">清除历史记录？</string>
+    <string name="history_clear_body">保存在这部手机上的听写记录将被删除，且无法恢复。</string>
+    <string name="history_clear_confirm">清除</string>
+    <string name="history_open_settings">设置</string>
+
+    <!-- Screen 10, settings. -->
+    <string name="settings_bubble">显示气泡</string>
+    <string name="settings_bubble_summary">显示在其他应用的上层</string>
+    <string name="settings_auto_paste">自动粘贴</string>
+    <string name="settings_language">语言</string>
+    <string name="settings_language_auto">自动检测（FR, EN）</string>
+    <string name="settings_language_french">法语</string>
+    <string name="settings_language_english">英语</string>
+    <string name="settings_clear_history">清除历史记录</string>
+    <string name="settings_clear_history_summary">最近 20 次听写，仅保存文字</string>
+    <string name="settings_privacy">隐私</string>
+    <string name="settings_privacy_summary">音频会发送给 Mistral 进行转写。Dixi 从不保留它。</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_summary">版本 %1$s</string>
+
+    <!--
+        Screen 8, auto-paste disclosure (DMC-141), from the screen 8 design (DMC-121). In every build
+        again (DMC-767). Final texts by Léa (DMC-765), checked against AutoPasteService.
+        The service label and description below are part of it: Android shows them in its settings.
+    -->
+    <string name="disclosure_title">自动粘贴</string>
+    <string name="disclosure_optional">可选：不开启时，文字会被复制，由你自己粘贴。</string>
+    <string name="disclosure_accept">同意并开启</string>
+    <string name="disclosure_decline">暂不</string>
+    <string name="auto_paste_service_label">Dixi · 自动粘贴</string>
+    <string name="auto_paste_service_description">将你刚听写的文字粘贴到你正在输入的字段中。只检查该字段是否接受文字，从不读取其内容。不收集任何数据。</string>
+
+    <!-- Main screen, neon design 05 (DMC-213). -->
+    <string name="screen_home">首页</string>
+    <string name="screen_offer">套餐</string>
+    <string name="home_bubble_on">气泡已开启</string>
+    <string name="home_bubble_off">气泡已关闭</string>
+    <string name="home_bubble_on_body">在任何应用中点按气泡即可听写。</string>
+    <string name="home_bubble_off_body">开启后，即可在任何应用中听写。</string>
+    <string name="home_last_dictation">上次听写</string>
+
+    <!-- Onboarding screen 1, neon design 08. -->
+    <string name="welcome_tagline">说出来，Dixi 帮你整理成文字。在每个应用中都可用。</string>
+    <string name="welcome_no_account">无需创建账户。</string>
+    <string name="welcome_start">开始使用</string>
+    <string name="welcome_step">第 %1$d 步，共 %2$d 步</string>
+
+    <!-- Offers, neon designs 06 and 07: frame only, no feature, name or price before the founder decides.
+         Never shown: the Offer screen and its cards are hidden (Screen.offerShown = false, DMC-338).
+         Kept until the founder defines the offers, as Zoé decided on DMC-348 (DMC-372); the
+         dummy slots left the APK on DMC-572. -->
+    <string name="offer_your_offer">你的套餐</string>
+    <string name="offer_free">免费</string>
+    <string name="offer_current">当前套餐</string>
+    <string name="offer_upgrade">升级到付费套餐</string>
+    <string name="offer_label">更改套餐</string>
+    <string name="offer_title">选择你的套餐</string>
+    <string name="offer_paid">付费</string>
+
+    <!-- Settings sections, neon design 06. -->
+    <string name="settings_section_bubble">气泡</string>
+    <string name="settings_section_dictation">听写</string>
+    <string name="settings_section_other">数据与信息</string>
+
+    <!-- Bubble and dictation (PoC, DMC-129). -->
+    <string name="bubble_idle">Dixi，可以开始听写</string>
+    <string name="bubble_listening">Dixi，正在录音</string>
+    <string name="bubble_processing">Dixi，正在转写</string>
+    <string name="bubble_ready">Dixi，文字已复制</string>
+    <string name="bubble_error">Dixi，听写失败</string>
+    <string name="bubble_hide_zone">隐藏气泡</string>
+    <string name="bubble_hide_zone_label">拖到此处即可隐藏</string>
+    <string name="bubble_action_hide">隐藏气泡</string>
+    <string name="channel_bubble">气泡</string>
+    <string name="notif_bubble_hidden_title">气泡已隐藏</string>
+    <string name="notif_bubble_hidden_body">点按即可显示气泡。</string>
+    <string name="channel_dictation">听写</string>
+    <string name="channel_copied">文字已复制</string>
+    <string name="notif_recording">正在录音</string>
+    <string name="notif_recording_body">点按气泡即可停止。</string>
+    <string name="notif_recording_warning">30 秒后自动停止。</string>
+    <string name="notif_recording_stop">停止</string>
+    <string name="error_nothing_heard">我什么也没听到。请再试一次。</string>
+    <string name="error_mic_denied">Dixi 需要使用麦克风。请在设置中允许。</string>
+    <!-- First dictation (DMC-338): explanation before Android's requests, then the settings after a second refusal. -->
+    <string name="mic_ask_title">允许使用麦克风</string>
+    <string name="mic_ask_body">只有在你点按气泡时，Dixi 才会收听，以便写下你说的话。通知会显示录音进行中和“文字已复制”。</string>
+    <string name="mic_ask_continue">继续</string>
+    <string name="action_later">稍后</string>
+    <string name="mic_settings_title">麦克风已被拒绝</string>
+    <string name="mic_settings_body">要听写，请打开 Dixi 的设置，然后依次选择 权限 › 麦克风 › 允许。</string>
+    <string name="mic_settings_open">打开设置</string>
+    <string name="error_recording_failed">麦克风未能启动。请再试一次。</string>
+    <string name="notif_copied_title">文字已复制</string>
+    <string name="notif_copied_body">在输入框中长按即可粘贴。</string>
+    <string name="notif_copied_show_text">显示文字</string>
+
+    <!-- Transcription errors, screen 3 and dictation (DMC-137). Say what to do (charter § 7). -->
+    <string name="error_no_connection">没有网络连接。请稍后再试。</string>
+    <string name="error_timeout">服务响应时间过长。请再试一次。</string>
+    <string name="error_audio_too_long">听写时间过长。请分成较短的几段。</string>
+    <string name="error_invalid_key">密钥被拒绝，请在设置中检查。</string>
+    <string name="error_rate_limited">同时听写的次数过多。请一分钟后再试。</string>
+    <string name="error_service_unavailable">服务不可用。请几分钟后再试。</string>
+
+    <!-- Screen 10, the user's own Mistral key (DMC-227). The key itself is never shown. -->
+    <string name="key_section">Mistral API 密钥</string>
+    <string name="key_status_none">没有密钥 · 演示模式，不会发送任何内容</string>
+    <string name="key_status_saved">密钥已保存</string>
+    <string name="key_status_rejected">Mistral 拒绝了该密钥。请检查，或粘贴另一个密钥。</string>
+    <string name="key_field">在此粘贴密钥</string>
+    <string name="key_save">保存</string>
+    <string name="key_test">测试密钥</string>
+    <string name="key_delete">删除密钥</string>
+    <string name="key_saved">密钥已保存。点按“测试密钥”进行检查。</string>
+    <string name="key_format_invalid">这段文字不像密钥：请粘贴时不要带空格或换行。</string>
+    <string name="key_save_failed">无法保存密钥。请再试一次。</string>
+    <string name="key_deleted">密钥已删除。听写现在使用演示模式。</string>
+    <string name="key_check_running">正在测试…</string>
+    <string name="key_check_valid">密钥有效</string>
+    <string name="key_delete_title">删除密钥？</string>
+    <string name="key_delete_body">在你粘贴密钥之前，听写将使用演示模式。</string>
+    <string name="key_delete_confirm">删除</string>
+
+    <!-- Dictation messages about the key (DMC-227). Tapping opens screen 10. -->
+    <string name="notif_demo_body">演示模式：示例文字。点按即可在设置中添加你的 Mistral 密钥。</string>
+    <string name="notif_key_refused_title">密钥被拒绝</string>
+    <string name="notif_key_refused_body">请在设置中检查。</string>
+
+    <!-- Without a Mistral key: transcription is faked (DMC-137, DMC-227). -->
+    <string name="demo_mode">演示模式</string>
+    <string name="demo_mode_description">演示模式：模拟转写，不会发送任何内容。</string>
+    <!-- Message next to the bubble after a dictation (mockup 01). -->
+    <string name="toast_copied">文字已复制</string>
+    <string name="toast_pasted">文字已粘贴</string>
+
+    <!-- History dates (java.time patterns, not text): « Today 9:12 AM », « Nov 2 9:12 AM ». -->
+    <string name="history_date_day_month">M月d日</string>
+    <string name="history_date_day_month_year">yyyy年M月d日</string>
+    <string name="history_date_time">HH:mm</string>
+
+    <!-- Mockups DMC-764 and texts DMC-765 (DMC-768): bubble, guided trial, home, Mistral key, auto-paste disclosure. -->
+    <string name="key_guide_title">添加你的 Mistral 密钥</string>
+    <string name="key_guide_intro">Dixi 使用你自己的 Mistral 密钥将语音转为文字。大约需要两分钟。</string>
+    <string name="key_guide_step1">1. 打开 console.mistral.ai 并登录，或创建账户。</string>
+    <string name="key_guide_step1_note">Mistral 可能会先要求你选择套餐并验证手机号码。</string>
+    <string name="key_guide_step2">2. 在菜单中打开 API Keys。</string>
+    <string name="key_guide_step3">3. 点按 Create new key，为它命名（例如“Dixi”），然后确认。</string>
+    <string name="key_guide_step4">4. 复制密钥。Mistral 只显示一次。</string>
+    <string name="key_guide_step5">5. 回到 Dixi，在下方粘贴。</string>
+    <string name="key_guide_link">打开 Mistral 的 API Keys 页面</string>
+    <string name="key_check_valid_body">Mistral 接受此密钥。你可以继续。</string>
+    <string name="key_check_refused">密钥被拒绝</string>
+    <string name="key_cause_invalid">Mistral 无法识别此密钥。请确认已完整复制且没有空格，或创建一个新密钥。</string>
+    <string name="key_cause_no_access">此密钥没有 API 访问权限。请确认你的 Mistral 套餐处于有效状态。</string>
+    <string name="key_cause_rate_limited">Mistral 目前正在限制此密钥。请等待一分钟后再测试。</string>
+    <string name="key_cause_no_network">没有网络。联网后再测试。</string>
+    <string name="key_cause_unavailable">Mistral 没有响应。请几分钟后再测试。</string>
+    <string name="key_continue">继续</string>
+    <string name="key_storage_note">你的密钥加密保存在这部手机上。Dixi 从不显示它，也从不备份它。</string>
+    <string name="disclosure_intro">为了把听写的文字粘贴到你正在输入的字段中，Dixi 使用 Android 的无障碍服务 API。开启前，请先了解它的作用。</string>
+    <string name="disclosure_reads_title">它读取什么</string>
+    <string name="disclosure_reads">仅在听写结束后，读取你正在输入的字段：它是否接受文字、是否为密码字段，以及属于哪个应用。它从不读取字段中的文字，也不读取屏幕上的其他内容。</string>
+    <string name="disclosure_does_title">它做什么</string>
+    <string name="disclosure_does">把你刚听写的文字粘贴到该字段中。两次听写之间它什么也不做。</string>
+    <string name="disclosure_does_not_title">它不做什么</string>
+    <string name="disclosure_does_not">它不收集任何数据，不存储任何内容，也不发送任何内容：没有任何数据通过此服务离开你的手机。它从不在密码字段中粘贴。</string>
+    <string name="disclosure_voice_note">与不使用自动粘贴时一样，你的语音仍会发送给 Mistral 以生成文字。</string>
+    <string name="disclosure_stop_title">如何关闭</string>
+    <string name="disclosure_stop">随时可在 Dixi 的设置中关闭“自动粘贴”，或在 Android 设置 › 无障碍 › Dixi · 自动粘贴 中关闭。</string>
+    <string name="disclosure_next_step">Android 将打开无障碍设置。请选择“Dixi · 自动粘贴”并开启。</string>
+    <string name="settings_auto_paste_on">已开启 · 粘贴到你正在输入的字段</string>
+    <string name="settings_auto_paste_off">已关闭 · 文字会被复制，由你粘贴</string>
+    <string name="screen_mistral_key">Mistral 密钥</string>
+    <string name="trial_field_hint">你的文字会出现在这里</string>
+    <string name="trial_hint_tap">点按气泡开始说话</string>
+    <string name="trial_hint_speak">说完后，再次点按即可结束</string>
+    <string name="trial_it_works">好了，在所有应用中都能用。</string>
+    <string name="trial_hint_dock">把气泡拖到屏幕边缘即可收起</string>
+    <string name="trial_hint_undock">点按它即可再次唤出</string>
+    <string name="trial_retry">点按气泡再试一次。</string>
+    <string name="bubble_docked">Dixi，已收在屏幕边缘。点按即可唤出。</string>
+    <string name="bubble_listening_elapsed">Dixi，正在收听，%1$s</string>
+    <string name="bubble_action_dock">把气泡收到屏幕边缘</string>
+    <string name="bubble_action_cancel">取消听写</string>
+    <string name="bubble_error_key_refused">密钥被拒绝</string>
+    <string name="bubble_error_no_network">没有网络</string>
+    <string name="bubble_error_nothing_heard">没有听到声音</string>
+    <string name="home_bubble_permission">不允许显示</string>
+    <string name="home_bubble_permission_body">请允许“显示在其他应用的上层”以显示气泡。</string>
+    <string name="home_key_active">密钥有效</string>
+    <string name="home_key_refused">密钥被拒绝</string>
+    <string name="home_key_none">没有密钥</string>
+    <string name="home_key_change">更换密钥</string>
+    <string name="home_key_check">检查密钥</string>
+    <string name="home_key_add">添加密钥</string>
+    <string name="home_auto_paste_off">自动粘贴：已关闭</string>
+    <string name="home_auto_paste_turn_on">开启</string>
+    <string name="home_last_dictation_empty">你的第一次听写会显示在这里。</string>
+    <string name="home_all_history">全部历史记录</string>
+    <string name="home_dictate_here">在此听写</string>
+</resources>

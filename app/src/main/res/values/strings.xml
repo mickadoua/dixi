@@ -1,5 +1,5 @@
-<resources>
-    <string name="app_name">Dixi</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" tools:ignore="MissingTranslation">Dixi</string>
 
     <!-- Screens, named like the designs (DMC-121). -->
     <string name="screen_welcome">Welcome</string>
@@ -201,10 +201,10 @@
     <string name="history_date_time">h:mm a</string>
 
     <!-- Demo mode without a Mistral key: fictitious raw dictation, cleaned by FakeTextCleaner. -->
-    <string name="demo_raw_text">hello um this is a dixi test text</string>
+    <string name="demo_raw_text" tools:ignore="MissingTranslation">hello um this is a dixi test text</string>
 
     <!-- Debug builds only (extra seedHistory N): fictitious history entries for proofs and store captures. -->
-    <string-array name="debug_sample_dictations">
+    <string-array name="debug_sample_dictations" tools:ignore="MissingTranslation">
         <item>Hi Claire, I wanted to confirm our meeting on Thursday at 2 pm.</item>
         <item>Meeting notes: the client approves the quote. Next step, send the signed contract and plan the kick-off meeting with the whole team next week.</item>
         <item>Remember to chase the supplier about Monday\'s delivery.</item>
