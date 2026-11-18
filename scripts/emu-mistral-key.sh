@@ -91,6 +91,8 @@ PY
 type_in() {
     local tries len k
     for tries in 1 2 3; do
+        # The keyboard left open by the other field covers this one: a tap would hit the keyboard.
+        keyboard_down
         reveal "EDITABLE:$1" || return 1
         wake; $ADB shell input tap $(find_node "EDITABLE:$1"); sleep 1
         $ADB shell input keyevent KEYCODE_MOVE_END $(printf '67 %.0s' $(seq 1 40))
@@ -185,7 +187,8 @@ shot 5-perso-active-again
 
 echo "--- 6. « Test the active key »"
 tap "$(label key_test_active)"
-check "« Key valid » shown" "for i in 1 2 3 4 5; do on_screen \"$(label key_check_valid)\" && break; sleep 2; false; done"
+# The title line is « Key valid ✓ »: match the sentence under it.
+check "« Key valid » shown" "for i in 1 2 3 4 5; do on_screen \"$(label key_check_valid_body)\" && break; sleep 2; false; done"
 shot 6-active-key-valid
 check "no key in the UI tree" "no_key_in_ui"
 
