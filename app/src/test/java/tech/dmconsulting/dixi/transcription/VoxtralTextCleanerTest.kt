@@ -59,11 +59,23 @@ class VoxtralTextCleanerTest {
     @Test
     fun promptKeepsMeaningAndLanguage() {
         val prompt = VoxtralTextCleaner.SYSTEM_PROMPT
-        assertTrue(prompt.contains("Ne change pas le sens"))
-        assertTrue(prompt.contains("Ne traduis jamais"))
-        assertTrue(prompt.contains("ponctuation"))
-        assertTrue(prompt.contains("paragraphes"))
+        assertTrue(prompt.contains("Do not change the meaning"))
+        assertTrue(prompt.contains("punctuation"))
+        assertTrue(prompt.contains("paragraphs"))
         assertTrue(prompt.contains("euh"))
+        assertTrue(prompt.contains("um, uh"))
+    }
+
+    /** DMC-1160: a French prompt made the model translate English dictations, and turn 5:00 into 18 h. */
+    @Test
+    fun promptIsInEnglishAndNeverTranslates() {
+        val prompt = VoxtralTextCleaner.SYSTEM_PROMPT
+        assertTrue(prompt.startsWith("You tidy up the text"))
+        assertTrue(prompt.contains("The text is either French or English. ALWAYS answer in the same language as the text. Never translate."))
+        assertTrue(prompt.contains("Never change a number or a time."))
+        assertTrue(prompt.contains("French: 14 h, 3 €, 25 %; English: 3 pm, \$3, 25%"))
+        // No French instruction left: the model follows the prompt's language.
+        listOf("Tu mets en forme", "Règles", "Ne traduis", "Réponds").forEach { assertFalse(it, prompt.contains(it)) }
     }
 
     @Test
@@ -72,8 +84,8 @@ class VoxtralTextCleanerTest {
         server.answer(200, chatAnswer("Hello."))
         cleaner.clean("bonjour", DictationLanguage.French)
         cleaner.clean("hello", DictationLanguage.English)
-        assertTrue(systemPromptSent().endsWith("Le texte est en français."))
-        assertTrue(systemPromptSent().endsWith("Le texte est en anglais : réponds en anglais."))
+        assertTrue(systemPromptSent().endsWith("The text is in French: answer in French."))
+        assertTrue(systemPromptSent().endsWith("The text is in English: answer in English."))
     }
 
     @Test
